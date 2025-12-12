@@ -1,0 +1,3 @@
+userId,name,email,phone,role,branch,status,password,permissions,createdAt,updatedAt
+USR001,Admin User,admin@nbfc.com,9999999999,admin,HEAD_OFFICE,active,hashed_password,all,2024-01-01T00:00:00.000Z,2024-01-01T00:00:00.000Z
+USR002,Collection Agent,agent@nbfc.com,9999999998,collection_agent,BRANCH_001,active,hashed_password,"collections,customers",2024-01-01T00:00:00.000Z,2024-01-01T00:00:00.000Z

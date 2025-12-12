@@ -1,0 +1,18 @@
+[
+  {
+    "metric": "total_loans",
+    "value": 1,
+    "date": "2024-01-01",
+    "category": "portfolio",
+    "branch": "BRANCH_001",
+    "createdAt": "2024-01-01T00:00:00.000Z"
+  },
+  {
+    "metric": "total_disbursement",
+    "value": 100000,
+    "date": "2024-01-01",
+    "category": "disbursement",
+    "branch": "BRANCH_001",
+    "createdAt": "2024-01-01T00:00:00.000Z"
+  }
+]

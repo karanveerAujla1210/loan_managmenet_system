@@ -1,0 +1,2 @@
+customerId,name,phone,email,aadhaar,pan,address,dateOfBirth,occupation,monthlyIncome,branch,status,kycStatus,createdAt,updatedAt
+CUST001,John Doe,9876543210,john@example.com,1234-5678-9012,ABCDE1234F,"123 Main Street, City, State, 123456",1990-01-01,Business,50000,BRANCH_001,active,verified,2024-01-01T00:00:00.000Z,2024-01-01T00:00:00.000Z

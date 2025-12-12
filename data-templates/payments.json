@@ -1,0 +1,17 @@
+[
+  {
+    "paymentId": "PAY001",
+    "loanId": "LN001",
+    "customerId": "CUST001",
+    "amount": 9456,
+    "paymentMethod": "cash",
+    "paymentDate": "2024-02-01",
+    "status": "completed",
+    "receiptNumber": "RCP001",
+    "collectedBy": "USR002",
+    "branch": "BRANCH_001",
+    "remarks": "EMI payment",
+    "createdAt": "2024-02-01T00:00:00.000Z",
+    "updatedAt": "2024-02-01T00:00:00.000Z"
+  }
+]

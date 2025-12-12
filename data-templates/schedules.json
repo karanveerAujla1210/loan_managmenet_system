@@ -1,0 +1,16 @@
+[
+  {
+    "loanId": "LN001",
+    "installmentNumber": 1,
+    "dueDate": "2024-02-01",
+    "amount": 9456,
+    "principal": 8123,
+    "interest": 1333,
+    "remainingAmount": 9456,
+    "paidAmount": 0,
+    "status": "due",
+    "paymentDate": null,
+    "createdAt": "2024-01-01T00:00:00.000Z",
+    "updatedAt": "2024-01-01T00:00:00.000Z"
+  }
+]

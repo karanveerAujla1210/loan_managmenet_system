@@ -1,0 +1,19 @@
+[
+  {
+    "customerId": "CUST001",
+    "name": "John Doe",
+    "phone": "9876543210",
+    "email": "john@example.com",
+    "aadhaar": "1234-5678-9012",
+    "pan": "ABCDE1234F",
+    "address": "123 Main Street, City, State, 123456",
+    "dateOfBirth": "1990-01-01",
+    "occupation": "Business",
+    "monthlyIncome": 50000,
+    "branch": "BRANCH_001",
+    "status": "active",
+    "kycStatus": "verified",
+    "createdAt": "2024-01-01T00:00:00.000Z",
+    "updatedAt": "2024-01-01T00:00:00.000Z"
+  }
+]

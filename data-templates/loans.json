@@ -1,0 +1,26 @@
+[
+  {
+    "loanId": "LN001",
+    "customerId": "CUST001",
+    "loanAmount": 100000,
+    "interestRate": 24,
+    "tenure": 12,
+    "emiAmount": 9456,
+    "processingFees": 2000,
+    "gst": 360,
+    "netDisbursement": 97640,
+    "loanType": "personal",
+    "purpose": "business",
+    "status": "active",
+    "disbursementDate": "2024-01-01",
+    "maturityDate": "2024-12-31",
+    "outstandingAmount": 100000,
+    "nextDueDate": "2024-02-01",
+    "dpd": 0,
+    "bucket": "Current",
+    "branch": "BRANCH_001",
+    "createdBy": "USR001",
+    "createdAt": "2024-01-01T00:00:00.000Z",
+    "updatedAt": "2024-01-01T00:00:00.000Z"
+  }
+]

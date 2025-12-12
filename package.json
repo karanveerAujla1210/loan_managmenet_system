@@ -1,0 +1,20 @@
+{
+  "name": "nbfc-loan-management-system",
+  "version": "1.0.0",
+  "description": "Complete NBFC Loan Management System",
+  "scripts": {
+    "install-all": "npm run install-backend && npm run install-frontend && npm run install-mobile && npm run install-desktop",
+    "install-backend": "cd backend && npm install",
+    "install-frontend": "cd frontend-web && npm install",
+    "install-mobile": "cd mobile-app && npm install",
+    "install-desktop": "cd desktop-app && npm install",
+    "dev-all": "concurrently \"npm run dev-backend\" \"npm run dev-frontend\" \"npm run dev-mobile\"",
+    "dev-backend": "cd backend && npm run dev",
+    "dev-frontend": "cd frontend-web && npm run dev",
+    "dev-mobile": "cd mobile-app && npm start",
+    "dev-desktop": "cd desktop-app && npm run electron-dev"
+  },
+  "devDependencies": {
+    "concurrently": "^8.2.2"
+  }
+}

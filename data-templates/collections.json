@@ -1,0 +1,21 @@
+[
+  {
+    "loanId": "LN001",
+    "customerId": "CUST001",
+    "agentId": "USR002",
+    "dpd": 0,
+    "bucket": "Current",
+    "lastContactDate": "2024-01-15",
+    "nextFollowUp": "2024-02-01",
+    "contactMethod": "phone",
+    "status": "active",
+    "remarks": "Customer contacted, payment promised",
+    "ptp": {
+      "active": false,
+      "promiseDate": null,
+      "promiseAmount": 0
+    },
+    "createdAt": "2024-01-01T00:00:00.000Z",
+    "updatedAt": "2024-01-15T00:00:00.000Z"
+  }
+]

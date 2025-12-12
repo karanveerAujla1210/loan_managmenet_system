@@ -1,0 +1,31 @@
+{
+  "name": "nbfc-desktop-app",
+  "version": "1.0.0",
+  "description": "NBFC Loan Management Desktop Application",
+  "main": "main.js",
+  "scripts": {
+    "start": "electron .",
+    "electron-dev": "concurrently \"npm run react-dev\" \"wait-on http://localhost:3001 && electron .\"",
+    "react-dev": "cd renderer && npm start",
+    "build": "cd renderer && npm run build",
+    "electron-pack": "electron-builder"
+  },
+  "devDependencies": {
+    "electron": "^26.2.1",
+    "electron-builder": "^24.6.4",
+    "concurrently": "^8.2.2",
+    "wait-on": "^7.0.1"
+  },
+  "build": {
+    "appId": "com.nbfc.loanmanagement",
+    "productName": "NBFC Loan Management",
+    "directories": {
+      "output": "dist"
+    },
+    "files": [
+      "main.js",
+      "preload.js",
+      "renderer/build/**/*"
+    ]
+  }
+}

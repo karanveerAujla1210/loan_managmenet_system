@@ -1,0 +1,2 @@
+loanId,customerId,loanAmount,interestRate,tenure,emiAmount,processingFees,gst,netDisbursement,loanType,purpose,status,disbursementDate,maturityDate,outstandingAmount,nextDueDate,dpd,bucket,branch,createdBy,createdAt,updatedAt
+LN001,CUST001,100000,24,12,9456,2000,360,97640,personal,business,active,2024-01-01,2024-12-31,100000,2024-02-01,0,Current,BRANCH_001,USR001,2024-01-01T00:00:00.000Z,2024-01-01T00:00:00.000Z

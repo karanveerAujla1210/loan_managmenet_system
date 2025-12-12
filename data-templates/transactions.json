@@ -1,0 +1,15 @@
+[
+  {
+    "transactionId": "TXN001",
+    "loanId": "LN001",
+    "customerId": "CUST001",
+    "type": "payment",
+    "amount": 9456,
+    "status": "completed",
+    "paymentMethod": "cash",
+    "transactionDate": "2024-02-01",
+    "description": "EMI Payment",
+    "createdBy": "USR002",
+    "createdAt": "2024-02-01T00:00:00.000Z"
+  }
+]
