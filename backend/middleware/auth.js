@@ -1,22 +1,45 @@
 const jwt = require('jsonwebtoken');
+const ErrorResponse = require('../utils/errorResponse');
+const User = require('../models/User');
 
-module.exports = function auth(required = true) {
+// Protect routes
+module.exports = async (req, res, next) => {
+  let token;
+
+  if (
+    req.headers.authorization &&
+    req.headers.authorization.startsWith('Bearer')
+  ) {
+    token = req.headers.authorization.split(' ')[1];
+  }
+
+  // Make sure token exists
+  if (!token) {
+    return next(new ErrorResponse('Not authorized to access this route', 401));
+  }
+
+  try {
+    // Verify token
+    const decoded = jwt.verify(token, process.env.JWT_SECRET);
+
+    req.user = await User.findById(decoded.id);
+    next();
+  } catch (err) {
+    return next(new ErrorResponse('Not authorized to access this route', 401));
+  }
+};
+
+// Grant access to specific roles
+module.exports.authorize = (...roles) => {
   return (req, res, next) => {
-    const header = req.headers['authorization'] || '';
-    const token = header.startsWith('Bearer ') ? header.slice(7) : null;
-
-    if (!token) {
-      if (required) return res.status(401).json({ message: 'Unauthorized' });
-      req.user = null; // optional auth
-      return next();
+    if (!roles.includes(req.user.role)) {
+      return next(
+        new ErrorResponse(
+          `User role ${req.user.role} is not authorized to access this route`,
+          403
+        )
+      );
     }
-
-    try {
-      const decoded = jwt.verify(token, process.env.JWT_SECRET);
-      req.user = decoded;
-      next();
-    } catch (err) {
-      return res.status(401).json({ message: 'Invalid token' });
-    }
+    next();
   };
-}
+};
