@@ -1,9 +1,9 @@
-import { loanAPI } from './api';
+import api from './api';
 
 export const loanService = {
   async createLoan(loanData) {
     try {
-      const response = await loanAPI.create(loanData);
+      const response = await api.post('/loans', loanData);
       return response.data;
     } catch (error) {
       throw error.response?.data || error.message;
@@ -12,7 +12,7 @@ export const loanService = {
 
   async getAllLoans(params = {}) {
     try {
-      const response = await loanAPI.getAll(params);
+      const response = await api.get('/loans', { params });
       return response.data;
     } catch (error) {
       throw error.response?.data || error.message;
@@ -21,7 +21,7 @@ export const loanService = {
 
   async getLoanById(id) {
     try {
-      const response = await loanAPI.getById(id);
+      const response = await api.get(`/loans/${id}`);
       return response.data;
     } catch (error) {
       throw error.response?.data || error.message;
@@ -30,7 +30,7 @@ export const loanService = {
 
   async addPayment(loanId, paymentData) {
     try {
-      const response = await loanAPI.addPayment(loanId, paymentData);
+      const response = await api.post(`/loans/${loanId}/payments`, paymentData);
       return response.data;
     } catch (error) {
       throw error.response?.data || error.message;
@@ -39,7 +39,7 @@ export const loanService = {
 
   async addPTP(loanId, ptpData) {
     try {
-      const response = await loanAPI.addPTP(loanId, ptpData);
+      const response = await api.post(`/loans/${loanId}/ptp`, ptpData);
       return response.data;
     } catch (error) {
       throw error.response?.data || error.message;
@@ -48,7 +48,16 @@ export const loanService = {
 
   async addNote(loanId, noteData) {
     try {
-      const response = await loanAPI.addNote(loanId, noteData);
+      const response = await api.post(`/loans/${loanId}/notes`, noteData);
+      return response.data;
+    } catch (error) {
+      throw error.response?.data || error.message;
+    }
+  },
+
+  async importLoans(loanData) {
+    try {
+      const response = await api.post('/loans/import', loanData);
       return response.data;
     } catch (error) {
       throw error.response?.data || error.message;
