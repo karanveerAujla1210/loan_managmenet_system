@@ -31,7 +31,7 @@ router.get('/', protect, async (req, res, next) => {
   } catch (err) { next(err); }
 });
 
-router.post('/', auth(), async (req, res, next) => {
+router.post('/', protect, async (req, res, next) => {
   try {
     const { error, value } = customerSchema.validate(req.body, { stripUnknown: true });
     if (error) return res.status(400).json({ message: error.message });
@@ -41,7 +41,7 @@ router.post('/', auth(), async (req, res, next) => {
   } catch (err) { next(err); }
 });
 
-router.get('/:id', auth(), async (req, res, next) => {
+router.get('/:id', protect, async (req, res, next) => {
   try {
     const doc = await Customer.findById(req.params.id);
     if (!doc) return res.status(404).json({ message: 'Not found' });
@@ -49,7 +49,7 @@ router.get('/:id', auth(), async (req, res, next) => {
   } catch (err) { next(err); }
 });
 
-router.put('/:id', auth(), async (req, res, next) => {
+router.put('/:id', protect, async (req, res, next) => {
   try {
     const { error, value } = customerSchema.min(1).validate(req.body, { stripUnknown: true });
     if (error) return res.status(400).json({ message: error.message });

@@ -14,14 +14,14 @@ const loanSchema = Joi.object({
   disbursedDate: Joi.date().optional(),
 });
 
-router.get('/', auth(), async (req, res, next) => {
+router.get('/', protect, async (req, res, next) => {
   try {
     const loans = await Loan.find().limit(100).sort({ createdAt: -1 });
     res.json(loans);
   } catch (err) { next(err); }
 });
 
-router.post('/', protect, validateLoanInput, async (req, res, next) => {
+router.post('/', protect, async (req, res, next) => {
   try {
     const { error, value } = loanSchema.validate(req.body, { stripUnknown: true });
     if (error) return res.status(400).json({ message: error.message });

@@ -3,6 +3,7 @@ const ErrorResponse = require('../utils/errorResponse');
 const asyncHandler = require('../middleware/async');
 const sendEmail = require('../utils/sendEmail');
 const crypto = require('crypto');
+const { logSecurityEvent } = require('../middleware/logger');
 
 // @desc    Register user
 // @route   POST /api/v1/auth/register
@@ -10,15 +11,24 @@ const crypto = require('crypto');
 exports.register = asyncHandler(async (req, res, next) => {
   const { name, email, password, role } = req.body;
 
-  // Create user
-  const user = await User.create({
-    name,
-    email,
-    password,
-    role
-  });
+  if (!name || !email || !password) {
+    return next(new ErrorResponse('Please provide name, email and password', 400));
+  }
 
-  sendTokenResponse(user, 200, res);
+  try {
+    // Create user
+    const user = await User.create({
+      name,
+      email,
+      password,
+      role
+    });
+
+    logSecurityEvent('USER_REGISTERED', req, { userId: user._id, email: user.email });
+    sendTokenResponse(user, 200, res);
+  } catch (error) {
+    return next(new ErrorResponse('User registration failed', 400));
+  }
 });
 
 // @desc    Login user
@@ -36,6 +46,7 @@ exports.login = asyncHandler(async (req, res, next) => {
   const user = await User.findOne({ email }).select('+password');
 
   if (!user) {
+    logSecurityEvent('LOGIN_FAILED', req, { email, reason: 'user_not_found' });
     return next(new ErrorResponse('Invalid credentials', 401));
   }
 
@@ -43,6 +54,7 @@ exports.login = asyncHandler(async (req, res, next) => {
   const isMatch = await user.matchPassword(password);
 
   if (!isMatch) {
+    logSecurityEvent('LOGIN_FAILED', req, { email, reason: 'invalid_password' });
     return next(new ErrorResponse('Invalid credentials', 401));
   }
 
@@ -128,8 +140,13 @@ exports.forgotPassword = asyncHandler(async (req, res, next) => {
 
   await user.save({ validateBeforeSave: false });
 
-  // Create reset URL
-  const resetUrl = `${req.protocol}://${req.get('host')}/api/v1/auth/resetpassword/${resetToken}`;
+  // Create reset URL - validate host to prevent open redirect
+  const allowedHosts = process.env.ALLOWED_HOSTS?.split(',') || ['localhost'];
+  const host = req.get('host');
+  if (!allowedHosts.includes(host)) {
+    return next(new ErrorResponse('Invalid host', 400));
+  }
+  const resetUrl = `${req.protocol}://${host}/api/v1/auth/resetpassword/${resetToken}`;
 
   const message = `You are receiving this email because you (or someone else) has requested the reset of a password. Please make a PUT request to: \n\n ${resetUrl}`;
 
@@ -142,11 +159,15 @@ exports.forgotPassword = asyncHandler(async (req, res, next) => {
 
     res.status(200).json({ success: true, data: 'Email sent' });
   } catch (err) {
-    console.error(err);
+    console.error('Email sending failed:', err.message);
     user.resetPasswordToken = undefined;
     user.resetPasswordExpire = undefined;
 
-    await user.save({ validateBeforeSave: false });
+    try {
+      await user.save({ validateBeforeSave: false });
+    } catch (saveErr) {
+      console.error('Failed to clear reset token:', saveErr.message);
+    }
 
     return next(new ErrorResponse('Email could not be sent', 500));
   }

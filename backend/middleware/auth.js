@@ -22,16 +22,26 @@ module.exports = async (req, res, next) => {
     // Verify token
     const decoded = jwt.verify(token, process.env.JWT_SECRET);
 
-    req.user = await User.findById(decoded.id);
+    const user = await User.findById(decoded.id);
+    if (!user) {
+      return next(new ErrorResponse('User not found', 401));
+    }
+
+    req.user = user;
     next();
   } catch (err) {
+    console.error('Token verification failed:', err.message);
     return next(new ErrorResponse('Not authorized to access this route', 401));
   }
 };
 
 // Grant access to specific roles
-module.exports.authorize = (...roles) => {
+const authorize = (...roles) => {
   return (req, res, next) => {
+    if (!req.user) {
+      return next(new ErrorResponse('User not authenticated', 401));
+    }
+    
     if (!roles.includes(req.user.role)) {
       return next(
         new ErrorResponse(
@@ -43,3 +53,5 @@ module.exports.authorize = (...roles) => {
     next();
   };
 };
+
+module.exports.authorize = authorize;

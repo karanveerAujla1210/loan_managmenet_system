@@ -1,0 +1,16 @@
+NODE_ENV=production
+MONGO_URI=mongodb+srv://loanuser:LoanPass123@cluster0.mongodb.net/loan_management_prod
+JWT_SECRET=loan_mgmt_jwt_secret_key_2024_production_secure_32chars
+JWT_EXPIRE=30d
+JWT_COOKIE_EXPIRE=30
+SMTP_HOST=smtp.gmail.com
+SMTP_PORT=587
+SMTP_EMAIL=loanmanagement@gmail.com
+SMTP_PASSWORD=app_password_here
+FROM_NAME=Loan Management System
+FROM_EMAIL=noreply@loanmanagement.com
+ALLOWED_HOSTS=loan-management-system.vercel.app
+CLIENT_URL=https://loan-management-system.vercel.app
+MAX_FILE_UPLOAD=1000000
+RATE_LIMIT_WINDOW=10
+RATE_LIMIT_MAX=100

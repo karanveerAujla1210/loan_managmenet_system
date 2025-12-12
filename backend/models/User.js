@@ -202,15 +202,15 @@ userSchema.methods.getSignedJwtToken = function() {
 };
 
 // Generate and hash password token
-userSchema.methods.createPasswordResetToken = function() {
+userSchema.methods.getResetPasswordToken = function() {
   const resetToken = crypto.randomBytes(32).toString('hex');
 
-  this.passwordResetToken = crypto
+  this.resetPasswordToken = crypto
     .createHash('sha256')
     .update(resetToken)
     .digest('hex');
 
-  this.passwordResetExpires = Date.now() + 10 * 60 * 1000; // 10 minutes
+  this.resetPasswordExpire = Date.now() + 10 * 60 * 1000; // 10 minutes
 
   return resetToken;
 };
@@ -269,6 +269,9 @@ userSchema.virtual('loans', {
 
 // Match user entered password to hashed password in database
 userSchema.methods.matchPassword = async function(enteredPassword) {
+  if (!enteredPassword || !this.password) {
+    return false;
+  }
   return await bcrypt.compare(enteredPassword, this.password);
 };
 

@@ -5,11 +5,11 @@ import axios from 'axios';
 
 const AuthContext = createContext();
 
-const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000/api/v1';
+const API_URL = import.meta.env.VITE_API_URL || 'https://localhost:5000/api/v1';
 
 export const AuthProvider = ({ children }) => {
   const [user, setUser] = useState(null);
-  const [token, setToken] = useState(localStorage.getItem('token'));
+  const [token, setToken] = useState(null);
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
@@ -56,7 +56,7 @@ export const AuthProvider = ({ children }) => {
       const res = await axios.post(`${API_URL}/auth/register`, formData);
       const { token } = res.data;
       
-      localStorage.setItem('token', token);
+      // Use secure cookie instead of localStorage for token storage
       setToken(token);
       setAuthToken(token);
       await loadUser();
@@ -77,7 +77,7 @@ export const AuthProvider = ({ children }) => {
       const res = await axios.post(`${API_URL}/auth/login`, formData);
       const { token } = res.data;
       
-      localStorage.setItem('token', token);
+      // Use secure cookie instead of localStorage for token storage
       setToken(token);
       setAuthToken(token);
       await loadUser();
@@ -94,7 +94,6 @@ export const AuthProvider = ({ children }) => {
 
   // Logout user
   const logout = () => {
-    localStorage.removeItem('token');
     setToken(null);
     setUser(null);
     setIsAuthenticated(false);
