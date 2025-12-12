@@ -1,7 +1,7 @@
 const express = require('express');
 const Joi = require('joi');
 const Customer = require('../models/Customer');
-const auth = require('../middleware/auth');
+const protect = require('../middleware/auth');
 
 const router = express.Router();
 
@@ -24,7 +24,7 @@ const customerSchema = Joi.object({
   isActive: Joi.boolean().optional(),
 });
 
-router.get('/', auth(), async (req, res, next) => {
+router.get('/', protect, async (req, res, next) => {
   try {
     const customers = await Customer.find().limit(100).sort({ createdAt: -1 });
     res.json(customers);

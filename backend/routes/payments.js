@@ -2,7 +2,7 @@ const express = require('express');
 const Joi = require('joi');
 const Payment = require('../models/Payment');
 const Loan = require('../models/Loan');
-const auth = require('../middleware/auth');
+const protect = require('../middleware/auth');
 
 const router = express.Router();
 
@@ -14,14 +14,14 @@ const paymentSchema = Joi.object({
   reference: Joi.string().allow('', null),
 });
 
-router.get('/', auth(), async (req, res, next) => {
+router.get('/', protect, async (req, res, next) => {
   try {
     const payments = await Payment.find().limit(100).sort({ createdAt: -1 });
     res.json(payments);
   } catch (err) { next(err); }
 });
 
-router.post('/', auth(), async (req, res, next) => {
+router.post('/', protect, async (req, res, next) => {
   try {
     const { error, value } = paymentSchema.validate(req.body, { stripUnknown: true });
     if (error) return res.status(400).json({ message: error.message });

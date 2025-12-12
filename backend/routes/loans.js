@@ -1,7 +1,7 @@
 const express = require('express');
 const Joi = require('joi');
 const Loan = require('../models/Loan');
-const auth = require('../middleware/auth');
+const protect = require('../middleware/auth');
 
 const router = express.Router();
 
@@ -21,7 +21,7 @@ router.get('/', auth(), async (req, res, next) => {
   } catch (err) { next(err); }
 });
 
-router.post('/', auth(), async (req, res, next) => {
+router.post('/', protect, validateLoanInput, async (req, res, next) => {
   try {
     const { error, value } = loanSchema.validate(req.body, { stripUnknown: true });
     if (error) return res.status(400).json({ message: error.message });
