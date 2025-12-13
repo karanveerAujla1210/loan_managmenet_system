@@ -1,20 +1,23 @@
 import { useState } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { 
-  Home, Users, CreditCard, Phone, 
-  Menu, X, Bell, Search 
+  Home, Users, CreditCard, Phone, Upload, User,
+  Menu, X, Bell, Search, LogOut 
 } from 'lucide-react'
 import { Link, useLocation } from 'react-router-dom'
+import { useAuth } from '../context/AuthContext'
 
 const Layout = ({ children }) => {
   const [sidebarOpen, setSidebarOpen] = useState(false)
   const location = useLocation()
+  const { user, logout } = useAuth()
 
   const navigation = [
-    { name: 'Dashboard', href: '/', icon: Home },
+    { name: 'Dashboard', href: '/dashboard', icon: Home },
     { name: 'Customers', href: '/customers', icon: Users },
     { name: 'Loans', href: '/loans', icon: CreditCard },
     { name: 'Collections', href: '/collections', icon: Phone },
+    { name: 'Upload', href: '/upload', icon: Upload },
   ]
 
   return (
@@ -42,7 +45,7 @@ const Layout = ({ children }) => {
                   to={item.href}
                   className={`group flex items-center px-3 py-2 text-sm font-medium rounded-lg mb-1 smooth-transition ${
                     location.pathname === item.href
-                      ? 'bg-primary-50 text-primary-600'
+                      ? 'bg-blue-50 text-blue-600'
                       : 'text-gray-600 hover:bg-gray-50'
                   }`}
                 >
@@ -65,9 +68,9 @@ const Layout = ({ children }) => {
             <Link
               key={item.name}
               to={item.href}
-              className={`group flex items-center px-3 py-2 text-sm font-medium rounded-lg mb-1 smooth-transition ${
+              className={`group flex items-center px-3 py-2 text-sm font-medium rounded-lg mb-1 transition-colors ${
                 location.pathname === item.href
-                  ? 'bg-primary-50 text-primary-600'
+                  ? 'bg-blue-50 text-blue-600'
                   : 'text-gray-600 hover:bg-gray-50'
               }`}
             >
@@ -91,13 +94,26 @@ const Layout = ({ children }) => {
                 <input
                   type="text"
                   placeholder="Search..."
-                  className="pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500"
+                  className="pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
                 />
               </div>
               <button className="relative p-2 text-gray-400 hover:text-gray-600">
                 <Bell className="h-5 w-5" />
                 <span className="absolute top-1 right-1 h-2 w-2 bg-red-500 rounded-full"></span>
               </button>
+              <div className="flex items-center space-x-2">
+                <Link to="/profile" className="flex items-center space-x-2 text-gray-700 hover:text-gray-900">
+                  <User className="h-5 w-5" />
+                  <span className="text-sm font-medium">{user?.name || 'User'}</span>
+                </Link>
+                <button 
+                  onClick={logout}
+                  className="p-2 text-gray-400 hover:text-gray-600"
+                  title="Logout"
+                >
+                  <LogOut className="h-5 w-5" />
+                </button>
+              </div>
             </div>
           </div>
         </header>

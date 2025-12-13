@@ -1,4 +1,4 @@
-import { useState, useMemo, lazy, Suspense } from 'react';
+import { useState, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Card, CardContent, CardHeader, CardTitle } from '../../components/ui/Card';
 import { 
@@ -6,11 +6,6 @@ import {
   TrendingUp, Shield, Target, Activity, RefreshCw, BarChart3
 } from 'lucide-react';
 import { useDashboard } from '../../hooks/useDashboard';
-
-// Lazy load heavy components
-const RiskAnalytics = lazy(() => import('./components/RiskAnalytics'));
-const PortfolioCharts = lazy(() => import('./components/PortfolioCharts'));
-const AdvancedCharts = lazy(() => import('./components/AdvancedCharts'));
 
 const DashboardOptimized = () => {
   const navigate = useNavigate();
@@ -113,15 +108,25 @@ const DashboardOptimized = () => {
       )}
 
       {activeTab === 'risk' && (
-        <Suspense fallback={<div className="animate-pulse h-64 bg-gray-200 rounded"></div>}>
-          <RiskAnalytics data={riskData} />
-        </Suspense>
+        <Card>
+          <CardHeader>
+            <CardTitle>Risk Analytics</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <p className="text-gray-500">Risk analytics dashboard coming soon...</p>
+          </CardContent>
+        </Card>
       )}
 
       {activeTab === 'operations' && (
-        <Suspense fallback={<div className="animate-pulse h-64 bg-gray-200 rounded"></div>}>
-          <PortfolioCharts data={portfolio} stats={stats} />
-        </Suspense>
+        <Card>
+          <CardHeader>
+            <CardTitle>Operations Dashboard</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <p className="text-gray-500">Operations dashboard coming soon...</p>
+          </CardContent>
+        </Card>
       )}
     </div>
   );

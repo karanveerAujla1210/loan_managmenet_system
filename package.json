@@ -18,7 +18,18 @@
     "start": "react-scripts start",
     "build": "react-scripts build",
     "test": "react-scripts test",
-    "eject": "react-scripts eject"
+    "eject": "react-scripts eject",
+    "docker:build": "docker-compose build",
+    "docker:up": "docker-compose up -d",
+    "docker:down": "docker-compose down",
+    "prod:build": "docker-compose -f docker-compose.prod.yml build",
+    "prod:up": "docker-compose -f docker-compose.prod.yml up -d",
+    "prod:down": "docker-compose -f docker-compose.prod.yml down",
+    "backup": "./scripts/backup.sh",
+    "deploy": "./scripts/deploy.sh",
+    "security:audit": "npm audit --audit-level moderate",
+    "logs": "docker-compose logs -f",
+    "logs:prod": "docker-compose -f docker-compose.prod.yml logs -f"
   },
   "eslintConfig": {
     "extends": [

@@ -5,69 +5,8 @@ import { Input } from '../../components/ui/Input';
 import { Card, CardContent, CardHeader, CardTitle } from '../../components/ui/Card';
 import { Plus, Search, Edit, Trash2, Eye, Filter } from 'lucide-react';
 
-// Mock API functions - replace with actual API calls
-const getCustomers = async (params = {}) => {
-  // Simulate API call
-  return new Promise(resolve => {
-    setTimeout(() => {
-      resolve({
-        customers: [
-          {
-            id: 1,
-            name: 'John Doe',
-            email: 'john@example.com',
-            phone: '+1234567890',
-            company: 'ABC Corp',
-            address: '123 Main St, City, State',
-            createdAt: '2024-01-15',
-            status: 'active',
-            totalLoans: 2,
-            totalAmount: 75000
-          },
-          {
-            id: 2,
-            name: 'Jane Smith',
-            email: 'jane@example.com',
-            phone: '+1234567891',
-            company: 'XYZ Inc',
-            address: '456 Oak Ave, City, State',
-            createdAt: '2024-01-20',
-            status: 'active',
-            totalLoans: 1,
-            totalAmount: 50000
-          },
-          {
-            id: 3,
-            name: 'Robert Johnson',
-            email: 'robert@example.com',
-            phone: '+1234567892',
-            company: 'DEF Ltd',
-            address: '789 Pine Rd, City, State',
-            createdAt: '2024-02-01',
-            status: 'inactive',
-            totalLoans: 3,
-            totalAmount: 125000
-          }
-        ],
-        pagination: {
-          page: 1,
-          limit: 10,
-          total: 3,
-          pages: 1
-        }
-      });
-    }, 1000);
-  });
-};
-
-const deleteCustomer = async (id) => {
-  // Simulate API call
-  return new Promise((resolve, reject) => {
-    setTimeout(() => {
-      resolve({ success: true });
-    }, 1000);
-  });
-};
+import { getCustomers, createCustomer, updateCustomer, deleteCustomer } from '../../services/customers';
+import { toast } from 'react-hot-toast';
 
 const Customers = () => {
   const [searchTerm, setSearchTerm] = useState('');
@@ -85,10 +24,10 @@ const Customers = () => {
   const deleteMutation = useMutation(deleteCustomer, {
     onSuccess: () => {
       queryClient.invalidateQueries(['customers']);
-      alert('Customer deleted successfully!');
+      toast.success('Customer deleted successfully!');
     },
-    onError: () => {
-      alert('Failed to delete customer');
+    onError: (error) => {
+      toast.error(error.response?.data?.message || 'Failed to delete customer');
     }
   });
 
@@ -179,7 +118,7 @@ const Customers = () => {
                 </tr>
               </thead>
               <tbody className="bg-white divide-y divide-gray-200">
-                {data?.customers?.map((customer) => (
+                {data?.data?.map((customer) => (
                   <tr key={customer.id}>
                     <td className="px-6 py-4 whitespace-nowrap">
                       <div>
@@ -235,7 +174,7 @@ const Customers = () => {
             </table>
           </div>
           
-          {data?.customers?.length === 0 && (
+          {data?.data?.length === 0 && (
             <div className="text-center py-12">
               <p className="text-gray-500">No customers found</p>
             </div>

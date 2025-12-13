@@ -5,75 +5,8 @@ import { Input } from '../../components/ui/Input';
 import { Card, CardContent, CardHeader, CardTitle } from '../../components/ui/Card';
 import { Plus, Search, Edit, Trash2, Eye, Filter, DollarSign, Calendar, AlertTriangle, CheckCircle } from 'lucide-react';
 
-// Mock API functions - replace with actual API calls
-const getCollections = async (params = {}) => {
-  // Simulate API call
-  return new Promise(resolve => {
-    setTimeout(() => {
-      resolve({
-        collections: [
-          {
-            id: 1,
-            customerName: 'John Doe',
-            customerId: 1,
-            loanId: 1,
-            amount: 2379,
-            dueDate: '2024-02-15',
-            status: 'pending',
-            overdueDays: 0,
-            paymentMethod: 'bank_transfer',
-            notes: 'Monthly EMI payment',
-            collectedBy: null,
-            collectedAt: null
-          },
-          {
-            id: 2,
-            customerName: 'Jane Smith',
-            customerId: 2,
-            loanId: 2,
-            amount: 2199,
-            dueDate: '2024-02-20',
-            status: 'overdue',
-            overdueDays: 5,
-            paymentMethod: 'cash',
-            notes: 'Monthly EMI payment',
-            collectedBy: null,
-            collectedAt: null
-          },
-          {
-            id: 3,
-            customerName: 'Robert Johnson',
-            customerId: 3,
-            loanId: 3,
-            amount: 2555,
-            dueDate: '2024-01-01',
-            status: 'collected',
-            overdueDays: 0,
-            paymentMethod: 'cheque',
-            notes: 'Monthly EMI payment',
-            collectedBy: 'Agent Smith',
-            collectedAt: '2024-01-02'
-          }
-        ],
-        pagination: {
-          page: 1,
-          limit: 10,
-          total: 3,
-          pages: 1
-        }
-      });
-    }, 1000);
-  });
-};
-
-const recordCollection = async (collectionData) => {
-  // Simulate API call
-  return new Promise((resolve) => {
-    setTimeout(() => {
-      resolve({ success: true });
-    }, 1000);
-  });
-};
+import { getPayments, createPayment } from '../../services/payments';
+import { toast } from 'react-hot-toast';
 
 const Collections = () => {
   const [searchTerm, setSearchTerm] = useState('');
@@ -86,17 +19,17 @@ const Collections = () => {
   
   const { data, isLoading, error } = useQuery(
     ['collections', { page: currentPage, search: searchTerm, status: statusFilter }],
-    () => getCollections({ page: currentPage, search: searchTerm, status: statusFilter })
+    () => getPayments({ page: currentPage, search: searchTerm, status: statusFilter })
   );
   
-  const recordMutation = useMutation(recordCollection, {
+  const recordMutation = useMutation(createPayment, {
     onSuccess: () => {
       queryClient.invalidateQueries(['collections']);
-      alert('Payment recorded successfully!');
+      toast.success('Payment recorded successfully!');
       setShowRecordModal(false);
     },
-    onError: () => {
-      alert('Failed to record payment');
+    onError: (error) => {
+      toast.error(error.response?.data?.message || 'Failed to record payment');
     }
   });
 
@@ -247,7 +180,7 @@ const Collections = () => {
                 </tr>
               </thead>
               <tbody className="bg-white divide-y divide-gray-200">
-                {data?.collections?.map((collection) => (
+                {data?.data?.map((collection) => (
                   <tr key={collection.id}>
                     <td className="px-6 py-4 whitespace-nowrap">
                       <div>
@@ -306,7 +239,7 @@ const Collections = () => {
             </table>
           </div>
           
-          {data?.collections?.length === 0 && (
+          {data?.data?.length === 0 && (
             <div className="text-center py-12">
               <p className="text-gray-500">No collections found</p>
             </div>

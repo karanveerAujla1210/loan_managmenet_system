@@ -18,8 +18,8 @@ const ProtectedRoute = ({ children, roles = [] }) => {
     return <Navigate to="/login" state={{ from: location }} replace />;
   }
 
-  // Head role can access everything
-  if (user?.role === 'head') {
+  // Admin role can access everything
+  if (user?.role === 'admin' || user?.role === 'head') {
     return children;
   }
 

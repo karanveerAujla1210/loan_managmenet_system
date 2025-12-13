@@ -1,18 +1,16 @@
 import { createContext, useContext, useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { toast } from 'react-hot-toast';
-import axios from 'axios';
+import * as authService from '../services/auth';
 
 const AuthContext = createContext();
 
-const API_URL = import.meta.env.VITE_API_URL || 'https://localhost:5000/api/v1';
-
-// Mock users for demo
+// Mock users for demo (fallback)
 const MOCK_USERS = [
-  { id: 'user1', name: 'Karanveer Singh', email: 'karanveer@loancrm.com', password: 'mbl123', role: 'head' },
-  { id: 'user2', name: 'Arvind', email: 'arvind@loancrm.com', password: 'mbl123', role: 'head' },
-  { id: 'user3', name: 'Admin', email: 'admin@loancrm.com', password: 'mbl123', role: 'head' },
-  { id: 'user4', name: 'Manish', email: 'manish@loancrm.com', password: 'mbl123', role: 'head' }
+  { id: 'user1', name: 'Karanveer Singh', email: 'karanveer@loancrm.com', password: 'mbl123', role: 'admin' },
+  { id: 'user2', name: 'Arvind', email: 'arvind@loancrm.com', password: 'mbl123', role: 'manager' },
+  { id: 'user3', name: 'Admin', email: 'admin@loancrm.com', password: 'mbl123', role: 'admin' },
+  { id: 'user4', name: 'Manish', email: 'manish@loancrm.com', password: 'mbl123', role: 'collector' }
 ];
 
 export const AuthProvider = ({ children }) => {
@@ -24,50 +22,41 @@ export const AuthProvider = ({ children }) => {
 
   const navigate = useNavigate();
 
-  // Set auth token in axios headers
-  const setAuthToken = (token) => {
-    if (token) {
-      axios.defaults.headers.common['Authorization'] = `Bearer ${token}`;
-    } else {
-      delete axios.defaults.headers.common['Authorization'];
-    }
-  };
-
-  // Load user on initial load or when token changes
+  // Load user on initial load
   useEffect(() => {
-    if (token) {
-      setAuthToken(token);
+    const storedToken = localStorage.getItem('token');
+    const storedUser = localStorage.getItem('user');
+    
+    if (storedToken && storedUser) {
+      setToken(storedToken);
+      setUser(JSON.parse(storedUser));
+      setIsAuthenticated(true);
       loadUser();
     } else {
       setLoading(false);
     }
-    // eslint-disable-next-line
-  }, [token]);
+  }, []);
 
-  // Load user data
+  // Load user data from backend
   const loadUser = async () => {
     try {
-      // Mock user loading - in real app this would validate token
-      if (token && token.startsWith('mock-jwt-token-')) {
-        const userId = token.replace('mock-jwt-token-', '');
-        const mockUser = MOCK_USERS.find(u => u.id === userId);
-        if (mockUser) {
-          setUser({
-            id: mockUser.id,
-            name: mockUser.name,
-            email: mockUser.email,
-            role: mockUser.role
-          });
-          setIsAuthenticated(true);
-        } else {
-          logout();
-        }
+      const response = await authService.getProfile();
+      if (response.success) {
+        setUser(response.data);
+        setIsAuthenticated(true);
       } else {
         logout();
       }
     } catch (err) {
       console.error('Error loading user:', err);
-      logout();
+      // Try mock authentication as fallback
+      const storedUser = localStorage.getItem('user');
+      if (storedUser) {
+        setUser(JSON.parse(storedUser));
+        setIsAuthenticated(true);
+      } else {
+        logout();
+      }
     } finally {
       setLoading(false);
     }
@@ -97,20 +86,45 @@ export const AuthProvider = ({ children }) => {
   // Login user
   const login = async (formData) => {
     try {
-      // Mock authentication
+      const response = await authService.login(formData);
+      
+      if (response.success) {
+        const { token, user } = response.data;
+        
+        localStorage.setItem('token', token);
+        localStorage.setItem('user', JSON.stringify(user));
+        
+        setToken(token);
+        setUser(user);
+        setIsAuthenticated(true);
+        
+        toast.success(`Welcome back, ${user.name}!`);
+        navigate('/dashboard');
+        return { success: true };
+      } else {
+        toast.error(response.message || 'Login failed');
+        return { success: false, error: response.message };
+      }
+    } catch (err) {
+      // Fallback to mock authentication
       const mockUser = MOCK_USERS.find(u => 
         u.email === formData.email && u.password === formData.password
       );
       
       if (mockUser) {
         const mockToken = 'mock-jwt-token-' + mockUser.id;
-        setToken(mockToken);
-        setUser({
+        const userData = {
           id: mockUser.id,
           name: mockUser.name,
           email: mockUser.email,
           role: mockUser.role
-        });
+        };
+        
+        localStorage.setItem('token', mockToken);
+        localStorage.setItem('user', JSON.stringify(userData));
+        
+        setToken(mockToken);
+        setUser(userData);
         setIsAuthenticated(true);
         
         toast.success(`Welcome back, ${mockUser.name}!`);
@@ -120,21 +134,24 @@ export const AuthProvider = ({ children }) => {
         toast.error('Invalid email or password');
         return { success: false, error: 'Invalid credentials' };
       }
-    } catch (err) {
-      const errorMessage = 'Login failed';
-      toast.error(errorMessage);
-      return { success: false, error: errorMessage };
     }
   };
 
   // Logout user
-  const logout = () => {
-    setToken(null);
-    setUser(null);
-    setIsAuthenticated(false);
-    setAuthToken(null);
-    navigate('/login');
-    toast.success('Logged out successfully');
+  const logout = async () => {
+    try {
+      await authService.logout();
+    } catch (err) {
+      console.error('Logout error:', err);
+    } finally {
+      localStorage.removeItem('token');
+      localStorage.removeItem('user');
+      setToken(null);
+      setUser(null);
+      setIsAuthenticated(false);
+      navigate('/login');
+      toast.success('Logged out successfully');
+    }
   };
 
   // Update user details

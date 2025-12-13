@@ -5,6 +5,7 @@ import { Button } from '../../components/ui/Button';
 import { Input } from '../../components/ui/Input';
 import { getLoans, createLoan, updateLoan, approveLoan, rejectLoan } from '../../services/loans';
 import { toast } from 'react-hot-toast';
+import { FileText, DollarSign, Users, AlertCircle } from 'lucide-react';
 
 const Loans = () => {
   const [searchTerm, setSearchTerm] = useState('');

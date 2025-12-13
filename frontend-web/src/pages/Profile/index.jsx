@@ -4,6 +4,7 @@ import { Button } from '../../components/ui/Button';
 import { Input } from '../../components/ui/Input';
 import { Card, CardContent, CardHeader, CardTitle } from '../../components/ui/Card';
 import { User, Mail, Lock, Building, Phone, Key } from 'lucide-react';
+import { toast } from 'react-hot-toast';
 
 const Profile = () => {
   const { user, updateProfile, updatePassword } = useAuth();
@@ -28,9 +29,9 @@ const Profile = () => {
     setLoading(true);
     try {
       await updateProfile(profileForm);
-      alert('Profile updated successfully!');
+      toast.success('Profile updated successfully!');
     } catch (error) {
-      alert('Failed to update profile');
+      toast.error('Failed to update profile');
     } finally {
       setLoading(false);
     }
@@ -40,21 +41,21 @@ const Profile = () => {
     e.preventDefault();
     
     if (passwordForm.newPassword !== passwordForm.confirmPassword) {
-      alert('New passwords do not match');
+      toast.error('New passwords do not match');
       return;
     }
     
     setLoading(true);
     try {
       await updatePassword(passwordForm.currentPassword, passwordForm.newPassword);
-      alert('Password updated successfully!');
+      toast.success('Password updated successfully!');
       setPasswordForm({
         currentPassword: '',
         newPassword: '',
         confirmPassword: '',
       });
     } catch (error) {
-      alert('Failed to update password');
+      toast.error('Failed to update password');
     } finally {
       setLoading(false);
     }
