@@ -5,6 +5,7 @@ import { Button } from '../../components/ui/Button';
 import { Input } from '../../components/ui/Input';
 import { Card, CardContent, CardHeader, CardTitle } from '../../components/ui/Card';
 import { Plus, Search, Edit, Trash2, Eye, Filter, ChevronLeft, ChevronRight } from 'lucide-react';
+import { formatCurrency } from '../../lib/format';
 
 import { getCustomers, createCustomer, updateCustomer, deleteCustomer } from '../../services/customers';
 import { toast } from 'react-hot-toast';
@@ -166,7 +167,7 @@ const Customers = () => {
                       {customer.totalLoans}
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                      ${customer.totalAmount.toLocaleString()}
+                      {formatCurrency(customer.totalAmount)}
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
                       <div className="flex space-x-2">

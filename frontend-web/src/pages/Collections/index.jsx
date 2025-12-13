@@ -3,6 +3,7 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { Button } from '../../components/ui/Button';
 import { Card, CardContent, CardHeader, CardTitle } from '../../components/ui/Card';
 import { Plus, Edit, Trash2, Eye, Filter, DollarSign, Calendar, AlertTriangle, CheckCircle } from 'lucide-react';
+import { formatCurrency } from '../../lib/format';
 import FilterBar from '../../components/FilterBar';
 import Pagination from '../../components/Pagination';
 
@@ -160,7 +161,7 @@ const Collections = () => {
                       <div className="flex items-center">
                         <DollarSign className="h-4 w-4 text-gray-400 mr-1" />
                         <span className="text-sm font-medium text-gray-900">
-                          ${collection.amount.toLocaleString()}
+                          {formatCurrency(collection.amount)}
                         </span>
                       </div>
                     </td>

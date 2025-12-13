@@ -3,6 +3,7 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { Card, CardContent, CardHeader, CardTitle } from '../../components/ui/Card';
 import { Button } from '../../components/ui/Button';
 import { getLoans, createLoan, updateLoan, approveLoan, rejectLoan } from '../../services/loans';
+import { formatCurrency } from '../../lib/format';
 import FilterBar from '../../components/FilterBar';
 import Pagination from '../../components/Pagination';
 import { toast } from 'react-hot-toast';
@@ -170,7 +171,7 @@ const Loans = () => {
           </CardHeader>
           <CardContent>
             <div className="text-3xl font-bold text-green-600">
-              ${loans?.disbursedThisMonth?.toLocaleString() || 0}
+              {formatCurrency(loans?.disbursedThisMonth || 0)}
             </div>
           </CardContent>
         </Card>
@@ -238,7 +239,7 @@ const Loans = () => {
                       <div className="text-sm text-gray-500">{loan.customerEmail}</div>
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                      ${loan.principalAmount?.toLocaleString()}
+                      {formatCurrency(loan.principalAmount)}
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
                       {loan.interestRate}%

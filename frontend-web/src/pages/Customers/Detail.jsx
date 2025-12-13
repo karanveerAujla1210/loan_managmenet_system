@@ -4,6 +4,7 @@ import { useQuery } from '@tanstack/react-query';
 import { getCustomer, getCustomerLoans, getCustomerPayments } from '../../services/customers';
 import { Card, CardContent, CardHeader, CardTitle } from '../../components/ui/Card';
 import { Button } from '../../components/ui/Button';
+import { formatCurrency, formatDate } from '../../lib/format';
 
 const CustomerDetail = () => {
   const { id } = useParams();
@@ -78,7 +79,7 @@ const CustomerDetail = () => {
                       </div>
                       <div className="text-right">
                         <div className="text-sm font-medium">{loan.status}</div>
-                        <div className="text-sm text-gray-600">₹{(loan.principal || loan.amount || 0).toLocaleString()}</div>
+                        <div className="text-sm text-gray-600">{formatCurrency(loan.principal || loan.amount || 0)}</div>
                       </div>
                     </div>
                   </li>
@@ -101,7 +102,7 @@ const CustomerDetail = () => {
                         <div className="text-sm text-gray-500">{p.date}</div>
                       </div>
                       <div className="text-right">
-                        <div className="text-sm font-medium">₹{(p.amount || 0).toLocaleString()}</div>
+                        <div className="text-sm font-medium">{formatCurrency(p.amount || 0)}</div>
                         <div className="text-sm text-gray-600">{p.status}</div>
                       </div>
                     </div>
