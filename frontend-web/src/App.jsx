@@ -39,9 +39,11 @@ const router = createBrowserRouter(
     { path: '/reset-password', element: <ResetPassword /> },
     {
       element: (
-        <ProtectedRoute>
-          <LayoutWrapper />
-        </ProtectedRoute>
+        <AuthProvider>
+          <ProtectedRoute>
+            <LayoutWrapper />
+          </ProtectedRoute>
+        </AuthProvider>
       ),
       children: [
         { path: '/dashboard', element: <Dashboard /> },
@@ -86,13 +88,10 @@ const queryClient = new QueryClient({
 function App() {
   return (
     <QueryClientProvider client={queryClient}>
-      <AuthProvider>
-        <div className="min-h-screen bg-gray-50">
-          <RouterProvider router={router} />
-          <Toaster position="top-right" />
-          {/* <SystemHealthMonitor /> */}
-        </div>
-      </AuthProvider>
+      <div className="min-h-screen bg-gray-50">
+        <RouterProvider router={router} />
+        <Toaster position="top-right" />
+      </div>
     </QueryClientProvider>
   );
 }
