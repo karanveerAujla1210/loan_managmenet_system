@@ -5,17 +5,44 @@ type Props = {
   value: React.ReactNode
   delta?: string
   spark?: React.ReactNode
+  icon?: string
+  color?: 'primary' | 'success' | 'warning' | 'danger'
 }
 
-export const Kpi: React.FC<Props> = ({ title, value, delta, spark }) => {
+export const Kpi: React.FC<Props> = ({ title, value, delta, spark, icon, color = 'primary' }) => {
+  const colorClasses = {
+    primary: 'from-primary/10 to-primary-light border-primary/20',
+    success: 'from-success/10 to-emerald-50 border-success/20',
+    warning: 'from-warning/10 to-orange-50 border-warning/20',
+    danger: 'from-danger/10 to-red-50 border-danger/20'
+  }
+
+  const iconBgColors = {
+    primary: 'bg-gradient-primary',
+    success: 'bg-gradient-success',
+    warning: 'bg-gradient-warm',
+    danger: 'bg-danger'
+  }
+
   return (
-    <div className="p-6 bg-white rounded-xl shadow-sm border border-gray-100">
-      <div className="text-sm text-gray-500">{title}</div>
-      <div className="text-2xl font-semibold mt-2">{value}</div>
-      <div className="flex items-center justify-between mt-2 text-sm text-gray-500">
-        <div>{delta}</div>
-        <div>{spark}</div>
+    <div className={`card-interactive bg-gradient-to-br ${colorClasses[color]} border`}>
+      <div className="flex items-start justify-between mb-4">
+        <div className="flex-1">
+          <p className="text-body-sm font-medium text-gray-600 mb-2">{title}</p>
+          <p className="text-4xl font-bold bg-gradient-primary bg-clip-text text-transparent">{value}</p>
+        </div>
+        {icon && (
+          <div className={`${iconBgColors[color]} rounded-xl p-3 text-white text-xl`}>
+            {icon}
+          </div>
+        )}
       </div>
+      {(delta || spark) && (
+        <div className="flex items-center justify-between pt-3 border-t border-white/40">
+          {delta && <span className="text-xs font-semibold text-green-600">{delta}</span>}
+          {spark && <div className="text-sm">{spark}</div>}
+        </div>
+      )}
     </div>
   )
 }

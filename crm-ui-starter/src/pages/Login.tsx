@@ -4,8 +4,8 @@ import { PrimaryButton } from '../components/ui/PrimaryButton'
 import { useAuth } from '../context/AuthContext'
 
 export const Login: React.FC = () => {
-  const [email, setEmail] = useState('')
-  const [password, setPassword] = useState('')
+  const [email, setEmail] = useState('officer@crm.com')
+  const [password, setPassword] = useState('password123')
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const { login } = useAuth()
@@ -16,8 +16,7 @@ export const Login: React.FC = () => {
     if (!password) return setError('Password is required')
     setLoading(true)
     try {
-      await new Promise((r) => setTimeout(r, 400))
-      login({ email, password })
+      await login(email, password)
     } catch (err) {
       setError('Unable to sign in')
     } finally {
