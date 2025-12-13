@@ -1,3 +1,4 @@
+import React from 'react';
 import { Navigate, Outlet } from 'react-router-dom';
 import { createBrowserRouter, RouterProvider } from 'react-router-dom';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
@@ -12,6 +13,7 @@ import Dashboard from './pages/Dashboard';
 import Customers from './pages/Customers';
 import CustomerDetail from './pages/Customers/Detail';
 import Loans from './pages/Loans';
+import AuditLog from './pages/AuditLog';
 import Collections from './pages/Collections';
 import Upload from './pages/Upload';
 import Profile from './pages/Profile';
@@ -43,6 +45,7 @@ const router = createBrowserRouter(
         { path: '/', element: <Navigate to="/dashboard" replace /> },
         { path: '/customers', element: <Customers /> },
         { path: '/customers/:id', element: <CustomerDetail /> },
+          { path: '/audit', element: <AuditLog /> },
         { path: '/loans', element: <Loans /> },
         { path: '/collections', element: <Collections /> },
         { path: '/upload', element: <Upload /> },

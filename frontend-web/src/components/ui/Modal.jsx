@@ -1,4 +1,4 @@
-import { Fragment } from 'react';
+import { Fragment, useRef, useEffect } from 'react';
 import { Dialog, Transition } from '@headlessui/react';
 import { X } from 'lucide-react';
 import { cn } from '../../lib/utils';
@@ -26,7 +26,7 @@ const Modal = ({
 
   return (
     <Transition appear show={open} as={Fragment}>
-      <Dialog as="div" className="relative z-50" onClose={setOpen}>
+      <Dialog as="div" className="relative z-50" onClose={setOpen} initialFocus={undefined}>
         <Transition.Child
           as={Fragment}
           enter="ease-out duration-300"
@@ -65,9 +65,11 @@ const Modal = ({
                     {title}
                   </Dialog.Title>
                   <button
+                    ref={(el) => { /* intentionally keep a ref point for initial focus if needed */ }}
                     type="button"
                     className="rounded-md text-gray-400 hover:text-gray-500 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2"
                     onClick={() => setOpen(false)}
+                    aria-label="Close dialog"
                   >
                     <X className="h-6 w-6" aria-hidden="true" />
                   </button>
