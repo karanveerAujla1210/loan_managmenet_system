@@ -65,19 +65,27 @@ export const AuthProvider = ({ children }) => {
   // Register user
   const register = async (formData) => {
     try {
-      const res = await axios.post(`${API_URL}/auth/register`, formData);
-      const { token } = res.data;
-      
-      // Use secure cookie instead of localStorage for token storage
-      setToken(token);
-      setAuthToken(token);
-      await loadUser();
-      
-      toast.success('Registration successful!');
-      navigate('/dashboard');
-      return { success: true };
+      const response = await authService.register(formData);
+      if (response?.success) {
+        const { token, user } = response.data || {};
+        if (token) {
+          localStorage.setItem('token', token);
+        }
+        if (user) {
+          localStorage.setItem('user', JSON.stringify(user));
+          setUser(user);
+        }
+        setToken(token || null);
+        setIsAuthenticated(!!token);
+        toast.success('Registration successful!');
+        navigate('/dashboard');
+        return { success: true };
+      }
+      const message = response?.message || 'Registration failed';
+      toast.error(message);
+      return { success: false, error: message };
     } catch (err) {
-      const errorMessage = err.response?.data?.error || 'Registration failed';
+      const errorMessage = err.response?.data?.error || err.message || 'Registration failed';
       toast.error(errorMessage);
       return { success: false, error: errorMessage };
     }
@@ -87,24 +95,19 @@ export const AuthProvider = ({ children }) => {
   const login = async (formData) => {
     try {
       const response = await authService.login(formData);
-      
-      if (response.success) {
-        const { token, user } = response.data;
-        
-        localStorage.setItem('token', token);
-        localStorage.setItem('user', JSON.stringify(user));
-        
-        setToken(token);
-        setUser(user);
-        setIsAuthenticated(true);
-        
-        toast.success(`Welcome back, ${user.name}!`);
+      if (response?.success) {
+        const { token, user } = response.data || {};
+        if (token) localStorage.setItem('token', token);
+        if (user) localStorage.setItem('user', JSON.stringify(user));
+        setToken(token || null);
+        setUser(user || null);
+        setIsAuthenticated(!!token);
+        toast.success(`Welcome back, ${user?.name || 'user'}!`);
         navigate('/dashboard');
         return { success: true };
-      } else {
-        toast.error(response.message || 'Login failed');
-        return { success: false, error: response.message };
       }
+      toast.error(response?.message || 'Login failed');
+      return { success: false, error: response?.message };
     } catch (err) {
       // Fallback to mock authentication
       const mockUser = MOCK_USERS.find(u => 
@@ -157,12 +160,18 @@ export const AuthProvider = ({ children }) => {
   // Update user details
   const updateDetails = async (formData) => {
     try {
-      const res = await axios.put(`${API_URL}/auth/updatedetails`, formData);
-      setUser(res.data.data);
-      toast.success('Profile updated successfully');
-      return { success: true };
+      const res = await authService.updateProfile(formData);
+      if (res?.success) {
+        setUser(res.data);
+        localStorage.setItem('user', JSON.stringify(res.data));
+        toast.success('Profile updated successfully');
+        return { success: true };
+      }
+      const message = res?.message || 'Update failed';
+      toast.error(message);
+      return { success: false, error: message };
     } catch (err) {
-      const errorMessage = err.response?.data?.error || 'Update failed';
+      const errorMessage = err.response?.data?.error || err.message || 'Update failed';
       toast.error(errorMessage);
       return { success: false, error: errorMessage };
     }
@@ -171,14 +180,16 @@ export const AuthProvider = ({ children }) => {
   // Update password
   const updatePassword = async (currentPassword, newPassword) => {
     try {
-      await axios.put(`${API_URL}/auth/updatepassword`, {
-        currentPassword,
-        newPassword
-      });
-      toast.success('Password updated successfully');
-      return { success: true };
+      const res = await authService.updatePassword({ currentPassword, newPassword });
+      if (res?.success) {
+        toast.success('Password updated successfully');
+        return { success: true };
+      }
+      const message = res?.message || 'Password update failed';
+      toast.error(message);
+      return { success: false, error: message };
     } catch (err) {
-      const errorMessage = err.response?.data?.error || 'Password update failed';
+      const errorMessage = err.response?.data?.error || err.message || 'Password update failed';
       toast.error(errorMessage);
       return { success: false, error: errorMessage };
     }
@@ -187,11 +198,16 @@ export const AuthProvider = ({ children }) => {
   // Forgot password
   const forgotPassword = async (email) => {
     try {
-      await axios.post(`${API_URL}/auth/forgotpassword`, { email });
-      toast.success('Password reset email sent');
-      return { success: true };
+      const res = await authService.forgotPassword(email);
+      if (res?.success) {
+        toast.success('Password reset email sent');
+        return { success: true };
+      }
+      const message = res?.message || 'Failed to send reset email';
+      toast.error(message);
+      return { success: false, error: message };
     } catch (err) {
-      const errorMessage = err.response?.data?.error || 'Failed to send reset email';
+      const errorMessage = err.response?.data?.error || err.message || 'Failed to send reset email';
       toast.error(errorMessage);
       return { success: false, error: errorMessage };
     }
@@ -200,13 +216,16 @@ export const AuthProvider = ({ children }) => {
   // Reset password
   const resetPassword = async (resetToken, newPassword) => {
     try {
-      await axios.put(`${API_URL}/auth/resetpassword/${resetToken}`, {
-        password: newPassword
-      });
-      toast.success('Password reset successful. Please log in.');
-      return { success: true };
+      const res = await authService.resetPassword(resetToken, newPassword);
+      if (res?.success) {
+        toast.success('Password reset successful. Please log in.');
+        return { success: true };
+      }
+      const message = res?.message || 'Password reset failed';
+      toast.error(message);
+      return { success: false, error: message };
     } catch (err) {
-      const errorMessage = err.response?.data?.error || 'Password reset failed';
+      const errorMessage = err.response?.data?.error || err.message || 'Password reset failed';
       toast.error(errorMessage);
       return { success: false, error: errorMessage };
     }
