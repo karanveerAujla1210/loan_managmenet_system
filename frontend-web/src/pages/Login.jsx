@@ -15,6 +15,7 @@ const Login = () => {
   const [loading, setLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
   const [mounted, setMounted] = useState(false);
+  const [formErrors, setFormErrors] = useState({});
   const { login, isAuthenticated } = useAuth();
   const navigate = useNavigate();
 
@@ -36,22 +37,34 @@ const Login = () => {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    
-    if (!email || !password) {
-      alert('Please fill in all fields');
+    setFormErrors({});
+
+    const errors = {};
+    if (!email) errors.email = 'Email is required';
+    if (!password) errors.password = 'Password is required';
+    if (Object.keys(errors).length) {
+      setFormErrors(errors);
       return;
     }
 
     setLoading(true);
-    
+
     try {
-      const { success } = await login({ email, password });
-      
-      if (success) {
-        navigate('/dashboard');
+      const { success, error } = await login({ email, password });
+      if (!success) {
+        // handle rate limit / 429
+        const message = error || 'Login failed. Please check your credentials.';
+        setFormErrors({ form: message });
       }
-    } catch (error) {
-      console.error('Login error:', error);
+    } catch (err) {
+      const status = err?.response?.status;
+      if (status === 429) {
+        setFormErrors({ form: 'Too many attempts. Please wait a minute and try again.' });
+      } else if (err?.response?.data?.message) {
+        setFormErrors({ form: err.response.data.message });
+      } else {
+        setFormErrors({ form: 'Network error. Please try again.' });
+      }
     } finally {
       setLoading(false);
     }
@@ -162,7 +175,10 @@ const Login = () => {
       >
         <Card className="bg-white/90 backdrop-blur-sm py-8 px-6 sm:px-10 rounded-2xl shadow-xl border border-white/20">
           <CardContent>
-            <form className="space-y-6" onSubmit={handleSubmit}>
+            <form className="space-y-6" onSubmit={handleSubmit} noValidate>
+              {formErrors.form && (
+                <div className="text-sm text-red-600 mb-2">{formErrors.form}</div>
+              )}
               <div>
                 <label htmlFor="email" className="block text-sm font-medium text-gray-700">Email address</label>
                 <div className="mt-1 relative">
@@ -180,6 +196,7 @@ const Login = () => {
                     className="pl-12 bg-gray-50"
                     placeholder="karanveer@loancrm.com"
                   />
+                  {formErrors.email && <p className="mt-1 text-xs text-red-600">{formErrors.email}</p>}
                 </div>
               </div>
 
@@ -200,6 +217,7 @@ const Login = () => {
                     className="pl-12 pr-12 bg-gray-50"
                     placeholder="••••••••"
                   />
+                  {formErrors.password && <p className="mt-1 text-xs text-red-600">{formErrors.password}</p>}
                   <button type="button" className="absolute inset-y-0 right-0 pr-4 flex items-center" onClick={() => setShowPassword(!showPassword)} aria-label={showPassword ? 'Hide password' : 'Show password'}>
                     {showPassword ? <EyeOff className="h-5 w-5 text-gray-400 hover:text-gray-600" /> : <Eye className="h-5 w-5 text-gray-400 hover:text-gray-600" />}
                   </button>
