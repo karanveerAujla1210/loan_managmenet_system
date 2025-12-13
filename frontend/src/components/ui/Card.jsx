@@ -38,4 +38,5 @@ Card.Header = CardHeader;
 Card.Title = CardTitle;
 Card.Content = CardContent;
 
+export { Card, CardHeader, CardTitle, CardContent };
 export default Card;
