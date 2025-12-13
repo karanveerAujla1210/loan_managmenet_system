@@ -137,7 +137,7 @@ const Customers = () => {
               </thead>
               <tbody className="bg-white divide-y divide-gray-200">
                 {data?.data?.map((customer) => (
-                  <tr key={customer.id}>
+                  <tr key={customer.id} tabIndex={0} className="focus:outline-none focus:ring-2 focus:ring-indigo-200">
                     <td className="px-6 py-4 whitespace-nowrap">
                       <div>
                         <div className="text-sm font-medium text-gray-900">{customer.name}</div>
@@ -171,11 +171,11 @@ const Customers = () => {
                     <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
                       <div className="flex space-x-2">
                         <Link to={`/customers/${customer.id}`}>
-                          <Button variant="ghost" size="sm">
+                          <Button variant="ghost" size="sm" aria-label={`View ${customer.name}`}>
                             <Eye className="h-4 w-4" />
                           </Button>
                         </Link>
-                        <Button variant="ghost" size="sm">
+                        <Button variant="ghost" size="sm" aria-label={`Edit ${customer.name}`}>
                           <Edit className="h-4 w-4" />
                         </Button>
                         <Button 
@@ -183,6 +183,7 @@ const Customers = () => {
                           size="sm"
                           onClick={() => handleDelete(customer.id)}
                           disabled={deleteMutation.isLoading}
+                          aria-label={`Delete ${customer.name}`}
                         >
                           <Trash2 className="h-4 w-4" />
                         </Button>
@@ -195,7 +196,7 @@ const Customers = () => {
           </div>
           
           {data?.data?.length === 0 && (
-            <div className="text-center py-12">
+            <div className="empty-state">
               <p className="text-gray-500">No customers found</p>
             </div>
           )}

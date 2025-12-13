@@ -1,9 +1,10 @@
 import { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { Button } from '../../components/ui/Button';
-import { Input } from '../../components/ui/Input';
 import { Card, CardContent, CardHeader, CardTitle } from '../../components/ui/Card';
-import { Plus, Search, Edit, Trash2, Eye, Filter, DollarSign, Calendar, AlertTriangle, CheckCircle } from 'lucide-react';
+import { Plus, Edit, Trash2, Eye, Filter, DollarSign, Calendar, AlertTriangle, CheckCircle } from 'lucide-react';
+import FilterBar from '../../components/FilterBar';
+import Pagination from '../../components/Pagination';
 
 import { getPayments, createPayment } from '../../services/payments';
 import { toast } from 'react-hot-toast';
@@ -13,13 +14,14 @@ const Collections = () => {
   const [showRecordModal, setShowRecordModal] = useState(false);
   const [selectedCollection, setSelectedCollection] = useState(null);
   const [currentPage, setCurrentPage] = useState(1);
+  const [pageSize, setPageSize] = useState(10);
   const [statusFilter, setStatusFilter] = useState('all');
   
   const queryClient = useQueryClient();
   
   const { data, isLoading, error } = useQuery(
-    ['collections', { page: currentPage, search: searchTerm, status: statusFilter }],
-    () => getPayments({ page: currentPage, search: searchTerm, status: statusFilter })
+    ['collections', { page: currentPage, limit: pageSize, search: searchTerm, status: statusFilter }],
+    () => getPayments({ page: currentPage, limit: pageSize, search: searchTerm, status: statusFilter })
   );
   
   const recordMutation = useMutation(createPayment, {
@@ -122,61 +124,27 @@ const Collections = () => {
 
       <Card>
         <CardHeader>
-          <div className="flex flex-col sm:flex-row gap-4">
-            <div className="flex-1">
-              <div className="relative">
-                <Search className="absolute left-3 top-3 h-5 w-5 text-gray-400" />
-                <Input
-                  type="text"
-                  placeholder="Search collections..."
-                  value={searchTerm}
-                  onChange={handleSearch}
-                  className="pl-10"
-                />
-              </div>
-            </div>
-            <select
-              value={statusFilter}
-              onChange={(e) => setStatusFilter(e.target.value)}
-              className="px-3 py-2 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
-            >
-              <option value="all">All Status</option>
-              <option value="pending">Pending</option>
-              <option value="overdue">Overdue</option>
-              <option value="collected">Collected</option>
-            </select>
-            <Button variant="outline">
-              <Filter className="h-4 w-4 mr-2" />
-              Filter
-            </Button>
-          </div>
+          <FilterBar
+            searchTerm={searchTerm}
+            onSearch={(v) => { setSearchTerm(v); setCurrentPage(1); }}
+            status={statusFilter}
+            onStatusChange={(v) => { setStatusFilter(v); setCurrentPage(1); }}
+            pageSize={pageSize}
+            onPageSizeChange={(v) => { setPageSize(v); setCurrentPage(1); }}
+          />
         </CardHeader>
         <CardContent>
           <div className="overflow-x-auto">
             <table className="min-w-full divide-y divide-gray-200">
               <thead className="bg-gray-50">
                 <tr>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Customer
-                  </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Amount
-                  </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Due Date
-                  </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Status
-                  </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Payment Method
-                  </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Collected By
-                  </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Actions
-                  </th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Customer</th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Amount</th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Due Date</th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Payment Method</th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Collected By</th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
                 </tr>
               </thead>
               <tbody className="bg-white divide-y divide-gray-200">
@@ -238,7 +206,14 @@ const Collections = () => {
               </tbody>
             </table>
           </div>
-          
+
+          <div className="mt-4">
+            <Pagination
+              pagination={data?.pagination}
+              onPageChange={(p) => setCurrentPage(p)}
+            />
+          </div>
+
           {data?.data?.length === 0 && (
             <div className="text-center py-12">
               <p className="text-gray-500">No collections found</p>

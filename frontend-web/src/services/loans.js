@@ -97,6 +97,15 @@ export const getLoans = async (params = {}) => {
         loan.loanId.toLowerCase().includes(searchTerm)
       );
     }
+
+    // Pagination support
+    const page = Math.max(1, parseInt(params.page || 1, 10));
+    const limit = Math.max(1, parseInt(params.limit || 10, 10));
+    const total = transformedLoans.length;
+    const pages = Math.max(1, Math.ceil(total / limit));
+    const start = (page - 1) * limit;
+    const end = start + limit;
+    const paged = transformedLoans.slice(start, end);
     
     // Calculate statistics
     const totalApplications = actualLoansData.length;
@@ -106,7 +115,9 @@ export const getLoans = async (params = {}) => {
     const activeLoans = disbursedLoans.length;
     
     return {
-      data: transformedLoans,
+      success: true,
+      data: paged,
+      pagination: { total, page, pages, limit },
       totalApplications,
       pendingApproval,
       disbursedThisMonth,

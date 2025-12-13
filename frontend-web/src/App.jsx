@@ -1,4 +1,5 @@
-import { BrowserRouter as Router, Routes, Route, Navigate, Outlet } from 'react-router-dom';
+import { Navigate, Outlet } from 'react-router-dom';
+import { createBrowserRouter, RouterProvider } from 'react-router-dom';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { Toaster } from 'react-hot-toast';
 import { AuthProvider } from './context/AuthContext';
@@ -24,6 +25,40 @@ const LayoutWrapper = () => {
   );
 };
 
+// Build a route tree and opt-in to future v7 behaviors to silence warnings
+const router = createBrowserRouter(
+  [
+    { path: '/login', element: <Login /> },
+    { path: '/register', element: React.createElement(require('./pages/Register').default) },
+    { path: '/forgot-password', element: React.createElement(require('./pages/ForgotPassword').default) },
+    { path: '/reset-password', element: React.createElement(require('./pages/ResetPassword').default) },
+    {
+      element: (
+        <ProtectedRoute>
+          <LayoutWrapper />
+        </ProtectedRoute>
+      ),
+      children: [
+        { path: '/dashboard', element: <Dashboard /> },
+        { path: '/', element: <Navigate to="/dashboard" replace /> },
+        { path: '/customers', element: <Customers /> },
+        { path: '/customers/:id', element: <CustomerDetail /> },
+        { path: '/loans', element: <Loans /> },
+        { path: '/collections', element: <Collections /> },
+        { path: '/upload', element: <Upload /> },
+        { path: '/profile', element: <Profile /> },
+      ],
+    },
+    { path: '*', element: <Navigate to="/dashboard" replace /> },
+  ],
+  {
+    future: {
+      v7_startTransition: true,
+      v7_relativeSplatPath: true,
+    },
+  }
+);
+
 const queryClient = new QueryClient({
   defaultOptions: {
     queries: {
@@ -45,36 +80,15 @@ const queryClient = new QueryClient({
 function App() {
   return (
     <QueryClientProvider client={queryClient}>
-      <Router>
-        <AuthProvider>
-          <div className="min-h-screen bg-gray-50">
-            <Routes>
-              {/* Public Routes */}
-              <Route path="/login" element={<Login />} />
-              
-              {/* Protected Routes */}
-              <Route element={<ProtectedRoute><LayoutWrapper /></ProtectedRoute>}>
-                <Route path="/dashboard" element={<Dashboard />} />
-                <Route path="/" element={<Navigate to="/dashboard" replace />} />
-                <Route path="/customers" element={<Customers />} />
-                <Route path="/customers/:id" element={<CustomerDetail />} />
-                <Route path="/loans" element={<Loans />} />
-                <Route path="/collections" element={<Collections />} />
-                <Route path="/upload" element={<Upload />} />
-                <Route path="/profile" element={<Profile />} />
-              </Route>
-
-              {/* 404 Route */}
-              <Route path="*" element={<Navigate to="/dashboard" replace />} />
-            </Routes>
-
-            <Toaster position="top-right" />
-            {/* <SystemHealthMonitor /> */}
-          </div>
-        </AuthProvider>
-      </Router>
+      <AuthProvider>
+        <div className="min-h-screen bg-gray-50">
+          <RouterProvider router={router} />
+          <Toaster position="top-right" />
+          {/* <SystemHealthMonitor /> */}
+        </div>
+      </AuthProvider>
     </QueryClientProvider>
-  )
+  );
 }
 
-export default App
+export default App;

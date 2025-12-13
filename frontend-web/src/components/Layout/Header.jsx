@@ -1,3 +1,4 @@
+import React from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { LogOut, User, Menu, X, Search, Settings, FileSearch } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
@@ -7,8 +8,16 @@ const Header = ({ sidebarOpen, setSidebarOpen }) => {
   const { user, logout } = useAuth();
   const navigate = useNavigate();
 
-  const handleSearchLoan = () => {
-    navigate('/loans');
+  const [query, setQuery] = React.useState('');
+
+  const handleSearchLoan = (e) => {
+    if (e && e.preventDefault) e.preventDefault();
+    const target = query.trim();
+    if (target) {
+      navigate(`/loans?search=${encodeURIComponent(target)}`);
+    } else {
+      navigate('/loans');
+    }
   };
 
   return (
@@ -33,28 +42,41 @@ const Header = ({ sidebarOpen, setSidebarOpen }) => {
             <div className="lg:hidden ml-4">
               <img src="/logo.svg" alt="Mini Business Loan" className="h-8 w-auto" />
             </div>
+
+            {/* Brand for large screens */}
+            <div className="hidden lg:flex items-center ml-6">
+              <img src="/logo.svg" alt="Mini Business Loan" className="h-8 w-auto mr-3" />
+              <Link to="/dashboard" className="text-lg font-semibold text-gray-800 hover:text-gray-900">Loan Management</Link>
+            </div>
             
             {/* Global Search */}
             <div className="hidden md:block ml-6">
-              <div className="relative">
+              <form onSubmit={handleSearchLoan} className="relative">
+                <label htmlFor="global-search" className="sr-only">Search customers or loans</label>
                 <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
                   <Search className="h-5 w-5 text-gray-400" />
                 </div>
                 <input
+                  id="global-search"
+                  name="global-search"
+                  value={query}
+                  onChange={(e) => setQuery(e.target.value)}
                   type="text"
                   placeholder="Search customers, loans..."
+                  aria-label="Search customers or loans"
                   className="block w-full pl-10 pr-3 py-2 border border-gray-300 rounded-md leading-5 bg-white placeholder-gray-500 focus:outline-none focus:placeholder-gray-400 focus:ring-1 focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
                 />
-              </div>
+              </form>
             </div>
           </div>
           
           <div className="flex items-center space-x-4">
             {/* Search Loan Button */}
-            <button 
-              onClick={handleSearchLoan}
+            <button
+              onClick={(e) => handleSearchLoan(e)}
               className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors duration-200 text-sm font-medium"
               title="Search Loans"
+              aria-label="Open loan search"
             >
               <FileSearch className="h-4 w-4" />
               <span className="hidden sm:inline">Search Loan</span>

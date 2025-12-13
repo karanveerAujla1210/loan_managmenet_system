@@ -22,6 +22,7 @@ const customers = require('./routes/customers');
 const loans = require('./routes/loans');
 const payments = require('./routes/payments');
 const loanEngine = require('./routes/loanEngine');
+const dashboardApi = require('./routes/apiDashboard');
 
 const app = express();
 
@@ -74,6 +75,7 @@ app.use('/api/v1/customers', customers);
 app.use('/api/v1/loans', loans);
 app.use('/api/v1/payments', payments);
 app.use('/api/v1/loan-engine', loanEngine);
+app.use('/api/dashboard', dashboardApi);
 
 // Error handler middleware
 app.use(errorHandler);

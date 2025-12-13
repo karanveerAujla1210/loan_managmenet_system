@@ -2,14 +2,17 @@ import { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { Card, CardContent, CardHeader, CardTitle } from '../../components/ui/Card';
 import { Button } from '../../components/ui/Button';
-import { Input } from '../../components/ui/Input';
 import { getLoans, createLoan, updateLoan, approveLoan, rejectLoan } from '../../services/loans';
+import FilterBar from '../../components/FilterBar';
+import Pagination from '../../components/Pagination';
 import { toast } from 'react-hot-toast';
 import { FileText, DollarSign, Users, AlertCircle } from 'lucide-react';
 
 const Loans = () => {
   const [searchTerm, setSearchTerm] = useState('');
   const [statusFilter, setStatusFilter] = useState('all');
+  const [pageSize, setPageSize] = useState(10);
+  const [currentPage, setCurrentPage] = useState(1);
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
   const [editingLoan, setEditingLoan] = useState(null);
   const [formData, setFormData] = useState({
@@ -24,8 +27,8 @@ const Loans = () => {
   const queryClient = useQueryClient();
 
   const { data: loans, isLoading } = useQuery(
-    ['loans', searchTerm, statusFilter],
-    () => getLoans({ search: searchTerm, status: statusFilter }),
+    ['loans', { search: searchTerm, status: statusFilter, page: currentPage, limit: pageSize }],
+    () => getLoans({ search: searchTerm, status: statusFilter, page: currentPage, limit: pageSize }),
     {
       keepPreviousData: true,
     }
@@ -185,25 +188,15 @@ const Loans = () => {
       <Card>
         <CardHeader>
           <CardTitle>Loan Applications</CardTitle>
-          <div className="mt-4 flex space-x-4">
-            <Input
-              type="text"
-              placeholder="Search loans..."
-              value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
-              className="max-w-md"
+          <div className="mt-4">
+            <FilterBar
+              searchTerm={searchTerm}
+              onSearch={(v) => setSearchTerm(v)}
+              status={statusFilter}
+              onStatusChange={(v) => setStatusFilter(v)}
+              pageSize={pageSize}
+              onPageSizeChange={(v) => setPageSize(v)}
             />
-            <select
-              value={statusFilter}
-              onChange={(e) => setStatusFilter(e.target.value)}
-              className="rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
-            >
-              {statusOptions.map(option => (
-                <option key={option.value} value={option.value}>
-                  {option.label}
-                </option>
-              ))}
-            </select>
           </div>
         </CardHeader>
         <CardContent>
@@ -236,7 +229,7 @@ const Loans = () => {
               </thead>
               <tbody className="bg-white divide-y divide-gray-200">
                 {loans?.data?.map((loan) => (
-                  <tr key={loan.id}>
+                  <tr key={loan.id} tabIndex={0} className="focus:outline-none focus:ring-2 focus:ring-indigo-200" onKeyDown={(e) => { if (e.key === 'Enter') { /* noop - row clickable handlers could go here */ } }}>
                     <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
                       {loan.loanId}
                     </td>
@@ -306,7 +299,17 @@ const Loans = () => {
               </tbody>
             </table>
           </div>
+          {(!loans?.data || loans?.data?.length === 0) && (
+            <div className="empty-state">
+              <p className="text-gray-500">No loan applications found.</p>
+            </div>
+          )}
         </CardContent>
+
+        <Pagination
+          pagination={loans?.pagination}
+          onPageChange={(p) => setCurrentPage(p)}
+        />
       </Card>
 
       {isCreateModalOpen && (

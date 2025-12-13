@@ -3,6 +3,9 @@ import { Link, useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { useAuth } from '../context/AuthContext';
 import { Lock, Mail, Eye, EyeOff, Building2, Sparkles } from 'lucide-react';
+import { Input } from '../components/ui/Input';
+import { Button } from '../components/ui/Button';
+import { Card, CardContent } from '../components/ui/Card';
 
 const Login = () => {
   const [formData, setFormData] = useState({
@@ -157,122 +160,71 @@ const Login = () => {
         animate={{ opacity: mounted ? 1 : 0, y: mounted ? 0 : 50 }}
         transition={{ delay: 0.4, duration: 0.8, ease: "easeOut" }}
       >
-        <div className="bg-white/80 backdrop-blur-lg py-10 px-6 shadow-2xl rounded-2xl border border-white/20 sm:px-12">
-          <form className="space-y-6" onSubmit={handleSubmit}>
-            <div>
-              <label
-                htmlFor="email"
-                className="block text-sm font-medium text-gray-700"
-              >
-                Email address
-              </label>
-              <div className="mt-1 relative rounded-md shadow-sm">
-                <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                  <Mail className="h-5 w-5 text-gray-400" aria-hidden="true" />
-                </div>
-                <input
-                  id="email"
-                  name="email"
-                  type="email"
-                  autoComplete="email"
-                  required
-                  value={email}
-                  onChange={handleChange}
-                  className="focus:ring-2 focus:ring-blue-500 focus:border-blue-500 block w-full pl-12 pr-4 py-3 sm:text-sm border-gray-300 rounded-xl transition-all duration-200 bg-gray-50 hover:bg-white"
-                  placeholder="karanveer@loancrm.com"
-                />
-              </div>
-            </div>
-
-            <div>
-              <label
-                htmlFor="password"
-                className="block text-sm font-medium text-gray-700"
-              >
-                Password
-              </label>
-              <div className="mt-1 relative rounded-md shadow-sm">
-                <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
-                  <Lock className="h-5 w-5 text-gray-400" aria-hidden="true" />
-                </div>
-                <input
-                  id="password"
-                  name="password"
-                  type={showPassword ? 'text' : 'password'}
-                  autoComplete="current-password"
-                  required
-                  value={password}
-                  onChange={handleChange}
-                  className="focus:ring-2 focus:ring-blue-500 focus:border-blue-500 block w-full pl-12 pr-12 py-3 sm:text-sm border-gray-300 rounded-xl transition-all duration-200 bg-gray-50 hover:bg-white"
-                  placeholder="••••••••"
-                />
-                <button
-                  type="button"
-                  className="absolute inset-y-0 right-0 pr-4 flex items-center"
-                  onClick={() => setShowPassword(!showPassword)}
-                >
-                  {showPassword ? (
-                    <EyeOff className="h-5 w-5 text-gray-400 hover:text-gray-600" />
-                  ) : (
-                    <Eye className="h-5 w-5 text-gray-400 hover:text-gray-600" />
-                  )}
-                </button>
-              </div>
-            </div>
-
-            <div className="flex items-center justify-between">
-              <div className="flex items-center">
-                <input
-                  id="remember-me"
-                  name="remember-me"
-                  type="checkbox"
-                  className="h-4 w-4 text-indigo-600 focus:ring-indigo-500 border-gray-300 rounded"
-                />
-                <label
-                  htmlFor="remember-me"
-                  className="ml-2 block text-sm text-gray-900"
-                >
-                  Remember me
-                </label>
-              </div>
-
-              <div className="text-sm">
-                <Link
-                  to="/forgot-password"
-                  className="font-medium text-indigo-600 hover:text-indigo-500"
-                >
-                  Forgot your password?
-                </Link>
-              </div>
-            </div>
-
-            <motion.div
-              whileHover={{ scale: 1.02 }}
-              whileTap={{ scale: 0.98 }}
-            >
-              <button
-                type="submit"
-                disabled={loading}
-                className={`w-full flex justify-center py-4 px-6 border border-transparent rounded-xl shadow-lg text-base font-semibold text-white bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-all duration-200 ${
-                  loading ? 'opacity-70 cursor-not-allowed' : 'hover:shadow-xl'
-                }`}
-              >
-                {loading ? (
-                  <div className="flex items-center">
-                    <motion.div
-                      className="w-5 h-5 border-2 border-white border-t-transparent rounded-full mr-3"
-                      animate={{ rotate: 360 }}
-                      transition={{ duration: 1, repeat: Infinity, ease: "linear" }}
-                    />
-                    Signing in...
+        <Card className="bg-white/90 backdrop-blur-sm py-8 px-6 sm:px-10 rounded-2xl shadow-xl border border-white/20">
+          <CardContent>
+            <form className="space-y-6" onSubmit={handleSubmit}>
+              <div>
+                <label htmlFor="email" className="block text-sm font-medium text-gray-700">Email address</label>
+                <div className="mt-1 relative">
+                  <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                    <Mail className="h-5 w-5 text-gray-400" aria-hidden="true" />
                   </div>
-                ) : (
-                  'Sign in'
-                )}
-              </button>
-            </motion.div>
-          </form>
-        </div>
+                  <Input
+                    id="email"
+                    name="email"
+                    type="email"
+                    autoComplete="email"
+                    required
+                    value={email}
+                    onChange={handleChange}
+                    className="pl-12 bg-gray-50"
+                    placeholder="karanveer@loancrm.com"
+                  />
+                </div>
+              </div>
+
+              <div>
+                <label htmlFor="password" className="block text-sm font-medium text-gray-700">Password</label>
+                <div className="mt-1 relative">
+                  <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
+                    <Lock className="h-5 w-5 text-gray-400" aria-hidden="true" />
+                  </div>
+                  <Input
+                    id="password"
+                    name="password"
+                    type={showPassword ? 'text' : 'password'}
+                    autoComplete="current-password"
+                    required
+                    value={password}
+                    onChange={handleChange}
+                    className="pl-12 pr-12 bg-gray-50"
+                    placeholder="••••••••"
+                  />
+                  <button type="button" className="absolute inset-y-0 right-0 pr-4 flex items-center" onClick={() => setShowPassword(!showPassword)} aria-label={showPassword ? 'Hide password' : 'Show password'}>
+                    {showPassword ? <EyeOff className="h-5 w-5 text-gray-400 hover:text-gray-600" /> : <Eye className="h-5 w-5 text-gray-400 hover:text-gray-600" />}
+                  </button>
+                </div>
+              </div>
+
+              <div className="flex items-center justify-between">
+                <div className="flex items-center">
+                  <input id="remember-me" name="remember-me" type="checkbox" className="h-4 w-4 text-indigo-600 focus:ring-indigo-500 border-gray-300 rounded" />
+                  <label htmlFor="remember-me" className="ml-2 block text-sm text-gray-900">Remember me</label>
+                </div>
+
+                <div className="text-sm">
+                  <Link to="/forgot-password" className="font-medium text-indigo-600 hover:text-indigo-500">Forgot your password?</Link>
+                </div>
+              </div>
+
+              <motion.div whileHover={{ scale: 1.01 }} whileTap={{ scale: 0.995 }}>
+                <Button type="submit" className={`${loading ? 'opacity-70 cursor-not-allowed' : ''}`}>
+                  {loading ? 'Signing in...' : 'Sign in'}
+                </Button>
+              </motion.div>
+            </form>
+          </CardContent>
+        </Card>
       </motion.div>
       
       {/* Demo credentials */}
