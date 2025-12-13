@@ -9,6 +9,7 @@ import Layout from './components/Layout';
 import Login from './pages/Login';
 import Dashboard from './pages/Dashboard';
 import Customers from './pages/Customers';
+import CustomerDetail from './pages/Customers/Detail';
 import Loans from './pages/Loans';
 import Collections from './pages/Collections';
 import Upload from './pages/Upload';
@@ -56,6 +57,7 @@ function App() {
                 <Route path="/dashboard" element={<Dashboard />} />
                 <Route path="/" element={<Navigate to="/dashboard" replace />} />
                 <Route path="/customers" element={<Customers />} />
+                <Route path="/customers/:id" element={<CustomerDetail />} />
                 <Route path="/loans" element={<Loans />} />
                 <Route path="/collections" element={<Collections />} />
                 <Route path="/upload" element={<Upload />} />
