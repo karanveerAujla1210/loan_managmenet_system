@@ -1,1 +1,0 @@
-:root{--primary: #1741FF;--white: #FFFFFF;--slate: #6B7280;--neutralLight: #F5F7FA}html,body,#root{height:100%;margin:0;font-family:Inter,Roboto,system-ui,Segoe UI,Arial}.app-shell{display:flex;min-height:100vh}.content{flex:1;background:var(--neutralLight)}input{font-size:14px}
