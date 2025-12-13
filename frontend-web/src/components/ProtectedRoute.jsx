@@ -18,6 +18,11 @@ const ProtectedRoute = ({ children, roles = [] }) => {
     return <Navigate to="/login" state={{ from: location }} replace />;
   }
 
+  // Head role can access everything
+  if (user?.role === 'head') {
+    return children;
+  }
+
   // Check if route is restricted by role
   if (roles.length > 0 && !roles.includes(user.role)) {
     // Role not authorized so redirect to home page

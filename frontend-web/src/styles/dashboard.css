@@ -1,0 +1,142 @@
+/* Enhanced Dashboard Styles */
+.dashboard-container {
+  @apply min-h-screen bg-gray-50;
+}
+
+/* Mobile-first responsive design */
+.dashboard-grid {
+  @apply grid gap-4;
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+}
+
+@media (min-width: 768px) {
+  .dashboard-grid {
+    @apply gap-6;
+    grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+  }
+}
+
+@media (min-width: 1024px) {
+  .dashboard-grid {
+    grid-template-columns: repeat(4, 1fr);
+  }
+}
+
+/* KPI Cards */
+.kpi-card {
+  @apply bg-white rounded-lg shadow-sm border border-gray-200 p-6 hover:shadow-md transition-all duration-200;
+}
+
+.kpi-card:hover {
+  @apply transform -translate-y-1;
+}
+
+/* Chart containers */
+.chart-container {
+  @apply bg-white rounded-lg shadow-sm border border-gray-200 p-6;
+  min-height: 300px;
+}
+
+/* Alert styles */
+.alert-critical {
+  @apply bg-red-50 border-red-200 text-red-800;
+}
+
+.alert-warning {
+  @apply bg-yellow-50 border-yellow-200 text-yellow-800;
+}
+
+.alert-info {
+  @apply bg-blue-50 border-blue-200 text-blue-800;
+}
+
+.alert-success {
+  @apply bg-green-50 border-green-200 text-green-800;
+}
+
+/* Loading states */
+.loading-skeleton {
+  @apply animate-pulse bg-gray-200 rounded;
+}
+
+/* Tab navigation */
+.tab-nav {
+  @apply border-b border-gray-200 mb-6;
+}
+
+.tab-button {
+  @apply px-4 py-2 text-sm font-medium border-b-2 border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300 focus:outline-none focus:text-gray-700 focus:border-gray-300;
+}
+
+.tab-button.active {
+  @apply border-indigo-500 text-indigo-600;
+}
+
+/* Quick actions */
+.quick-action {
+  @apply w-full text-left p-4 rounded-lg border transition-colors duration-200 hover:shadow-sm;
+}
+
+.quick-action:hover {
+  @apply transform translate-x-1;
+}
+
+/* Responsive utilities */
+@media (max-width: 640px) {
+  .dashboard-header {
+    @apply flex-col space-y-4;
+  }
+  
+  .dashboard-filters {
+    @apply flex-col space-y-2;
+  }
+  
+  .kpi-card {
+    @apply p-4;
+  }
+  
+  .chart-container {
+    @apply p-4;
+    min-height: 250px;
+  }
+}
+
+/* Print styles */
+@media print {
+  .no-print {
+    @apply hidden;
+  }
+  
+  .dashboard-container {
+    @apply bg-white;
+  }
+  
+  .kpi-card, .chart-container {
+    @apply shadow-none border border-gray-300;
+    break-inside: avoid;
+  }
+}
+
+/* Animation classes */
+.fade-in {
+  animation: fadeIn 0.5s ease-in-out;
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(20px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.slide-up {
+  animation: slideUp 0.3s ease-out;
+}
+
+@keyframes slideUp {
+  from { transform: translateY(100%); }
+  to { transform: translateY(0); }
+}
+
+/* Accessibility improvements */
+.focus-visible:focus {
+  @apply outline-none ring-2 ring-indigo-500 ring-offset-2;
+}

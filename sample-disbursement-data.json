@@ -1,0 +1,33 @@
+{
+  "data": [
+    {
+      "loanId": "LN000001",
+      "amount": 100000,
+      "method": "bank_transfer",
+      "status": "completed",
+      "bankDetails": {
+        "accountNumber": "1234567890",
+        "ifscCode": "HDFC0001234",
+        "bankName": "HDFC Bank",
+        "accountHolderName": "John Doe"
+      },
+      "txnRef": "TXN123456789",
+      "disbursedAt": "2024-01-15T10:30:00Z",
+      "metadata": {
+        "branch": "Mumbai Main",
+        "officer": "Agent001"
+      }
+    },
+    {
+      "loanId": "LN000002",
+      "amount": 250000,
+      "method": "upi",
+      "status": "completed",
+      "txnRef": "UPI987654321",
+      "disbursedAt": "2024-01-16T14:45:00Z",
+      "metadata": {
+        "upiId": "customer@paytm"
+      }
+    }
+  ]
+}

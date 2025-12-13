@@ -1,30 +1,35 @@
 const mongoose = require('mongoose');
 
-const installmentSchema = new mongoose.Schema({
-  installmentNumber: Number,
-  dueDate: Date,
-  principalAmount: Number,
-  interestAmount: Number,
-  totalAmount: Number,
-  paidAmount: { type: Number, default: 0 },
-  status: { type: String, enum: ['due', 'partial', 'paid', 'overdue'], default: 'due' },
-  paidDate: Date
-});
-
-const loanSchema = new mongoose.Schema({
+const LoanSchema = new mongoose.Schema({
   loanId: { type: String, unique: true, required: true },
   customerId: { type: mongoose.Schema.Types.ObjectId, ref: 'Customer', required: true },
-  principalAmount: { type: Number, required: true },
-  interestRate: { type: Number, required: true },
-  tenure: { type: Number, required: true }, // in months
-  totalAmount: Number,
-  emiAmount: Number,
-  disbursedDate: Date,
-  status: { type: String, enum: ['pending', 'approved', 'disbursed', 'active', 'closed', 'npa'], default: 'pending' },
-  installments: [installmentSchema],
-  assignedAgent: { type: mongoose.Schema.Types.ObjectId, ref: 'User' },
-  dpd: { type: Number, default: 0 }, // Days Past Due
-  bucket: { type: String, enum: ['current', 'X', 'Y', 'M1', 'M2', 'M3', 'NPA'], default: 'current' }
+  
+  principal: { type: Number, required: true },
+  
+  pfRate: { type: Number, default: 0.10 },
+  pfAmount: Number,
+  
+  gstRate: { type: Number, default: 0.18 },
+  gstAmount: Number,
+  
+  totalPF: Number,
+  netDisbursement: Number,
+  
+  roiAnnual: { type: Number, default: 0.20 },
+  interestAmount: Number,
+  totalRepayable: Number,
+  
+  installmentFrequency: { type: String, default: "weekly" },
+  installmentGapDays: { type: Number, default: 7 },
+  installmentCount: { type: Number, default: 14 },
+  weeklyEmi: Number,
+  
+  disbursementDate: { type: Date, required: true },
+  branch: String,
+  
+  status: { type: String, default: "active", enum: ["active", "closed", "defaulted"] },
+  dpd: { type: Number, default: 0 },
+  bucket: { type: String, default: "current" }
 }, { timestamps: true });
 
-module.exports = mongoose.model('Loan', loanSchema);
+module.exports = mongoose.model('Loan', LoanSchema);

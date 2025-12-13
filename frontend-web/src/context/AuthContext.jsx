@@ -7,6 +7,14 @@ const AuthContext = createContext();
 
 const API_URL = import.meta.env.VITE_API_URL || 'https://localhost:5000/api/v1';
 
+// Mock users for demo
+const MOCK_USERS = [
+  { id: 'user1', name: 'Karanveer Singh', email: 'karanveer@loancrm.com', password: 'mbl123', role: 'head' },
+  { id: 'user2', name: 'Arvind', email: 'arvind@loancrm.com', password: 'mbl123', role: 'head' },
+  { id: 'user3', name: 'Admin', email: 'admin@loancrm.com', password: 'mbl123', role: 'head' },
+  { id: 'user4', name: 'Manish', email: 'manish@loancrm.com', password: 'mbl123', role: 'head' }
+];
+
 export const AuthProvider = ({ children }) => {
   const [user, setUser] = useState(null);
   const [token, setToken] = useState(null);
@@ -39,9 +47,24 @@ export const AuthProvider = ({ children }) => {
   // Load user data
   const loadUser = async () => {
     try {
-      const res = await axios.get(`${API_URL}/auth/me`);
-      setUser(res.data.data);
-      setIsAuthenticated(true);
+      // Mock user loading - in real app this would validate token
+      if (token && token.startsWith('mock-jwt-token-')) {
+        const userId = token.replace('mock-jwt-token-', '');
+        const mockUser = MOCK_USERS.find(u => u.id === userId);
+        if (mockUser) {
+          setUser({
+            id: mockUser.id,
+            name: mockUser.name,
+            email: mockUser.email,
+            role: mockUser.role
+          });
+          setIsAuthenticated(true);
+        } else {
+          logout();
+        }
+      } else {
+        logout();
+      }
     } catch (err) {
       console.error('Error loading user:', err);
       logout();
@@ -74,19 +97,31 @@ export const AuthProvider = ({ children }) => {
   // Login user
   const login = async (formData) => {
     try {
-      const res = await axios.post(`${API_URL}/auth/login`, formData);
-      const { token } = res.data;
+      // Mock authentication
+      const mockUser = MOCK_USERS.find(u => 
+        u.email === formData.email && u.password === formData.password
+      );
       
-      // Use secure cookie instead of localStorage for token storage
-      setToken(token);
-      setAuthToken(token);
-      await loadUser();
-      
-      toast.success('Login successful!');
-      navigate('/dashboard');
-      return { success: true };
+      if (mockUser) {
+        const mockToken = 'mock-jwt-token-' + mockUser.id;
+        setToken(mockToken);
+        setUser({
+          id: mockUser.id,
+          name: mockUser.name,
+          email: mockUser.email,
+          role: mockUser.role
+        });
+        setIsAuthenticated(true);
+        
+        toast.success(`Welcome back, ${mockUser.name}!`);
+        navigate('/dashboard');
+        return { success: true };
+      } else {
+        toast.error('Invalid email or password');
+        return { success: false, error: 'Invalid credentials' };
+      }
     } catch (err) {
-      const errorMessage = err.response?.data?.error || 'Login failed';
+      const errorMessage = 'Login failed';
       toast.error(errorMessage);
       return { success: false, error: errorMessage };
     }

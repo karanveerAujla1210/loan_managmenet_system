@@ -8,9 +8,15 @@
     "dev": "nodemon src/server.js",
     "seed": "node scripts/seed.js",
     "insert-production-data": "node scripts/insert-production-data.js",
+    "migrate-data": "node scripts/migrate-data.js",
+    "migrate-customers": "node scripts/migrate-customers.js",
+    "validate-migration": "node scripts/validate-migration.js",
     "test": "jest --runInBand",
     "test:watch": "jest --watch",
-    "test:coverage": "jest --coverage"
+    "test:coverage": "jest --coverage",
+    "import-data": "node scripts/importData.js",
+    "update-dpd": "node cron/updateDPD.js",
+    "cron:dpd": "node cron/updateDPD.js"
   },
   "dependencies": {
     "bcrypt": "^6.0.0",

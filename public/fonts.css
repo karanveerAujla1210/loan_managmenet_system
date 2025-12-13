@@ -1,0 +1,30 @@
+/* Global font settings */
+* {
+  font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif !important;
+  font-size: 9px !important;
+}
+
+body {
+  font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif !important;
+  font-size: 9px !important;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+h1, h2, h3, h4, h6, p, span, div, td, th, li, a, button, input, textarea, label {
+  font-size: 9px !important;
+}
+
+h5 {
+  font-weight: 700 !important;
+  font-size: 1rem !important;
+}
+
+.MuiTypography-root {
+  font-size: 9px !important;
+}
+
+.MuiTypography-h5 {
+  font-size: 1rem !important;
+  font-weight: 700 !important;
+}

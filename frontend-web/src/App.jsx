@@ -1,33 +1,54 @@
-import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
+import { BrowserRouter as Router, Routes, Route, Navigate, Outlet, Suspense } from 'react-router-dom';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { Toaster } from 'react-hot-toast';
-import { motion } from 'framer-motion';
 import { AuthProvider } from './context/AuthContext';
 import ProtectedRoute from './components/ProtectedRoute';
+import SystemHealthMonitor from './components/SystemHealthMonitor';
+import './styles/dashboard.css';
 
-// Pages
-import Dashboard from './pages/Dashboard';
+// Lazy loaded components
+import { 
+  Dashboard, 
+  Customers, 
+  Loans, 
+  Collections, 
+  Upload, 
+  Profile,
+  ComponentLoader 
+} from './components/LazyComponents';
+
+// Regular components (lightweight)
 import Login from './pages/Login';
 import Register from './pages/Register';
 import ForgotPassword from './pages/ForgotPassword';
 import ResetPassword from './pages/ResetPassword';
-import Profile from './pages/Profile';
-import Loans from './pages/Loans';
-import Customers from './pages/Customers';
-import Collections from './pages/Collections';
 import PageNotFound from './pages/PageNotFound';
 import Unauthorized from './pages/Unauthorized';
-
-// Layout
 import Layout from './components/Layout';
+
+// Layout wrapper component
+const LayoutWrapper = () => {
+  return (
+    <Layout>
+      <Outlet />
+    </Layout>
+  );
+};
 
 const queryClient = new QueryClient({
   defaultOptions: {
     queries: {
-      staleTime: 5 * 60 * 1000, // 5 minutes
-      cacheTime: 10 * 60 * 1000, // 10 minutes
+      staleTime: 10 * 60 * 1000, // 10 minutes
+      gcTime: 30 * 60 * 1000, // 30 minutes (renamed from cacheTime)
       retry: 1,
       refetchOnWindowFocus: false,
+      refetchOnReconnect: false,
+      refetchInterval: false,
+      networkMode: 'online',
+    },
+    mutations: {
+      retry: 1,
+      networkMode: 'online',
     },
   },
 });
@@ -35,14 +56,9 @@ const queryClient = new QueryClient({
 function App() {
   return (
     <QueryClientProvider client={queryClient}>
-      <AuthProvider>
-        <Router>
-          <motion.div 
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            transition={{ duration: 0.3 }}
-            className="min-h-screen bg-gray-50"
-          >
+      <Router>
+        <AuthProvider>
+          <div className="min-h-screen bg-gray-50">
             <Routes>
               {/* Public Routes */}
               <Route path="/login" element={<Login />} />
@@ -51,46 +67,58 @@ function App() {
               <Route path="/reset-password/:token" element={<ResetPassword />} />
               <Route path="/unauthorized" element={<Unauthorized />} />
 
-              {/* Protected Routes */}
-              <Route element={<Layout />}>
+              {/* Protected Routes - Temporarily removing authentication */}
+              <Route element={<LayoutWrapper />}>
+                <Route 
+                  path="/dashboard" 
+                  element={
+                    <Suspense fallback={<ComponentLoader />}>
+                      <Dashboard />
+                    </Suspense>
+                  } 
+                />
                 <Route 
                   path="/" 
-                  element={
-                    <ProtectedRoute>
-                      <Dashboard />
-                    </ProtectedRoute>
-                  } 
+                  element={<Navigate to="/dashboard" replace />} 
                 />
                 <Route 
                   path="/profile" 
                   element={
-                    <ProtectedRoute>
+                    <Suspense fallback={<ComponentLoader />}>
                       <Profile />
-                    </ProtectedRoute>
+                    </Suspense>
                   } 
                 />
                 <Route 
                   path="/loans" 
                   element={
-                    <ProtectedRoute>
+                    <Suspense fallback={<ComponentLoader />}>
                       <Loans />
-                    </ProtectedRoute>
+                    </Suspense>
                   } 
                 />
                 <Route 
                   path="/customers" 
                   element={
-                    <ProtectedRoute>
+                    <Suspense fallback={<ComponentLoader />}>
                       <Customers />
-                    </ProtectedRoute>
+                    </Suspense>
                   } 
                 />
                 <Route 
                   path="/collections" 
                   element={
-                    <ProtectedRoute roles={['admin', 'agent']}>
+                    <Suspense fallback={<ComponentLoader />}>
                       <Collections />
-                    </ProtectedRoute>
+                    </Suspense>
+                  } 
+                />
+                <Route 
+                  path="/upload" 
+                  element={
+                    <Suspense fallback={<ComponentLoader />}>
+                      <Upload />
+                    </Suspense>
                   } 
                 />
               </Route>
@@ -119,9 +147,12 @@ function App() {
                 },
               }}
             />
-          </motion.div>
-        </Router>
-      </AuthProvider>
+            
+            {/* System Health Monitor */}
+            <SystemHealthMonitor />
+          </div>
+        </AuthProvider>
+      </Router>
     </QueryClientProvider>
   )
 }

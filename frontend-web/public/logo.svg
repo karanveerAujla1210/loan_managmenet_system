@@ -1,0 +1,22 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 320 120" width="320" height="120">
+  <defs>
+    <style>
+      .mini-text { font-family: 'Segoe UI', Arial, sans-serif; font-weight: 700; }
+      .business-text { font-family: 'Segoe UI', Arial, sans-serif; font-weight: 600; }
+      .hindi-text { font-family: 'Segoe UI', Arial, sans-serif; font-weight: 400; }
+    </style>
+  </defs>
+  
+  <!-- MINI text -->
+  <text x="10" y="35" class="mini-text" font-size="28" fill="#1e40af">MINI</text>
+  
+  <!-- Red circle with rupee symbol -->
+  <circle cx="280" cy="25" r="18" fill="#ef4444"/>
+  <text x="280" y="32" class="mini-text" font-size="16" fill="white" text-anchor="middle">₹</text>
+  
+  <!-- BUSINESS LOAN text -->
+  <text x="10" y="65" class="business-text" font-size="20" fill="#1e40af">BUSINESS LOAN</text>
+  
+  <!-- Hindi text -->
+  <text x="10" y="90" class="hindi-text" font-size="12" fill="#ef4444">सिर्फ 30 मिनट में बिजनेस लोन</text>
+</svg>

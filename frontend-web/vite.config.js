@@ -13,20 +13,25 @@ export default defineConfig({
   build: {
     target: 'esnext',
     minify: 'esbuild',
+    chunkSizeWarningLimit: 1000,
     rollupOptions: {
       output: {
         manualChunks: {
           vendor: ['react', 'react-dom'],
           router: ['react-router-dom'],
-          ui: ['framer-motion', 'lucide-react']
+          ui: ['framer-motion', 'lucide-react'],
+          query: ['@tanstack/react-query'],
+          charts: ['recharts'],
+          forms: ['react-hook-form', 'formik', 'yup']
         }
       }
     }
   },
   optimizeDeps: {
-    include: ['react', 'react-dom', 'framer-motion']
+    include: ['react', 'react-dom', 'framer-motion', '@tanstack/react-query']
   },
   esbuild: {
-    target: 'esnext'
+    target: 'esnext',
+    drop: ['console', 'debugger']
   }
 })

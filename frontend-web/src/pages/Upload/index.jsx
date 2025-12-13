@@ -1,0 +1,146 @@
+import { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
+import { Upload, FileText, Users, CreditCard, Database } from 'lucide-react';
+import { Button } from '../../components/ui/Button';
+import { Card, CardContent, CardHeader, CardTitle } from '../../components/ui/Card';
+
+const UploadPage = () => {
+  const navigate = useNavigate();
+  const [dragActive, setDragActive] = useState(false);
+  const [files, setFiles] = useState([]);
+
+  const handleDrag = (e) => {
+    e.preventDefault();
+    e.stopPropagation();
+    if (e.type === "dragenter" || e.type === "dragover") {
+      setDragActive(true);
+    } else if (e.type === "dragleave") {
+      setDragActive(false);
+    }
+  };
+
+  const handleDrop = (e) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setDragActive(false);
+    
+    if (e.dataTransfer.files && e.dataTransfer.files[0]) {
+      setFiles(Array.from(e.dataTransfer.files));
+    }
+  };
+
+  const handleChange = (e) => {
+    e.preventDefault();
+    if (e.target.files && e.target.files[0]) {
+      setFiles(Array.from(e.target.files));
+    }
+  };
+
+  return (
+    <div className="space-y-8 font-['Segoe_UI']">
+      <div className="flex items-center justify-between">
+        <h1 className="text-3xl font-bold text-gray-900">Data Upload</h1>
+        <Button onClick={() => navigate('/dashboard')} variant="outline">
+          Back to Dashboard
+        </Button>
+      </div>
+
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <Upload className="h-5 w-5" />
+              Upload Files
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div
+              className={`relative border-2 border-dashed rounded-lg p-8 text-center transition-colors ${
+                dragActive 
+                  ? 'border-blue-400 bg-blue-50' 
+                  : 'border-gray-300 hover:border-gray-400'
+              }`}
+              onDragEnter={handleDrag}
+              onDragLeave={handleDrag}
+              onDragOver={handleDrag}
+              onDrop={handleDrop}
+            >
+              <input
+                type="file"
+                multiple
+                onChange={handleChange}
+                className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
+                accept=".json,.csv,.xlsx"
+              />
+              <Upload className="mx-auto h-12 w-12 text-gray-400 mb-4" />
+              <p className="text-lg font-medium text-gray-900 mb-2">
+                Drop files here or click to browse
+              </p>
+              <p className="text-sm text-gray-500">
+                Supports JSON, CSV, and Excel files
+              </p>
+            </div>
+
+            {files.length > 0 && (
+              <div className="mt-6">
+                <h3 className="text-sm font-medium text-gray-900 mb-3">Selected Files:</h3>
+                <div className="space-y-2">
+                  {files.map((file, index) => (
+                    <div key={index} className="flex items-center gap-3 p-3 bg-gray-50 rounded-lg">
+                      <FileText className="h-4 w-4 text-gray-500" />
+                      <span className="text-sm text-gray-900">{file.name}</span>
+                      <span className="text-xs text-gray-500 ml-auto">
+                        {(file.size / 1024).toFixed(1)} KB
+                      </span>
+                    </div>
+                  ))}
+                </div>
+                <Button className="w-full mt-4">
+                  Upload Files
+                </Button>
+              </div>
+            )}
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <Database className="h-5 w-5" />
+              Data Types
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="space-y-4">
+              <div className="flex items-center gap-3 p-4 bg-blue-50 rounded-lg border border-blue-200">
+                <Users className="h-5 w-5 text-blue-600" />
+                <div>
+                  <p className="font-medium text-gray-900">Customers</p>
+                  <p className="text-sm text-gray-500">Customer information and KYC data</p>
+                </div>
+              </div>
+              
+              <div className="flex items-center gap-3 p-4 bg-green-50 rounded-lg border border-green-200">
+                <FileText className="h-5 w-5 text-green-600" />
+                <div>
+                  <p className="font-medium text-gray-900">Loans</p>
+                  <p className="text-sm text-gray-500">Loan applications and details</p>
+                </div>
+              </div>
+              
+              <div className="flex items-center gap-3 p-4 bg-purple-50 rounded-lg border border-purple-200">
+                <CreditCard className="h-5 w-5 text-purple-600" />
+                <div>
+                  <p className="font-medium text-gray-900">Payments</p>
+                  <p className="text-sm text-gray-500">Payment records and transactions</p>
+                </div>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+      </div>
+    </div>
+  );
+};
+
+export default UploadPage;
