@@ -22,4 +22,4 @@ const CustomerSchema = new mongoose.Schema({
   isActive: { type: Boolean, default: true }
 }, { timestamps: true });
 
-module.exports = mongoose.model('Customer', CustomerSchema);
+module.exports = mongoose.models.Customer || mongoose.model('Customer', CustomerSchema);

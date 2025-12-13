@@ -12,12 +12,18 @@ import Login from './pages/Login';
 import Dashboard from './pages/Dashboard';
 import Customers from './pages/Customers';
 import CustomerDetail from './pages/Customers/Detail';
+import Leads from './pages/Leads';
+import CreditAnalysis from './pages/CreditAnalysis';
+import Operations from './pages/Operations';
+import Disbursement from './pages/Disbursement';
+import Collections from './pages/Collections';
+import Reports from './pages/Reports';
+import CaseClosure from './pages/CaseClosure';
 import Loans from './pages/Loans';
 import Register from './pages/Register';
 import ForgotPassword from './pages/ForgotPassword';
 import ResetPassword from './pages/ResetPassword';
 import AuditLog from './pages/AuditLog';
-import Collections from './pages/Collections';
 import Upload from './pages/Upload';
 import Profile from './pages/Profile';
 
@@ -50,9 +56,15 @@ const router = createBrowserRouter(
         { path: '/', element: <Navigate to="/dashboard" replace /> },
         { path: '/customers', element: <Customers /> },
         { path: '/customers/:id', element: <CustomerDetail /> },
-          { path: '/audit', element: <AuditLog /> },
-        { path: '/loans', element: <Loans /> },
+        { path: '/leads', element: <Leads /> },
+        { path: '/credit-analysis', element: <CreditAnalysis /> },
+        { path: '/operations', element: <Operations /> },
+        { path: '/disbursement', element: <Disbursement /> },
         { path: '/collections', element: <Collections /> },
+        { path: '/reports', element: <Reports /> },
+        { path: '/case-closure', element: <CaseClosure /> },
+        { path: '/loans', element: <Loans /> },
+        { path: '/audit', element: <AuditLog /> },
         { path: '/upload', element: <Upload /> },
         { path: '/profile', element: <Profile /> },
       ],
@@ -88,7 +100,7 @@ const queryClient = new QueryClient({
 function App() {
   return (
     <QueryClientProvider client={queryClient}>
-      <div className="min-h-screen bg-gray-50">
+      <div className="min-h-screen bg-gray-50 font-sans">
         <RouterProvider router={router} />
         <Toaster position="top-right" />
       </div>

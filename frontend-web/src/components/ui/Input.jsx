@@ -1,19 +1,36 @@
-import * as React from 'react';
-import { cn } from '../../lib/utils';
+import React from 'react';
+import { clsx } from 'clsx';
 
-const Input = React.forwardRef(({ className, type, ...props }, ref) => {
+const Input = ({ 
+  label, 
+  error, 
+  className = '', 
+  required = false,
+  ...props 
+}) => {
   return (
-    <input
-      type={type}
-      className={cn(
-        'flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50',
-        className
+    <div className="space-y-1">
+      {label && (
+        <label className="block text-sm font-medium text-gray-700">
+          {label}
+          {required && <span className="text-red-500 ml-1">*</span>}
+        </label>
       )}
-      ref={ref}
-      {...props}
-    />
+      <input
+        className={clsx(
+          'w-full px-3 py-2 border border-gray-300 rounded-lg shadow-sm placeholder-gray-400',
+          'focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-primary-500',
+          'disabled:bg-gray-50 disabled:text-gray-500',
+          error && 'border-red-300 focus:ring-red-500 focus:border-red-500',
+          className
+        )}
+        {...props}
+      />
+      {error && (
+        <p className="text-sm text-red-600">{error}</p>
+      )}
+    </div>
   );
-});
-Input.displayName = 'Input';
+};
 
-export { Input };
+export default Input;
