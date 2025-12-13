@@ -2,6 +2,7 @@ import { BrowserRouter as Router, Routes, Route, Navigate, Outlet } from 'react-
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { Toaster } from 'react-hot-toast';
 import { AuthProvider } from './context/AuthContext';
+import ProtectedRoute from './components/ProtectedRoute';
 import Layout from './components/Layout';
 
 // Import pages directly
@@ -51,7 +52,7 @@ function App() {
               <Route path="/login" element={<Login />} />
               
               {/* Protected Routes */}
-              <Route element={<LayoutWrapper />}>
+              <Route element={<ProtectedRoute><LayoutWrapper /></ProtectedRoute>}>
                 <Route path="/dashboard" element={<Dashboard />} />
                 <Route path="/" element={<Navigate to="/dashboard" replace />} />
                 <Route path="/customers" element={<Customers />} />
