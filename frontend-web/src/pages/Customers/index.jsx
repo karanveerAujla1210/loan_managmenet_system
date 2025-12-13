@@ -4,7 +4,7 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { Button } from '../../components/ui/Button';
 import { Input } from '../../components/ui/Input';
 import { Card, CardContent, CardHeader, CardTitle } from '../../components/ui/Card';
-import { Plus, Search, Edit, Trash2, Eye, Filter } from 'lucide-react';
+import { Plus, Search, Edit, Trash2, Eye, Filter, ChevronLeft, ChevronRight } from 'lucide-react';
 
 import { getCustomers, createCustomer, updateCustomer, deleteCustomer } from '../../services/customers';
 import { toast } from 'react-hot-toast';
@@ -14,12 +14,13 @@ const Customers = () => {
   const [showAddModal, setShowAddModal] = useState(false);
   const [selectedCustomer, setSelectedCustomer] = useState(null);
   const [currentPage, setCurrentPage] = useState(1);
+  const [pageSize, setPageSize] = useState(10);
   
   const queryClient = useQueryClient();
   
   const { data, isLoading, error } = useQuery(
-    ['customers', { page: currentPage, search: searchTerm }],
-    () => getCustomers({ page: currentPage, search: searchTerm })
+    ['customers', { page: currentPage, limit: pageSize, search: searchTerm }],
+    () => getCustomers({ page: currentPage, limit: pageSize, search: searchTerm })
   );
   
   const deleteMutation = useMutation(deleteCustomer, {
@@ -84,10 +85,26 @@ const Customers = () => {
                 />
               </div>
             </div>
-            <Button variant="outline">
-              <Filter className="h-4 w-4 mr-2" />
-              Filter
-            </Button>
+            <div className="flex items-center space-x-3">
+              <Button variant="outline">
+                <Filter className="h-4 w-4 mr-2" />
+                Filter
+              </Button>
+
+              <div className="flex items-center space-x-2">
+                <label className="text-sm text-gray-600">Show</label>
+                <select
+                  value={pageSize}
+                  onChange={(e) => { setPageSize(Number(e.target.value)); setCurrentPage(1); }}
+                  className="border rounded-md px-2 py-1 text-sm bg-white"
+                >
+                  <option value={10}>10</option>
+                  <option value={25}>25</option>
+                  <option value={50}>50</option>
+                  <option value={100}>100</option>
+                </select>
+              </div>
+            </div>
           </div>
         </CardHeader>
         <CardContent>
@@ -183,6 +200,32 @@ const Customers = () => {
             </div>
           )}
         </CardContent>
+        
+        <div className="px-6 py-4 border-t bg-gray-50 flex items-center justify-between">
+          <div className="text-sm text-gray-600">
+            Showing <span className="font-medium">{data?.data?.length || 0}</span> of <span className="font-medium">{data?.pagination?.total ?? data?.data?.length ?? 0}</span>
+          </div>
+
+          <div className="flex items-center space-x-2">
+            <button
+              className="inline-flex items-center px-3 py-2 rounded-md bg-white border text-sm text-gray-700 disabled:opacity-50"
+              onClick={() => setCurrentPage((p) => Math.max(1, p - 1))}
+              disabled={(data?.pagination?.page || currentPage) <= 1}
+            >
+              <ChevronLeft className="h-4 w-4 mr-2" /> Prev
+            </button>
+
+            <div className="text-sm text-gray-700">Page <span className="font-medium">{data?.pagination?.page ?? currentPage}</span> of <span className="font-medium">{data?.pagination?.pages ?? 1}</span></div>
+
+            <button
+              className="inline-flex items-center px-3 py-2 rounded-md bg-white border text-sm text-gray-700 disabled:opacity-50"
+              onClick={() => setCurrentPage((p) => p + 1)}
+              disabled={(data?.pagination?.page ?? currentPage) >= (data?.pagination?.pages ?? 1)}
+            >
+              Next <ChevronRight className="h-4 w-4 ml-2" />
+            </button>
+          </div>
+        </div>
       </Card>
     </div>
   );

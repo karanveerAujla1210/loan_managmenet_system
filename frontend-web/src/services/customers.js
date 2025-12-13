@@ -76,27 +76,39 @@ export const getCustomers = async (params = {}) => {
   } catch (error) {
     // Return mock data if API fails
     let filteredCustomers = [...mockCustomers];
-    
+
+    // Search filter
     if (params.search) {
       const searchTerm = params.search.toLowerCase();
-      filteredCustomers = filteredCustomers.filter(customer => 
+      filteredCustomers = filteredCustomers.filter(customer =>
         customer.name.toLowerCase().includes(searchTerm) ||
         customer.email.toLowerCase().includes(searchTerm) ||
         customer.phone.includes(searchTerm)
       );
     }
-    
+
+    // Status filter
     if (params.status && params.status !== 'all') {
       filteredCustomers = filteredCustomers.filter(customer => customer.status === params.status);
     }
-    
+
+    // Pagination
+    const page = Math.max(1, parseInt(params.page || 1, 10));
+    const limit = Math.max(1, parseInt(params.limit || 10, 10));
+    const total = filteredCustomers.length;
+    const pages = Math.max(1, Math.ceil(total / limit));
+    const start = (page - 1) * limit;
+    const end = start + limit;
+    const paged = filteredCustomers.slice(start, end);
+
     return {
       success: true,
-      data: filteredCustomers,
+      data: paged,
       pagination: {
-        total: filteredCustomers.length,
-        page: 1,
-        pages: 1
+        total,
+        page,
+        pages,
+        limit
       }
     };
   }
