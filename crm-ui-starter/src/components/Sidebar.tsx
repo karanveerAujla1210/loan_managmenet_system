@@ -61,7 +61,7 @@ const NavItem: React.FC<NavItemProps> = ({ item, isActive, onClick, isCollapsed 
       {/* Nested Items */}
       {hasChildren && isOpen && !isCollapsed && (
         <div className="mt-1 ml-4 space-y-1 border-l-2 border-gray-200 pl-3">
-          {item.children.map((child) => (
+          {item.children?.map((child) => (
             <NavItem
               key={child.id}
               item={child}
