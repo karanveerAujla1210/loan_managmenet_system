@@ -13,6 +13,9 @@ import Dashboard from './pages/Dashboard';
 import Customers from './pages/Customers';
 import CustomerDetail from './pages/Customers/Detail';
 import Loans from './pages/Loans';
+import Register from './pages/Register';
+import ForgotPassword from './pages/ForgotPassword';
+import ResetPassword from './pages/ResetPassword';
 import AuditLog from './pages/AuditLog';
 import Collections from './pages/Collections';
 import Upload from './pages/Upload';
@@ -31,9 +34,9 @@ const LayoutWrapper = () => {
 const router = createBrowserRouter(
   [
     { path: '/login', element: <Login /> },
-    { path: '/register', element: React.createElement(require('./pages/Register').default) },
-    { path: '/forgot-password', element: React.createElement(require('./pages/ForgotPassword').default) },
-    { path: '/reset-password', element: React.createElement(require('./pages/ResetPassword').default) },
+    { path: '/register', element: <Register /> },
+    { path: '/forgot-password', element: <ForgotPassword /> },
+    { path: '/reset-password', element: <ResetPassword /> },
     {
       element: (
         <ProtectedRoute>
