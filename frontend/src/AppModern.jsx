@@ -13,6 +13,9 @@ import ModernDashboard from './pages/ModernDashboard';
 import ModernCustomers from './pages/ModernCustomers';
 import ModernLeads from './pages/ModernLeads';
 import ModernCollections from './pages/ModernCollections';
+import CollectorWorkbench from './pages/CollectorWorkbench';
+import ManagerSupervision from './pages/ManagerSupervision';
+import LegalCaseManagement from './pages/LegalCaseManagement';
 import ModernLayout from './components/Layout/ModernLayout';
 
 // Import existing pages for fallback
@@ -118,6 +121,9 @@ const routerWithLayout = createBrowserRouter(
             { path: '/leads', element: <ModernLeads /> },
             { path: '/collections', element: <ModernCollections /> },
             { path: '/collections-old', element: <Collections /> },
+            { path: '/collector-work', element: <CollectorWorkbench /> },
+            { path: '/manager-supervision', element: <ManagerSupervision /> },
+            { path: '/legal-cases', element: <LegalCaseManagement /> },
             { path: '/loans', element: <Loans /> },
             { path: '/audit', element: <AuditLog /> },
             { path: '/upload', element: <Upload /> },
