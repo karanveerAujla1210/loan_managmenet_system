@@ -1,7 +1,7 @@
 import React from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import { motion } from 'framer-motion';
-import { LogOut, ChevronLeft, ChevronRight } from 'lucide-react';
+import { LogOut, ChevronLeft, ChevronRight, CreditCard, User } from 'lucide-react';
 import NAV_ITEMS from '../../config/nav';
 import { cn } from '../../lib/utils';
 import { useAuth } from '../../context/AuthContext';

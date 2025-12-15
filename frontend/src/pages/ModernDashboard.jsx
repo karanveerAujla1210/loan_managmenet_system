@@ -4,7 +4,6 @@ import KPICard from '../components/ui/KPICard';
 import { LineChart, Line, PieChart as PieChartComponent, Pie, Cell, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts';
 import * as loansService from '../services/loans';
 import * as customersService from '../services/customers';
-import * as paymentsService from '../services/payments';
 
 export default function ModernDashboard() {
   const [dashboardData, setDashboardData] = useState(null);
@@ -18,15 +17,13 @@ export default function ModernDashboard() {
   const fetchDashboard = async () => {
     try {
       setLoading(true);
-      const [loansData, customersData, paymentsData] = await Promise.all([
+      const [loansData, customersData] = await Promise.all([
         loansService.getLoans(),
-        customersService.getCustomers(),
-        paymentsService.getPayments()
+        customersService.getCustomers()
       ]);
 
       const loans = loansData?.data || [];
       const customers = customersData?.data || [];
-      const payments = paymentsData?.data || [];
 
       // Calculate stats
       const stats = {
@@ -39,27 +36,15 @@ export default function ModernDashboard() {
 
       setDashboardData(stats);
 
-      // Format recent activity
-      const activities = [
-        ...loans.slice(0, 2).map(l => ({
-          id: l.id,
-          customer: l.customerName || l.customerId,
-          action: 'Loan Disbursed',
-          amount: `₹${(l.loanAmount || 0).toLocaleString()}`,
-          time: new Date(l.disbursementDate || l.createdAt).toLocaleDateString(),
-          status: 'success',
-          type: 'disbursement'
-        })),
-        ...payments.slice(0, 2).map(p => ({
-          id: p.id,
-          customer: p.customerName || p.customerId,
-          action: 'Payment Received',
-          amount: `₹${(p.amount || 0).toLocaleString()}`,
-          time: new Date(p.paymentDate || p.createdAt).toLocaleDateString(),
-          status: 'success',
-          type: 'payment'
-        }))
-      ].slice(0, 5);
+      const activities = loans.slice(0, 5).map(l => ({
+        id: l.id,
+        customer: l.customerName || l.customerId,
+        action: 'Loan Disbursed',
+        amount: `₹${(l.principalAmount || 0).toLocaleString()}`,
+        time: new Date(l.disbursementDate || l.createdAt).toLocaleDateString(),
+        status: 'success',
+        type: 'disbursement'
+      }));
 
       setRecentActivity(activities);
     } catch (error) {

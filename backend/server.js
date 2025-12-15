@@ -2,7 +2,7 @@
 require('colors');
 
 const express = require('express');
-const connectDB = require('./src/config/database');
+const { connectDB } = require('./src/config/database-optimized');
 const cors = require('cors');
 const path = require('path');
 const mongoSanitize = require('express-mongo-sanitize');
@@ -77,7 +77,7 @@ app.use('/api/v1/customers', customers);
 app.use('/api/v1/loans', loans);
 app.use('/api/v1/payments', payments);
 app.use('/api/v1/loan-engine', loanEngine);
-app.use('/api/dashboard', dashboardApi);
+app.use('/api/v1/dashboard', dashboardApi);
 
 // Error handler middleware
 app.use(errorHandler);
@@ -100,7 +100,7 @@ app.use((req, res, next) => {
 
 
 
-const PORT = process.env.PORT || 5000;
+const PORT = process.env.PORT || 4000;
 
 // Start server
 const startServer = async () => {
