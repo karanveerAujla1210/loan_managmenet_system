@@ -1,0 +1,92 @@
+[
+  {
+    "Branch_ID":"B0000",
+    "Branch_Name":"PANCHSHEEL PARK",
+    "Category":"Head office"
+  },
+  {
+    "Branch_ID":"B0001",
+    "Branch_Name":"UTTAM NAGAR",
+    "Category":"Branch"
+  },
+  {
+    "Branch_ID":"B0002",
+    "Branch_Name":"MOHALI",
+    "Category":"Branch"
+  },
+  {
+    "Branch_ID":"B0003",
+    "Branch_Name":"AGRA",
+    "Category":"Branch"
+  },
+  {
+    "Branch_ID":"B0005",
+    "Branch_Name":"ALIGARH ",
+    "Category":"Branch"
+  },
+  {
+    "Branch_ID":"B0006",
+    "Branch_Name":"BAREILLY",
+    "Category":"Branch"
+  },
+  {
+    "Branch_ID":"B0009",
+    "Branch_Name":"BULANDSHAHR ",
+    "Category":"Branch"
+  },
+  {
+    "Branch_ID":"B0011",
+    "Branch_Name":"HARDOI ",
+    "Category":"Branch"
+  },
+  {
+    "Branch_ID":"B0013",
+    "Branch_Name":"HATHRAS ",
+    "Category":"Branch"
+  },
+  {
+    "Branch_ID":"B0015",
+    "Branch_Name":"KANPUR ",
+    "Category":"Branch"
+  },
+  {
+    "Branch_ID":"B0016",
+    "Branch_Name":"LUCKNOW ",
+    "Category":"Branch"
+  },
+  {
+    "Branch_ID":"B0017",
+    "Branch_Name":"MATHURA",
+    "Category":"Branch"
+  },
+  {
+    "Branch_ID":"B0018",
+    "Branch_Name":"MEERUT ",
+    "Category":"Branch"
+  },
+  {
+    "Branch_ID":"B0019",
+    "Branch_Name":"MORADABAD",
+    "Category":"Branch"
+  },
+  {
+    "Branch_ID":"B0020",
+    "Branch_Name":"SAHARANPUR ",
+    "Category":"Branch"
+  },
+  {
+    "Branch_ID":"B0021",
+    "Branch_Name":"SHAMLI ",
+    "Category":"Branch"
+  },
+  {
+    "Branch_ID":"B0022",
+    "Branch_Name":"UNNAO",
+    "Category":"Branch"
+  },
+  {
+    "Branch_ID":"B0023",
+    "Branch_Name":"VARANASI",
+    "Category":"Branch"
+  }
+]
