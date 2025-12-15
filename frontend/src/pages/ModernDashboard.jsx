@@ -1,32 +1,97 @@
 import { useEffect, useState } from 'react';
-import { useQuery } from '@tanstack/react-query';
-import { Users, TrendingUp, DollarSign, AlertCircle, BarChart3, PieChart } from 'lucide-react';
+import { Users, TrendingUp, DollarSign, AlertCircle, Loader } from 'lucide-react';
 import KPICard from '../components/ui/KPICard';
-import { LineChart, Line, BarChart, Bar, PieChart as PieChartComponent, Pie, Cell, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts';
-import * as dashboardService from '../services/dashboard';
+import { LineChart, Line, PieChart as PieChartComponent, Pie, Cell, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts';
+import * as loansService from '../services/loans';
+import * as customersService from '../services/customers';
+import * as paymentsService from '../services/payments';
 
 export default function ModernDashboard() {
   const [dashboardData, setDashboardData] = useState(null);
+  const [recentActivity, setRecentActivity] = useState([]);
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    const fetchDashboard = async () => {
-      try {
-        const data = await dashboardService.getDashboardStats();
-        setDashboardData(data);
-      } catch (error) {
-        console.error('Error loading dashboard:', error);
-      }
-    };
     fetchDashboard();
   }, []);
 
+  const fetchDashboard = async () => {
+    try {
+      setLoading(true);
+      const [loansData, customersData, paymentsData] = await Promise.all([
+        loansService.getLoans(),
+        customersService.getCustomers(),
+        paymentsService.getPayments()
+      ]);
+
+      const loans = loansData?.data || [];
+      const customers = customersData?.data || [];
+      const payments = paymentsData?.data || [];
+
+      // Calculate stats
+      const stats = {
+        totalCustomers: customers.length,
+        activeLoans: loans.filter(l => l.status === 'disbursed').length,
+        totalDisbursed: loans.reduce((sum, l) => sum + (l.loanAmount || 0), 0),
+        overdueLoans: loans.filter(l => l.dpd > 30).length,
+        monthlyCollections: payments.reduce((sum, p) => sum + (p.amount || 0), 0),
+      };
+
+      setDashboardData(stats);
+
+      // Format recent activity
+      const activities = [
+        ...loans.slice(0, 2).map(l => ({
+          id: l.id,
+          customer: l.customerName || l.customerId,
+          action: 'Loan Disbursed',
+          amount: `₹${(l.loanAmount || 0).toLocaleString()}`,
+          time: new Date(l.disbursementDate || l.createdAt).toLocaleDateString(),
+          status: 'success',
+          type: 'disbursement'
+        })),
+        ...payments.slice(0, 2).map(p => ({
+          id: p.id,
+          customer: p.customerName || p.customerId,
+          action: 'Payment Received',
+          amount: `₹${(p.amount || 0).toLocaleString()}`,
+          time: new Date(p.paymentDate || p.createdAt).toLocaleDateString(),
+          status: 'success',
+          type: 'payment'
+        }))
+      ].slice(0, 5);
+
+      setRecentActivity(activities);
+    } catch (error) {
+      console.error('Error loading dashboard:', error);
+      setDashboardData({
+        totalCustomers: 0,
+        activeLoans: 0,
+        totalDisbursed: 0,
+        overdueLoans: 0,
+        monthlyCollections: 0,
+      });
+    } finally {
+      setLoading(false);
+    }
+  };
+
   // Fallback data while loading
   const stats = dashboardData || {
-    totalCustomers: 1250,
-    activeLoans: 890,
-    totalDisbursed: 45000000,
-    pendingApprovals: 23,
+    totalCustomers: 0,
+    activeLoans: 0,
+    totalDisbursed: 0,
+    overdueLoans: 0,
+    monthlyCollections: 0,
   };
+
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center h-screen">
+        <Loader className="w-8 h-8 animate-spin text-blue-600" />
+      </div>
+    );
+  }
 
   const performanceData = [
     { month: 'Jan', disbursed: 45000, collected: 38000 },
@@ -38,9 +103,8 @@ export default function ModernDashboard() {
   ];
 
   const statusData = [
-    { name: 'Active', value: stats.activeLoans || 245, color: '#1741FF' },
-    { name: 'Closed', value: 89, color: '#22c55e' },
-    { name: 'DPD', value: stats.overdueLoans || 34, color: '#ef4444' },
+    { name: 'Active', value: stats.activeLoans || 0, color: '#1741FF' },
+    { name: 'DPD', value: stats.overdueLoans || 0, color: '#ef4444' },
   ];
 
   return (
@@ -55,7 +119,7 @@ export default function ModernDashboard() {
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
         <KPICard
           label="Total Customers"
-          value={stats.totalCustomers?.toLocaleString()}
+          value={stats.totalCustomers?.toLocaleString() || '0'}
           icon={Users}
           trend="up"
           trendValue="12"
@@ -63,7 +127,7 @@ export default function ModernDashboard() {
         />
         <KPICard
           label="Active Loans"
-          value={stats.activeLoans?.toLocaleString()}
+          value={stats.activeLoans?.toLocaleString() || '0'}
           icon={TrendingUp}
           trend="up"
           trendValue="8"
@@ -71,7 +135,7 @@ export default function ModernDashboard() {
         />
         <KPICard
           label="Total Disbursed"
-          value={`₹${(stats.totalDisbursed / 100000).toFixed(1)}L`}
+          value={`₹${((stats.totalDisbursed || 0) / 100000).toFixed(1)}L`}
           icon={DollarSign}
           trend="up"
           trendValue="15"
@@ -79,7 +143,7 @@ export default function ModernDashboard() {
         />
         <KPICard
           label="DPD Cases"
-          value="34"
+          value={stats.overdueLoans?.toLocaleString() || '0'}
           icon={AlertCircle}
           trend="down"
           trendValue="5"

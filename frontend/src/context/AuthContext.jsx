@@ -17,35 +17,52 @@ export const AuthProvider = ({ children }) => {
   const [user, setUser] = useState(null);
   const [token, setToken] = useState(null);
   const [isAuthenticated, setIsAuthenticated] = useState(false);
-  const [loading, setLoading] = useState(false);
+  const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
 
   const navigate = useNavigate();
 
   // Load user on initial load
   useEffect(() => {
-    const storedToken = localStorage.getItem('token');
-    const storedUser = localStorage.getItem('user');
-    
-    if (storedToken && storedUser) {
-      setToken(storedToken);
-      setUser(JSON.parse(storedUser));
-      setIsAuthenticated(true);
-      loadUser();
-    } else {
-      setLoading(false);
-    }
+    const initializeAuth = async () => {
+      const storedToken = localStorage.getItem('token');
+      const storedUser = localStorage.getItem('user');
+      
+      if (storedToken && storedUser) {
+        setToken(storedToken);
+        const userData = JSON.parse(storedUser);
+        setUser(userData);
+        setIsAuthenticated(true);
+        await loadUser();
+      } else {
+        setLoading(false);
+      }
+    };
+
+    initializeAuth();
   }, []);
 
   // Load user data from backend
   const loadUser = async () => {
     try {
-      const response = await authService.getProfile();
-      if (response.success) {
-        setUser(response.data);
+      // Set a timeout for profile check - if it takes too long, just proceed with localStorage data
+      const timeoutPromise = new Promise((_, reject) => 
+        setTimeout(() => reject(new Error('Timeout')), 5000)
+      );
+      
+      try {
+        const response = await Promise.race([authService.getProfile(), timeoutPromise]);
+        if (response.success) {
+          setUser(response.data);
+          setIsAuthenticated(true);
+        } else {
+          // Keep the user from localStorage if profile check fails
+          setIsAuthenticated(true);
+        }
+      } catch (timeoutErr) {
+        // Timeout or error - keep the user from localStorage
+        console.log('Profile check timed out, using localStorage data');
         setIsAuthenticated(true);
-      } else {
-        logout();
       }
     } catch (err) {
       console.error('Error loading user:', err);
@@ -55,7 +72,7 @@ export const AuthProvider = ({ children }) => {
         setUser(JSON.parse(storedUser));
         setIsAuthenticated(true);
       } else {
-        logout();
+        setIsAuthenticated(false);
       }
     } finally {
       setLoading(false);
