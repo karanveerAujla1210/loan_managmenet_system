@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import { Phone, CheckCircle, Clock, AlertCircle, User, DollarSign, Loader, Zap } from 'lucide-react';
+import toast from 'react-hot-toast';
 import * as loansService from '../services/loans';
 import * as paymentsService from '../services/payments';
 
@@ -27,13 +28,14 @@ export default function CollectorWorkbench() {
   const [cases, setCases] = useState([]);
   const [loading, setLoading] = useState(true);
   const [selectedCase, setSelectedCase] = useState(null);
-  const [filter, setFilter] = useState('due-today'); // due-today, 1-7, 8-15, 16-22, 23-29, 30-60, 60-90, 90-plus
+  const [filter, setFilter] = useState('due-today'); // due-today, promised-today, 1-7, 8-15, 16-22, 23-29, 30-60, 60-90, 90-plus
   const [paymentAmount, setPaymentAmount] = useState('');
   const [paymentMode, setPaymentMode] = useState('cash');
   const [promiseDate, setPromiseDate] = useState('');
   const [remarks, setRemarks] = useState('');
   const [callOutcome, setCallOutcome] = useState('pending'); // pending, called, promised, refused, unreachable
   const [recordingPayment, setRecordingPayment] = useState(false);
+  const [markingPromiseHonored, setMarkingPromiseHonored] = useState(false);
 
   const dpdColors = {
     'due-today': 'bg-blue-50 text-blue-700 border-blue-200',
@@ -68,6 +70,8 @@ export default function CollectorWorkbench() {
       const loans = (data?.data || []).filter(l => l.status === 'disbursed');
 
       const today = new Date();
+      today.setHours(0, 0, 0, 0);
+      
       const casesWithPriority = loans.map(loan => {
         // Determine bucket
         let bucket = 'due-today';
@@ -78,6 +82,12 @@ export default function CollectorWorkbench() {
         else if (loan.dpd > 16) bucket = '16-22';
         else if (loan.dpd > 8) bucket = '8-15';
         else if (loan.dpd > 0) bucket = '1-7';
+
+        // Check if promise is due today
+        const promiseToPayDate = loan.promiseToPayDate ? new Date(loan.promiseToPayDate) : null;
+        const isPromisedToday = promiseToPayDate && 
+          promiseToPayDate.getTime() === today.getTime() &&
+          loan.promiseStatus !== 'honored';
 
         return {
           id: loan._id,
@@ -96,12 +106,18 @@ export default function CollectorWorkbench() {
           lastRemark: loan.lastRemark || 'No remarks',
           callOutcome: loan.callOutcome || 'pending',
           promiseDate: loan.promiseToPayDate || null,
+          promiseStatus: loan.promiseStatus || 'none', // none, pending, honored, broken
+          isPromisedToday,
           priority: bucketPriority[bucket],
         };
       });
 
-      // Sort by priority
-      casesWithPriority.sort((a, b) => a.priority - b.priority);
+      // Sort by priority (promised today at top)
+      casesWithPriority.sort((a, b) => {
+        if (a.isPromisedToday && !b.isPromisedToday) return -1;
+        if (!a.isPromisedToday && b.isPromisedToday) return 1;
+        return a.priority - b.priority;
+      });
       setCases(casesWithPriority);
       
       if (casesWithPriority.length > 0) {
@@ -114,47 +130,120 @@ export default function CollectorWorkbench() {
     }
   };
 
-  const filteredCases = cases.filter(c => c.bucket === filter);
+  const filteredCases = filter === 'promised-today' 
+    ? cases.filter(c => c.isPromisedToday)
+    : cases.filter(c => c.bucket === filter);
 
   const handleRecordPayment = async () => {
-    if (!selectedCase || !paymentAmount) return;
+    if (!selectedCase || !paymentAmount) {
+      toast.error('Please enter amount');
+      return;
+    }
 
     try {
       setRecordingPayment(true);
-      await paymentsService.recordPayment(selectedCase.loanId, {
-        amount: parseFloat(paymentAmount),
-        paymentDate: new Date(),
-        paymentMode,
-        remarks,
-        collectorRemark: remarks,
-      });
+      
+      // Use new real-time payment recording function
+      const result = await paymentsService.recordPaymentWithUpdate(
+        selectedCase.loanId,
+        {
+          amount: parseFloat(paymentAmount),
+          paymentDate: new Date().toISOString(),
+          paymentMode,
+          remarks,
+        }
+      );
 
-      alert('✅ Payment recorded successfully!');
+      // Show notification about payment and bucket change
+      if (result.notification.type === 'bucket_change') {
+        toast.success(
+          `💰 Payment recorded!\n${result.notification.oldBucket} → ${result.notification.newBucket}`,
+          { duration: 5 }
+        );
+      } else {
+        toast.success('💰 Payment recorded successfully!', { duration: 4 });
+      }
+
+      // Update the selected case with new data
+      const updatedCase = {
+        ...selectedCase,
+        dpd: result.updatedLoan.dpd,
+        remaining: result.updatedLoan.remainingAmount,
+        bucket: result.notification.newBucket,
+      };
+      
+      setSelectedCase(updatedCase);
       setPaymentAmount('');
       setRemarks('');
       setCallOutcome('pending');
-      fetchMyCases(); // Refresh cases
-      setSelectedCase(null);
+      
+      // Refresh all cases to update counts and positions
+      fetchMyCases();
+      
+      // Auto-close panel if fully paid
+      if (result.updatedLoan.remainingAmount <= 0) {
+        setTimeout(() => {
+          setSelectedCase(null);
+          toast.success('✅ Loan fully paid! Case closed.', { duration: 5 });
+        }, 2000);
+      }
+      
     } catch (err) {
       console.error('Error recording payment:', err);
-      alert('❌ Error recording payment');
+      toast.error(err.message || 'Failed to record payment');
     } finally {
       setRecordingPayment(false);
     }
   };
 
   const handlePromiseToPayment = async () => {
-    if (!selectedCase || !promiseDate) return;
+    if (!selectedCase || !promiseDate) {
+      toast.error('Please select a promise date');
+      return;
+    }
 
     try {
-      // In real implementation, this would update the loan with promise date
-      console.log('Promise recorded:', selectedCase.loanId, promiseDate);
-      alert('✅ Promise recorded. Follow-up reminder set.');
-      setPromiseDate('');
-      fetchMyCases();
-      setSelectedCase(null);
+      // Update the loan with promise details
+      const response = await loansService.updateLoan(selectedCase.loanId, {
+        promiseToPayDate: promiseDate,
+        promiseStatus: 'pending',
+        lastRemark: `Promise made for ${new Date(promiseDate).toLocaleDateString()}`,
+      });
+
+      if (response.success) {
+        toast.success(`✅ Promise set for ${new Date(promiseDate).toLocaleDateString()}!\nReminder will be sent at 8 AM.`, { duration: 5 });
+        setPromiseDate('');
+        fetchMyCases();
+        setSelectedCase(null);
+      }
     } catch (err) {
-      alert('❌ Error recording promise');
+      console.error('Error recording promise:', err);
+      toast.error('Failed to record promise');
+    }
+  };
+
+  const handleMarkPromiseHonored = async () => {
+    if (!selectedCase) return;
+
+    try {
+      setMarkingPromiseHonored(true);
+      
+      const response = await loansService.updateLoan(selectedCase.loanId, {
+        promiseStatus: 'honored',
+        lastRemark: 'Promise honored - payment received',
+      });
+
+      if (response.success) {
+        toast.success('✅ Promise marked as honored!', { duration: 4 });
+        setPaymentAmount('');
+        setRemarks('');
+        fetchMyCases();
+      }
+    } catch (err) {
+      console.error('Error marking promise:', err);
+      toast.error('Failed to mark promise honored');
+    } finally {
+      setMarkingPromiseHonored(false);
     }
   };
 
@@ -167,6 +256,7 @@ export default function CollectorWorkbench() {
   }
 
   const bucketCounts = {
+    'promised-today': cases.filter(c => c.isPromisedToday).length,
     'due-today': cases.filter(c => c.bucket === 'due-today').length,
     '1-7': cases.filter(c => c.bucket === '1-7').length,
     '8-15': cases.filter(c => c.bucket === '8-15').length,
@@ -188,6 +278,7 @@ export default function CollectorWorkbench() {
       {/* Priority Filter */}
       <div className="flex overflow-x-auto space-x-2 pb-2">
         {[
+          { bucket: 'promised-today', label: '🤝 Promised Today', color: 'purple' },
           { bucket: 'due-today', label: '📅 Due Today', color: 'blue' },
           { bucket: '1-7', label: '⚠️ 1-7 DPD', color: 'green' },
           { bucket: '8-15', label: '⚠️ 8-15 DPD', color: 'yellow' },
@@ -274,6 +365,25 @@ export default function CollectorWorkbench() {
                 <span className="font-bold text-lg">{selectedCase.dpd} days</span>
               </div>
             </div>
+
+            {/* Promise Status Indicator */}
+            {selectedCase.isPromisedToday && (
+              <div className="mb-6 p-3 bg-purple-50 border border-purple-200 rounded-lg">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <p className="text-sm font-semibold text-purple-900">🤝 Promise Due Today</p>
+                    <p className="text-xs text-purple-700 mt-1">Expected: ₹{selectedCase.emi.toLocaleString()}</p>
+                  </div>
+                  <button
+                    onClick={handleMarkPromiseHonored}
+                    disabled={markingPromiseHonored}
+                    className="px-3 py-1 bg-purple-600 text-white rounded text-xs font-medium hover:bg-purple-700 disabled:opacity-50"
+                  >
+                    {markingPromiseHonored ? '⏳' : '✅'} Mark Honored
+                  </button>
+                </div>
+              </div>
+            )}
 
             {/* Action Tabs */}
             <div className="space-y-4">

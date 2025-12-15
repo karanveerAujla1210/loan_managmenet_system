@@ -74,6 +74,30 @@ const ModernSidebar = ({ isCollapsed, setIsCollapsed }) => {
       roles: ['collector', 'manager', 'admin']
     },
     {
+      title: 'My Workbench',
+      icon: Phone,
+      path: '/collector-work',
+      roles: ['collector']
+    },
+    {
+      title: 'Team Supervision',
+      icon: BarChart3,
+      path: '/manager-supervision',
+      roles: ['manager']
+    },
+    {
+      title: 'Legal Cases',
+      icon: FileText,
+      path: '/legal-cases',
+      roles: ['legal', 'admin']
+    },
+    {
+      title: 'Audit Trail',
+      icon: BarChart3,
+      path: '/audit-trail',
+      roles: ['manager', 'admin']
+    },
+    {
       title: 'Reports',
       icon: BarChart3,
       path: '/reports',

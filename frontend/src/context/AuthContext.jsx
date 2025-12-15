@@ -108,6 +108,21 @@ export const AuthProvider = ({ children }) => {
     }
   };
 
+  // Get role-based redirect path
+  const getRoleBasedPath = (userRole) => {
+    switch (userRole?.toLowerCase()) {
+      case 'collector':
+        return '/collector-work';
+      case 'manager':
+        return '/manager-supervision';
+      case 'legal':
+        return '/legal-cases';
+      case 'admin':
+      default:
+        return '/dashboard';
+    }
+  };
+
   // Login user
   const login = async (formData) => {
     try {
@@ -120,7 +135,9 @@ export const AuthProvider = ({ children }) => {
         setUser(user || null);
         setIsAuthenticated(!!token);
         toast.success(`Welcome back, ${user?.name || 'user'}!`);
-        navigate('/dashboard');
+        // Navigate to role-based dashboard
+        const redirectPath = getRoleBasedPath(user?.role);
+        navigate(redirectPath);
         return { success: true };
       }
       toast.error(response?.message || 'Login failed');
@@ -148,7 +165,9 @@ export const AuthProvider = ({ children }) => {
         setIsAuthenticated(true);
         
         toast.success(`Welcome back, ${mockUser.name}!`);
-        navigate('/dashboard');
+        // Navigate to role-based dashboard
+        const redirectPath = getRoleBasedPath(mockUser.role);
+        navigate(redirectPath);
         return { success: true };
       } else {
         toast.error('Invalid email or password');

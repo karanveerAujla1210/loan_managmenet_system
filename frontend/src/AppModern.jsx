@@ -16,6 +16,7 @@ import ModernCollections from './pages/ModernCollections';
 import CollectorWorkbench from './pages/CollectorWorkbench';
 import ManagerSupervision from './pages/ManagerSupervision';
 import LegalCaseManagement from './pages/LegalCaseManagement';
+import AuditTrail from './pages/AuditTrail';
 import ModernLayout from './components/Layout/ModernLayout';
 
 // Import existing pages for fallback
@@ -124,6 +125,7 @@ const routerWithLayout = createBrowserRouter(
             { path: '/collector-work', element: <CollectorWorkbench /> },
             { path: '/manager-supervision', element: <ManagerSupervision /> },
             { path: '/legal-cases', element: <LegalCaseManagement /> },
+            { path: '/audit-trail', element: <AuditTrail /> },
             { path: '/loans', element: <Loans /> },
             { path: '/audit', element: <AuditLog /> },
             { path: '/upload', element: <Upload /> },

@@ -1,6 +1,8 @@
 import { useState, useEffect } from 'react';
-import { TrendingUp, TrendingDown, Users, AlertTriangle, DollarSign, Loader, BarChart3 } from 'lucide-react';
+import { TrendingUp, TrendingDown, Users, AlertTriangle, DollarSign, Loader, BarChart3, X } from 'lucide-react';
+import toast from 'react-hot-toast';
 import * as loansService from '../services/loans';
+import * as reassignmentService from '../services/reassignment';
 
 /**
  * MANAGER SUPERVISION DASHBOARD
@@ -22,6 +24,10 @@ export default function ManagerSupervision() {
   const [loans, setLoans] = useState([]);
   const [loading, setLoading] = useState(true);
   const [timeRange, setTimeRange] = useState('today'); // today, week, month
+  const [selectedLoanForReassign, setSelectedLoanForReassign] = useState(null);
+  const [newCollectorId, setNewCollectorId] = useState('');
+  const [reassignReason, setReassignReason] = useState('');
+  const [reassigning, setReassigning] = useState(false);
 
   useEffect(() => {
     fetchPortfolio();
@@ -36,6 +42,36 @@ export default function ManagerSupervision() {
       console.error('Error fetching portfolio:', err);
     } finally {
       setLoading(false);
+    }
+  };
+
+  const handleReassignCase = async () => {
+    if (!selectedLoanForReassign || !newCollectorId) {
+      toast.error('Please select collector');
+      return;
+    }
+
+    try {
+      setReassigning(true);
+      const result = await reassignmentService.reassignCase(
+        selectedLoanForReassign.loanId,
+        newCollectorId,
+        reassignReason
+      );
+
+      if (result.success) {
+        toast.success(`✅ Case reassigned successfully`);
+        setSelectedLoanForReassign(null);
+        setNewCollectorId('');
+        setReassignReason('');
+      } else {
+        toast.error(result.error || 'Reassignment failed');
+      }
+    } catch (err) {
+      toast.error('Error reassigning case');
+      console.error(err);
+    } finally {
+      setReassigning(false);
     }
   };
 
@@ -304,7 +340,16 @@ export default function ManagerSupervision() {
       <div className="bg-blue-50 border border-blue-200 rounded-lg p-6">
         <h3 className="text-lg font-bold text-blue-900 mb-3">Manager Actions Available</h3>
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-          <button className="px-4 py-3 bg-white border border-blue-200 rounded-lg hover:bg-blue-50 text-sm font-medium text-blue-900">
+          <button 
+            onClick={() => {
+              // Open reassignment for a specific high-overdue case
+              const highOverdueCase = loans.find(l => l.dpd > 30 && l.status === 'disbursed');
+              if (highOverdueCase) {
+                setSelectedLoanForReassign(highOverdueCase);
+              }
+            }}
+            className="px-4 py-3 bg-white border border-blue-200 rounded-lg hover:bg-blue-50 text-sm font-medium text-blue-900"
+          >
             👤 Reassign Cases
           </button>
           <button className="px-4 py-3 bg-white border border-blue-200 rounded-lg hover:bg-blue-50 text-sm font-medium text-blue-900">
@@ -315,6 +360,75 @@ export default function ManagerSupervision() {
           </button>
         </div>
       </div>
+
+      {/* Reassignment Modal */}
+      {selectedLoanForReassign && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-lg p-8 max-w-md w-full">
+            <div className="flex items-center justify-between mb-6">
+              <h2 className="text-2xl font-bold text-gray-900">👤 Reassign Case</h2>
+              <button
+                onClick={() => setSelectedLoanForReassign(null)}
+                className="text-gray-500 hover:text-gray-700"
+              >
+                <X className="w-6 h-6" />
+              </button>
+            </div>
+
+            <div className="space-y-4">
+              <div>
+                <p className="text-sm text-gray-600">Case Details</p>
+                <div className="mt-2 p-3 bg-gray-50 rounded">
+                  <p className="font-bold text-gray-900">{selectedLoanForReassign.loanId}</p>
+                  <p className="text-sm text-gray-600">{selectedLoanForReassign.customerName}</p>
+                  <p className="text-sm text-red-600 font-bold">{selectedLoanForReassign.dpd} DPD</p>
+                </div>
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">Assign to Collector</label>
+                <select
+                  value={newCollectorId}
+                  onChange={(e) => setNewCollectorId(e.target.value)}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                >
+                  <option value="">Select collector...</option>
+                  <option value="collector1">Raj Kumar</option>
+                  <option value="collector2">Priya Singh</option>
+                  <option value="collector3">Amit Patel</option>
+                </select>
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">Reason for Reassignment</label>
+                <textarea
+                  value={reassignReason}
+                  onChange={(e) => setReassignReason(e.target.value)}
+                  placeholder="e.g., Load balancing, Collector reassignment, Special handling needed..."
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 resize-none"
+                  rows="3"
+                />
+              </div>
+
+              <div className="flex gap-2 pt-4">
+                <button
+                  onClick={() => setSelectedLoanForReassign(null)}
+                  className="flex-1 px-4 py-2 border border-gray-300 rounded-lg text-gray-700 font-medium hover:bg-gray-50"
+                >
+                  Cancel
+                </button>
+                <button
+                  onClick={handleReassignCase}
+                  disabled={reassigning || !newCollectorId}
+                  className="flex-1 px-4 py-2 bg-blue-600 text-white rounded-lg font-medium hover:bg-blue-700 disabled:bg-gray-300"
+                >
+                  {reassigning ? 'Reassigning...' : 'Confirm Reassignment'}
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

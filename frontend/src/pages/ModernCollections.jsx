@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import { Phone, MessageSquare, Clock, AlertCircle, CheckCircle, Filter, Loader, Search, Download, Plus } from 'lucide-react';
+import toast from 'react-hot-toast';
 import * as loansService from '../services/loans';
 import * as paymentsService from '../services/payments';
 
@@ -115,28 +116,51 @@ export default function ModernCollections() {
   };
 
   const handlePaymentSubmit = async () => {
-    if (!selectedCase || !paymentAmount) return;
+    if (!selectedCase || !paymentAmount) {
+      toast.error('Please enter amount');
+      return;
+    }
+
     try {
       setPaymentLoading(true);
-      const result = await paymentsService.recordPayment(selectedCase.loanId, {
-        amount: parseFloat(paymentAmount),
-        paymentDate: new Date(paymentDate),
-        paymentMethod: 'manual',
-        remarks: `Payment recorded on ${paymentDate}`
-      });
       
-      if (result.success || result.data) {
-        alert('Payment recorded successfully!');
-        setPaymentAmount('');
-        setPaymentDate(new Date().toISOString().split('T')[0]);
-        // Refresh collections data
-        fetchAllCases();
+      // Use new real-time payment recording function
+      const result = await paymentsService.recordPaymentWithUpdate(
+        selectedCase.loanId,
+        {
+          amount: parseFloat(paymentAmount),
+          paymentDate: paymentDate,
+          paymentMode: 'manual',
+          remarks: `Payment recorded on ${paymentDate}`
+        }
+      );
+
+      // Show notification about payment and bucket change
+      if (result.notification.type === 'bucket_change') {
+        toast.success(
+          `💰 Payment recorded!\n${result.notification.oldBucket} → ${result.notification.newBucket}`,
+          { duration: 5 }
+        );
       } else {
-        alert('Error recording payment');
+        toast.success('💰 Payment recorded successfully!', { duration: 4 });
+      }
+
+      setPaymentAmount('');
+      setPaymentDate(new Date().toISOString().split('T')[0]);
+      
+      // Refresh collections data
+      fetchAllCases();
+      
+      // Auto-close panel if fully paid
+      if (result.updatedLoan.remainingAmount <= 0) {
+        setTimeout(() => {
+          setSelectedCase(null);
+          toast.success('✅ Loan fully paid! Case closed.', { duration: 5 });
+        }, 2000);
       }
     } catch (err) {
       console.error('Error recording payment:', err);
-      alert('Failed to record payment');
+      toast.error(err.message || 'Failed to record payment');
     } finally {
       setPaymentLoading(false);
     }

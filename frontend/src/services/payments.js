@@ -142,3 +142,56 @@ export const getCustomerPayments = async (customerId) => {
     return { success: true, data: customerPayments };
   }
 };
+
+/**
+ * Record a payment and get updated loan DPD/bucket immediately
+ * Used by Collector and Collections pages for real-time updates
+ * 
+ * @param {string} loanId - The loan ID
+ * @param {object} paymentData - { amount, paymentDate, paymentMode, remarks }
+ * @returns {object} - { success, payment, updatedLoan, notification }
+ */
+export const recordPaymentWithUpdate = async (loanId, paymentData) => {
+  try {
+    // Record the payment
+    const paymentResponse = await api.post('/payments', {
+      loanId,
+      ...paymentData
+    });
+
+    if (!paymentResponse.data.success) {
+      throw new Error('Payment recording failed');
+    }
+
+    // Fetch updated loan info (will include recalculated DPD + bucket)
+    const loanResponse = await api.get(`/loans/${loanId}`);
+    const updatedLoan = loanResponse.data?.data || loanResponse.data;
+
+    // Calculate notification message
+    const oldBucket = updatedLoan.previousBucket;
+    const newBucket = updatedLoan.bucket;
+    const bucketChanged = oldBucket && oldBucket !== newBucket;
+    
+    const notification = {
+      type: bucketChanged ? 'bucket_change' : 'payment_recorded',
+      message: bucketChanged 
+        ? `Payment recorded. Bucket changed: ${oldBucket} → ${newBucket}`
+        : 'Payment recorded successfully',
+      oldDpd: updatedLoan.previousDpd,
+      newDpd: updatedLoan.dpd,
+      oldBucket: oldBucket,
+      newBucket: newBucket,
+      remainingAmount: updatedLoan.remainingAmount
+    };
+
+    return {
+      success: true,
+      payment: paymentResponse.data.data,
+      updatedLoan,
+      notification
+    };
+  } catch (error) {
+    console.error('Payment record error:', error);
+    throw error;
+  }
+};

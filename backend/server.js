@@ -14,6 +14,8 @@ const hpp = require('hpp');
 const cookieParser = require('cookie-parser');
 const session = require('express-session');
 const errorHandler = require('./middleware/error');
+const { initDPDCron } = require('./cron/dpdCronScheduler');
+const { initPromiseReminderCron } = require('./cron/promiseReminderCron');
 require('dotenv').config();
 
 // Route files
@@ -103,6 +105,23 @@ const PORT = process.env.PORT || 5000;
 // Start server
 const startServer = async () => {
   await connectDB();
+  
+  // Initialize DPD cron job (runs at 2:30 AM daily)
+  try {
+    initDPDCron();
+    console.log('DPD Cron scheduler initialized - runs daily at 2:30 AM'.cyan);
+  } catch (error) {
+    console.error('Failed to initialize DPD cron:', error.message);
+  }
+  
+  // Initialize Promise reminder cron job (runs at 8:00 AM daily)
+  try {
+    initPromiseReminderCron();
+    console.log('Promise reminder cron scheduler initialized - runs daily at 8:00 AM'.cyan);
+  } catch (error) {
+    console.error('Failed to initialize Promise reminder cron:', error.message);
+  }
+  
   const server = app.listen(PORT, () => {
     console.log(`Server running in ${process.env.NODE_ENV} mode on port ${PORT}`.yellow.bold);
   });
