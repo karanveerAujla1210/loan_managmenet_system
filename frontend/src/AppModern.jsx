@@ -38,46 +38,7 @@ const ModernLayoutWrapper = () => {
   );
 };
 
-// Build a route tree with modern components
-const router = createBrowserRouter(
-  [
-    { path: '/', element: <Welcome /> },
-    { path: '/welcome', element: <Welcome /> },
-    { path: '/login', element: <ModernLogin /> },
-    { path: '/login-old', element: <Login /> },
-    { path: '/register', element: <Register /> },
-    { path: '/forgot-password', element: <ForgotPassword /> },
-    { path: '/reset-password', element: <ResetPassword /> },
-    {
-      element: (
-        <ProtectedRoute>
-          <ModernLayoutWrapper />
-        </ProtectedRoute>
-      ),
-      children: [
-        { path: '/dashboard', element: <ModernDashboard /> },
-        { path: '/dashboard-old', element: <Dashboard /> },
-        { path: '/customers', element: <ModernCustomers /> },
-        { path: '/customers-old', element: <Customers /> },
-        { path: '/customers/:id', element: <CustomerDetail /> },
-        { path: '/leads', element: <ModernLeads /> },
-        { path: '/collections', element: <ModernCollections /> },
-        { path: '/collections-old', element: <Collections /> },
-        { path: '/loans', element: <Loans /> },
-        { path: '/audit', element: <AuditLog /> },
-        { path: '/upload', element: <Upload /> },
-        { path: '/profile', element: <Profile /> },
-      ],
-    },
-    { path: '*', element: <Navigate to="/" replace /> },
-  ],
-  {
-    future: {
-      v7_startTransition: true,
-      v7_relativeSplatPath: true,
-    },
-  }
-);
+
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -97,35 +58,88 @@ const queryClient = new QueryClient({
   },
 });
 
+// Inner component that uses router context
+const AppContent = () => {
+  return (
+    <AuthProvider>
+      <div className="min-h-screen bg-gray-50 font-sans">
+        <Outlet />
+        <Toaster 
+          position="top-right"
+          toastOptions={{
+            duration: 4000,
+            style: {
+              background: '#363636',
+              color: '#fff',
+              borderRadius: '12px',
+            },
+            success: {
+              style: {
+                background: '#10b981',
+              },
+            },
+            error: {
+              style: {
+                background: '#ef4444',
+              },
+            },
+          }}
+        />
+      </div>
+    </AuthProvider>
+  );
+};
+
+// Update router to include AppContent as root layout
+const routerWithLayout = createBrowserRouter(
+  [
+    {
+      element: <AppContent />,
+      children: [
+        { path: '/', element: <Welcome /> },
+        { path: '/welcome', element: <Welcome /> },
+        { path: '/login', element: <ModernLogin /> },
+        { path: '/login-old', element: <Login /> },
+        { path: '/register', element: <Register /> },
+        { path: '/forgot-password', element: <ForgotPassword /> },
+        { path: '/reset-password', element: <ResetPassword /> },
+        {
+          element: (
+            <ProtectedRoute>
+              <ModernLayoutWrapper />
+            </ProtectedRoute>
+          ),
+          children: [
+            { path: '/dashboard', element: <ModernDashboard /> },
+            { path: '/dashboard-old', element: <Dashboard /> },
+            { path: '/customers', element: <ModernCustomers /> },
+            { path: '/customers-old', element: <Customers /> },
+            { path: '/customers/:id', element: <CustomerDetail /> },
+            { path: '/leads', element: <ModernLeads /> },
+            { path: '/collections', element: <ModernCollections /> },
+            { path: '/collections-old', element: <Collections /> },
+            { path: '/loans', element: <Loans /> },
+            { path: '/audit', element: <AuditLog /> },
+            { path: '/upload', element: <Upload /> },
+            { path: '/profile', element: <Profile /> },
+          ],
+        },
+        { path: '*', element: <Navigate to="/" replace /> },
+      ],
+    },
+  ],
+  {
+    future: {
+      v7_startTransition: true,
+      v7_relativeSplatPath: true,
+    },
+  }
+);
+
 function AppModern() {
   return (
     <QueryClientProvider client={queryClient}>
-      <AuthProvider>
-        <div className="min-h-screen bg-gray-50 font-sans">
-          <RouterProvider router={router} />
-          <Toaster 
-            position="top-right"
-            toastOptions={{
-              duration: 4000,
-              style: {
-                background: '#363636',
-                color: '#fff',
-                borderRadius: '12px',
-              },
-              success: {
-                style: {
-                  background: '#10b981',
-                },
-              },
-              error: {
-                style: {
-                  background: '#ef4444',
-                },
-              },
-            }}
-          />
-        </div>
-      </AuthProvider>
+      <RouterProvider router={routerWithLayout} />
     </QueryClientProvider>
   );
 }

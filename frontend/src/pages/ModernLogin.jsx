@@ -1,9 +1,11 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Mail, Lock, Eye, EyeOff, Loader } from 'lucide-react';
+import { useAuth } from '../context/AuthContext';
 
 export default function ModernLogin() {
   const navigate = useNavigate();
+  const { login } = useAuth();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
@@ -18,14 +20,18 @@ export default function ModernLogin() {
     setLoading(true);
 
     try {
-      // Simulate API call
-      await new Promise((resolve) => setTimeout(resolve, 1500));
-
-      if (email && password) {
-        setSuccess('Login successful! Redirecting...');
-        setTimeout(() => navigate('/'), 1000);
-      } else {
+      if (!email || !password) {
         setError('Please fill in all fields');
+        setLoading(false);
+        return;
+      }
+
+      const result = await login({ email, password });
+      if (result.success) {
+        setSuccess('Login successful! Redirecting...');
+        // Navigation happens automatically in AuthContext
+      } else {
+        setError(result.error || 'Login failed');
       }
     } catch (err) {
       setError('Login failed. Please try again.');
