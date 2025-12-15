@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import toast from 'react-hot-toast';
-import { managerService } from '../../services/managerService';
+import { managerService } from '../../services';
 import BucketOverviewChart from '../../components/Charts/BucketOverviewChart';
 import RiskTrendsChart from '../../components/Charts/RiskTrendsChart';
 import CollectorPerformanceTable from '../../components/Tables/CollectorPerformanceTable';

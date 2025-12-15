@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import toast from 'react-hot-toast';
-import { promiseService } from '../../services/promiseService';
+import { promiseService } from '../../services';
 
 const PromiseToPayModal = ({ loanId, onSuccess, onClose }) => {
   const [loading, setLoading] = useState(false);

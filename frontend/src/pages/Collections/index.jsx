@@ -20,10 +20,10 @@ const Collections = () => {
   
   const queryClient = useQueryClient();
   
-  const { data, isLoading, error } = useQuery(
-    ['collections', { page: currentPage, limit: pageSize, search: searchTerm, status: statusFilter }],
-    () => getPayments({ page: currentPage, limit: pageSize, search: searchTerm, status: statusFilter })
-  );
+  const { data, isLoading, error } = useQuery({
+    queryKey: ['collections', { page: currentPage, limit: pageSize, search: searchTerm, status: statusFilter }],
+    queryFn: () => getPayments({ page: currentPage, limit: pageSize, search: searchTerm, status: statusFilter })
+  });
   
   const recordMutation = useMutation(createPayment, {
     onSuccess: () => {

@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import toast from 'react-hot-toast';
-import { loanService } from '../../services/loanService';
+import { loanService } from '../../services';
 import RecordPaymentModal from '../../components/Modals/RecordPaymentModal';
 import AddRemarkModal from '../../components/Modals/AddRemarkModal';
 import PromiseToPayModal from '../../components/Modals/PromiseToPayModal';

@@ -9,7 +9,10 @@ const AuditLog = () => {
   const [search, setSearch] = useState('');
   const [page, setPage] = useState(1);
 
-  const { data, isLoading, error } = useQuery(['audit', { page, search }], () => getAuditLogs({ page, search }));
+  const { data, isLoading, error } = useQuery({
+    queryKey: ['audit', { page, search }],
+    queryFn: () => getAuditLogs({ page, search }),
+  });
 
   if (isLoading) return <div className="p-6">Loading audit logs...</div>;
   if (error) return <div className="p-6 text-red-600">Failed to load audit logs</div>;

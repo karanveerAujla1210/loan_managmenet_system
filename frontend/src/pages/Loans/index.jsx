@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { Card, CardContent, CardHeader, CardTitle } from '../../components/ui/Card';
 import { Button } from '../../components/ui/Button';
+import { Input } from '../../components/ui/Input';
 import { getLoans, createLoan, updateLoan, approveLoan, rejectLoan } from '../../services/loans';
 import { formatCurrency } from '../../lib/format';
 import FilterBar from '../../components/FilterBar';
@@ -30,13 +31,11 @@ const Loans = () => {
 
   const queryClient = useQueryClient();
 
-  const { data: loansResponse, isLoading } = useQuery(
-    ['loans', { search: searchTerm, status: statusFilter, page: currentPage, limit: pageSize }],
-    () => getLoans({ search: searchTerm, status: statusFilter, page: currentPage, limit: pageSize }),
-    {
-      keepPreviousData: true,
-    }
-  );
+  const { data: loansResponse, isLoading } = useQuery({
+    queryKey: ['loans', { search: searchTerm, status: statusFilter, page: currentPage, limit: pageSize }],
+    queryFn: () => getLoans({ search: searchTerm, status: statusFilter, page: currentPage, limit: pageSize }),
+    keepPreviousData: true,
+  });
 
   // Extract unique branches from loans
   useEffect(() => {
@@ -48,9 +47,10 @@ const Loans = () => {
 
   const loans = loansResponse || {};
 
-  const createMutation = useMutation(createLoan, {
+  const createMutation = useMutation({
+    mutationFn: createLoan,
     onSuccess: () => {
-      queryClient.invalidateQueries(['loans']);
+      queryClient.invalidateQueries({ queryKey: ['loans'] });
       toast.success('Loan created successfully');
       setIsCreateModalOpen(false);
       setFormData({
@@ -67,31 +67,30 @@ const Loans = () => {
     },
   });
 
-  const updateMutation = useMutation(
-    ({ id, data }) => updateLoan(id, data),
-    {
-      onSuccess: () => {
-        queryClient.invalidateQueries(['loans']);
-        toast.success('Loan updated successfully');
-        setEditingLoan(null);
-        setFormData({
-          customerId: '',
-          principalAmount: '',
-          interestRate: '',
-          tenure: '',
-          processingFee: '',
-          disbursementDate: '',
-        });
-      },
-      onError: (error) => {
-        toast.error(error.response?.data?.message || 'Failed to update loan');
-      },
-    }
-  );
-
-  const approveMutation = useMutation(approveLoan, {
+  const updateMutation = useMutation({
+    mutationFn: ({ id, data }) => updateLoan(id, data),
     onSuccess: () => {
-      queryClient.invalidateQueries(['loans']);
+      queryClient.invalidateQueries({ queryKey: ['loans'] });
+      toast.success('Loan updated successfully');
+      setEditingLoan(null);
+      setFormData({
+        customerId: '',
+        principalAmount: '',
+        interestRate: '',
+        tenure: '',
+        processingFee: '',
+        disbursementDate: '',
+      });
+    },
+    onError: (error) => {
+      toast.error(error.response?.data?.message || 'Failed to update loan');
+    },
+  });
+
+  const approveMutation = useMutation({
+    mutationFn: approveLoan,
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['loans'] });
       toast.success('Loan approved successfully');
     },
     onError: (error) => {
@@ -99,9 +98,10 @@ const Loans = () => {
     },
   });
 
-  const rejectMutation = useMutation(rejectLoan, {
+  const rejectMutation = useMutation({
+    mutationFn: rejectLoan,
     onSuccess: () => {
-      queryClient.invalidateQueries(['loans']);
+      queryClient.invalidateQueries({ queryKey: ['loans'] });
       toast.success('Loan rejected successfully');
     },
     onError: (error) => {
@@ -414,7 +414,7 @@ const Loans = () => {
                 <div className="bg-gray-50 px-4 py-3 sm:px-6 sm:flex sm:flex-row-reverse">
                   <Button
                     type="submit"
-                    disabled={createMutation.isLoading || updateMutation.isLoading}
+                    disabled={createMutation.isPending || updateMutation.isPending}
                     className="w-full sm:ml-3 sm:w-auto"
                   >
                     {editingLoan ? 'Update' : 'Create'}

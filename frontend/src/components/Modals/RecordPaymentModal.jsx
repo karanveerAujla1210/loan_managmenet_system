@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import toast from 'react-hot-toast';
-import { paymentService } from '../../services/paymentService';
+import { paymentService } from '../../services';
 
 const RecordPaymentModal = ({ loanId, emiAmount, onSuccess, onClose }) => {
   const [loading, setLoading] = useState(false);

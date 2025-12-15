@@ -6,11 +6,11 @@ import { dashboardService } from '../services/dashboard';
 const SystemHealthMonitor = () => {
   const [isExpanded, setIsExpanded] = useState(false);
 
-  const { data: health, isLoading } = useQuery(
-    ['system-health'],
-    dashboardService.getSystemHealth,
-    { refetchInterval: 10000 }
-  );
+  const { data: health, isLoading } = useQuery({
+    queryKey: ['system-health'],
+    queryFn: dashboardService.getSystemHealth,
+    refetchInterval: 10000,
+  });
 
   const getStatusColor = (status) => {
     switch (status) {

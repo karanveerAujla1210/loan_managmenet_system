@@ -19,10 +19,10 @@ const Customers = () => {
   
   const queryClient = useQueryClient();
   
-  const { data, isLoading, error } = useQuery(
-    ['customers', { page: currentPage, limit: pageSize, search: searchTerm }],
-    () => getCustomers({ page: currentPage, limit: pageSize, search: searchTerm })
-  );
+  const { data, isLoading, error } = useQuery({
+    queryKey: ['customers', { page: currentPage, limit: pageSize, search: searchTerm }],
+    queryFn: () => getCustomers({ page: currentPage, limit: pageSize, search: searchTerm }),
+  });
   
   const deleteMutation = useMutation(deleteCustomer, {
     onSuccess: () => {

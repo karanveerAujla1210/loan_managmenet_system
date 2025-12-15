@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import toast from 'react-hot-toast';
-import { remarkService } from '../../services/remarkService';
+import { remarkService } from '../../services';
 
 const AddRemarkModal = ({ loanId, onSuccess, onClose }) => {
   const [loading, setLoading] = useState(false);

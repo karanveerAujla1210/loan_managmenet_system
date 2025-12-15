@@ -5,7 +5,7 @@ import toast from 'react-hot-toast';
 import Button from '../../components/ui/Button';
 import Input from '../../components/ui/Input';
 import Card from '../../components/ui/Card';
-import { authService } from '../../services/authService';
+import { authService } from '../../services';
 
 const OptimizedLogin = () => {
   const [loading, setLoading] = useState(false);

@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import toast from 'react-hot-toast';
-import { collectorService } from '../../services/collectorService';
+import { collectorService } from '../../services';
 
 const MyCases = () => {
   const navigate = useNavigate();

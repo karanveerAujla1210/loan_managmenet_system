@@ -7,11 +7,11 @@ const AlertNotification = () => {
   const [isOpen, setIsOpen] = useState(false);
   const queryClient = useQueryClient();
 
-  const { data: alerts, isLoading } = useQuery(
-    ['alerts'],
-    dashboardService.getAlerts,
-    { refetchInterval: 30000 }
-  );
+  const { data: alerts, isLoading } = useQuery({
+    queryKey: ['alerts'],
+    queryFn: dashboardService.getAlerts,
+    refetchInterval: 30000,
+  });
 
   const markAsReadMutation = useMutation(
     dashboardService.markAlertAsRead,

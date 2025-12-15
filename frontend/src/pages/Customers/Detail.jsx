@@ -10,14 +10,23 @@ const CustomerDetail = () => {
   const { id } = useParams();
   const navigate = useNavigate();
 
-  const { data: customerRes, isLoading: loadingCustomer, error: customerError } = useQuery(
-    ['customer', id],
-    () => getCustomer(id),
-    { enabled: !!id }
-  );
+  const { data: customerRes, isLoading: loadingCustomer, error: customerError } = useQuery({
+    queryKey: ['customer', id],
+    queryFn: () => getCustomer(id),
+    enabled: !!id,
+  });
 
-  const { data: loansRes } = useQuery(['customer', id, 'loans'], () => getCustomerLoans(id), { enabled: !!id });
-  const { data: paymentsRes } = useQuery(['customer', id, 'payments'], () => getCustomerPayments(id), { enabled: !!id });
+  const { data: loansRes } = useQuery({
+    queryKey: ['customer', id, 'loans'],
+    queryFn: () => getCustomerLoans(id),
+    enabled: !!id,
+  });
+
+  const { data: paymentsRes } = useQuery({
+    queryKey: ['customer', id, 'payments'],
+    queryFn: () => getCustomerPayments(id),
+    enabled: !!id,
+  });
 
   const customer = customerRes?.data;
   const loans = loansRes?.data || [];

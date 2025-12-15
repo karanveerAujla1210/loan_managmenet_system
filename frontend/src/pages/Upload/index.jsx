@@ -14,10 +14,10 @@ const UploadPage = () => {
   const [uploadType, setUploadType] = useState('disbursements');
   const [isUploading, setIsUploading] = useState(false);
 
-  const { data: uploadHistory } = useQuery(
-    ['upload-history'],
-    getUploadHistory
-  );
+  const { data: uploadHistory } = useQuery({
+    queryKey: ['upload-history'],
+    queryFn: getUploadHistory,
+  });
 
   const uploadMutation = useMutation(
     (file) => {

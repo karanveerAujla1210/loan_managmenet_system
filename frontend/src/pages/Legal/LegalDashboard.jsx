@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import toast from 'react-hot-toast';
-import { legalService } from '../../services/legalService';
+import { legalService } from '../../services';
 
 const LegalDashboard = () => {
   const navigate = useNavigate();
