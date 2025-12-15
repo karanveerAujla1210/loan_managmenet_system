@@ -1,6 +1,7 @@
 const BankReconciliation = require('../models/BankReconciliationModel');
 const Payment = require('../models/Payment');
 const Loan = require('../models/Loan');
+const auditService = require('../../services/auditService');
 
 class BankReconciliationService {
   // Create reconciliation from bank statement
@@ -25,6 +26,20 @@ class BankReconciliationService {
     });
 
     await reconciliation.save();
+    // Central audit log
+    try {
+      await auditService.logAuditEvent({
+        action: 'status_changed',
+        userId,
+        userRole: null,
+        loanId: null,
+        loanIdStr: null,
+        newValue: { reconciliationId: reconciliation._id, status: reconciliation.status },
+        remarks: 'Reconciliation created',
+      });
+    } catch (e) {
+      console.error('Audit log failed for reconciliation create:', e.message);
+    }
     return reconciliation;
   }
 
@@ -62,6 +77,17 @@ class BankReconciliationService {
     });
 
     await reconciliation.save();
+    try {
+      await auditService.logAuditEvent({
+        action: 'status_changed',
+        userId,
+        newValue: { reconciliationId: reconciliation._id, action: 'auto_match' },
+        remarks: 'Auto-match completed'
+      });
+    } catch (e) {
+      console.error('Audit log failed for auto-match:', e.message);
+    }
+
     return reconciliation;
   }
 
@@ -99,6 +125,19 @@ class BankReconciliationService {
     });
 
     await reconciliation.save();
+    try {
+      await auditService.logAuditEvent({
+        action: 'status_changed',
+        userId,
+        loanId,
+        loanIdStr: String(loanId),
+        newValue: { reconciliationId: reconciliation._id, linkedBankUTR: bankTx.bankUTR },
+        remarks: 'Payment linked during reconciliation'
+      });
+    } catch (e) {
+      console.error('Audit log failed for linkPayment:', e.message);
+    }
+
     return reconciliation;
   }
 
@@ -122,6 +161,17 @@ class BankReconciliationService {
     });
 
     await reconciliation.save();
+    try {
+      await auditService.logAuditEvent({
+        action: 'status_changed',
+        userId,
+        newValue: { reconciliationId: reconciliation._id, bankUTR: bankTx.bankUTR, reason },
+        remarks: 'Fraud flagged in reconciliation'
+      });
+    } catch (e) {
+      console.error('Audit log failed for flagFraud:', e.message);
+    }
+
     return reconciliation;
   }
 
@@ -164,6 +214,17 @@ class BankReconciliationService {
     });
 
     await reconciliation.save();
+    try {
+      await auditService.logAuditEvent({
+        action: 'status_changed',
+        userId,
+        newValue: { reconciliationId: reconciliation._id, summary: reconciliation.summary },
+        remarks: 'Reconciliation finalized and locked'
+      });
+    } catch (e) {
+      console.error('Audit log failed for finalize:', e.message);
+    }
+
     return reconciliation;
   }
 

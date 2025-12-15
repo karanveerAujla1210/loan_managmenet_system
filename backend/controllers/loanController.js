@@ -4,6 +4,7 @@ const Payment = require('../models/Payment');
 const Customer = require('../models/Customer');
 const { createLoan } = require('../services/loanService');
 const { allocatePayment } = require('../services/paymentService');
+const auditService = require('../services/auditService');
 
 // Create new loan
 exports.createLoan = async (req, res) => {
@@ -98,6 +99,26 @@ exports.addPayment = async (req, res) => {
     const allocation = await allocatePayment(loan, payment, schedules);
     
     await Payment.updateOne({ _id: payment._id }, { allocation });
+
+    // Record audit event for payment recorded
+    try {
+      await auditService.logAuditEvent({
+        action: 'payment_recorded',
+        userId: req.user ? req.user._id : null,
+        userEmail: req.user ? req.user.email : null,
+        userName: req.user ? req.user.name : null,
+        userRole: req.user ? req.user.role : null,
+        loanId: loan._id,
+        loanIdStr: String(loan._id),
+        amount: payment.amount,
+        newValue: payment,
+        remarks: `Payment recorded via ${method}`,
+        ipAddress: req.ip,
+        userAgent: req.headers['user-agent']
+      });
+    } catch (e) {
+      console.error('Failed to write audit log for payment:', e.message);
+    }
 
     res.status(201).json({ success: true, data: payment });
   } catch (error) {

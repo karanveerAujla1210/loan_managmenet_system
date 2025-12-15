@@ -4,7 +4,7 @@ const BankReconciliationService = require('../services/BankReconciliationService
 const auth = require('../middleware/auth');
 
 // Create reconciliation from bank statement
-router.post('/', auth, async (req, res) => {
+router.post('/', auth, auth.authorize && auth.authorize('admin', 'manager'), async (req, res) => {
   try {
     const { reconciliationDate, account, transactions } = req.body;
 
@@ -29,7 +29,7 @@ router.post('/', auth, async (req, res) => {
 });
 
 // Auto-match transactions
-router.post('/:id/auto-match', auth, async (req, res) => {
+router.post('/:id/auto-match', auth, auth.authorize && auth.authorize('admin', 'manager'), async (req, res) => {
   try {
     const reconciliation = await BankReconciliationService.autoMatch(
       req.params.id,
@@ -50,7 +50,7 @@ router.post('/:id/auto-match', auth, async (req, res) => {
 });
 
 // Link unmatched payment
-router.post('/:id/link-payment', auth, async (req, res) => {
+router.post('/:id/link-payment', auth, auth.authorize && auth.authorize('admin', 'manager'), async (req, res) => {
   try {
     const { transactionIndex, loanId } = req.body;
 
@@ -75,7 +75,7 @@ router.post('/:id/link-payment', auth, async (req, res) => {
 });
 
 // Flag fraud
-router.post('/:id/flag-fraud', auth, async (req, res) => {
+router.post('/:id/flag-fraud', auth, auth.authorize && auth.authorize('admin', 'manager'), async (req, res) => {
   try {
     const { transactionIndex, reason } = req.body;
 
@@ -100,7 +100,7 @@ router.post('/:id/flag-fraud', auth, async (req, res) => {
 });
 
 // Finalize reconciliation
-router.post('/:id/finalize', auth, async (req, res) => {
+router.post('/:id/finalize', auth, auth.authorize && auth.authorize('admin', 'manager'), async (req, res) => {
   try {
     const reconciliation = await BankReconciliationService.finalizeReconciliation(
       req.params.id,
