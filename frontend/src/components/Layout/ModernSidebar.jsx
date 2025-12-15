@@ -74,9 +74,21 @@ const ModernSidebar = ({ isCollapsed, setIsCollapsed }) => {
       roles: ['collector', 'manager', 'admin']
     },
     {
+      title: 'Collector Dashboard',
+      icon: Phone,
+      path: '/collector/dashboard',
+      roles: ['collector']
+    },
+    {
       title: 'My Workbench',
       icon: Phone,
       path: '/collector-work',
+      roles: ['collector']
+    },
+    {
+      title: 'My Cases',
+      icon: FileText,
+      path: '/collector/cases',
       roles: ['collector']
     },
     {
@@ -86,10 +98,22 @@ const ModernSidebar = ({ isCollapsed, setIsCollapsed }) => {
       roles: ['manager']
     },
     {
+      title: 'Manager Dashboard',
+      icon: BarChart3,
+      path: '/manager/dashboard',
+      roles: ['manager']
+    },
+    {
       title: 'Legal Cases',
       icon: FileText,
       path: '/legal-cases',
       roles: ['legal', 'admin']
+    },
+    {
+      title: 'Legal Dashboard',
+      icon: FileText,
+      path: '/legal/dashboard',
+      roles: ['legal']
     },
     {
       title: 'Audit Trail',
@@ -102,6 +126,12 @@ const ModernSidebar = ({ isCollapsed, setIsCollapsed }) => {
       icon: BarChart3,
       path: '/reports',
       roles: ['manager', 'admin']
+    },
+    {
+      title: 'MIS Reports',
+      icon: BarChart3,
+      path: '/mis/reports',
+      roles: ['manager', 'admin', 'investor']
     },
     {
       title: 'Profile',

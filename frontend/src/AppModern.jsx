@@ -32,6 +32,12 @@ import AuditLog from './pages/AuditLog';
 import Collections from './pages/Collections';
 import Upload from './pages/Upload';
 import Profile from './pages/Profile';
+import CollectorDashboard from './pages/Collector/CollectorDashboard';
+import MyCases from './pages/Collector/MyCases';
+import LoanDetail from './pages/Collector/LoanDetail';
+import ManagerDashboard from './pages/Manager/ManagerDashboard';
+import LegalDashboard from './pages/Legal/LegalDashboard';
+import MISReports from './pages/Reports/MISReports';
 
 // Modern Layout wrapper
 const ModernLayoutWrapper = () => {
@@ -123,8 +129,14 @@ const routerWithLayout = createBrowserRouter(
             { path: '/collections', element: <ModernCollections /> },
             { path: '/collections-old', element: <Collections /> },
             { path: '/collector-work', element: <CollectorWorkbench /> },
+            { path: '/collector/dashboard', element: <CollectorDashboard /> },
+            { path: '/collector/cases', element: <MyCases /> },
+            { path: '/collector/loan/:loanId', element: <LoanDetail /> },
+            { path: '/manager/dashboard', element: <ManagerDashboard /> },
             { path: '/manager-supervision', element: <ManagerSupervision /> },
             { path: '/legal-cases', element: <LegalCaseManagement /> },
+            { path: '/legal/dashboard', element: <LegalDashboard /> },
+            { path: '/mis/reports', element: <MISReports /> },
             { path: '/audit-trail', element: <AuditTrail /> },
             { path: '/loans', element: <Loans /> },
             { path: '/audit', element: <AuditLog /> },
