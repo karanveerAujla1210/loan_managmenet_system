@@ -1,52 +1,7 @@
-import { useState } from 'react';
-import { Phone, MessageSquare, Clock, AlertCircle, CheckCircle, Filter } from 'lucide-react';
-
-const collectionsData = [
-  {
-    id: 1,
-    customer: 'Amit Patel',
-    loanId: 'LN-2024-001',
-    dpdBucket: '15-30',
-    amount: '₹12,000',
-    lastPayment: '2023-12-05',
-    nextDue: '2023-12-20',
-    callStatus: 'pending',
-    promiseToPayDate: null,
-    callLogs: [
-      { date: '2024-01-10', duration: '3 min', notes: 'Customer promised payment by 15th' },
-      { date: '2024-01-08', duration: '2 min', notes: 'Phone not reachable' },
-    ],
-  },
-  {
-    id: 2,
-    customer: 'Suresh Verma',
-    loanId: 'LN-2024-002',
-    dpdBucket: '30-60',
-    amount: '₹8,500',
-    lastPayment: '2023-11-15',
-    nextDue: '2023-12-15',
-    callStatus: 'completed',
-    promiseToPayDate: '2024-01-20',
-    callLogs: [
-      { date: '2024-01-09', duration: '5 min', notes: 'Promised payment on 20th' },
-    ],
-  },
-  {
-    id: 3,
-    customer: 'Kavya Nair',
-    loanId: 'LN-2024-003',
-    dpdBucket: '60+',
-    amount: '₹15,000',
-    lastPayment: '2023-10-20',
-    nextDue: '2023-11-20',
-    callStatus: 'escalated',
-    promiseToPayDate: null,
-    callLogs: [
-      { date: '2024-01-07', duration: '8 min', notes: 'Customer facing financial hardship' },
-      { date: '2024-01-05', duration: '4 min', notes: 'Escalated to senior collector' },
-    ],
-  },
-];
+import { useState, useEffect } from 'react';
+import { Phone, MessageSquare, Clock, AlertCircle, CheckCircle, Filter, Loader } from 'lucide-react';
+import * as collectionsService from '../services/collections';
+import * as paymentsService from '../services/payments';
 
 const dpdColors = {
   '0-15': 'bg-green-50 text-green-700 border-green-200',
@@ -62,9 +17,85 @@ const callStatusColors = {
 };
 
 export default function ModernCollections() {
+  const [collectionsData, setCollectionsData] = useState([]);
   const [selectedCase, setSelectedCase] = useState(null);
   const [filterBucket, setFilterBucket] = useState('all');
+  const [loading, setLoading] = useState(true);
+  const [paymentAmount, setPaymentAmount] = useState('');
+  const [paymentLoading, setPaymentLoading] = useState(false);
 
+  useEffect(() => {
+    fetchCollections();
+  }, []);
+
+  const fetchCollections = async () => {
+    try {
+      setLoading(true);
+      const data = await collectionsService.getOverdueLoans();
+      const cases = (data?.data || []).map((loan, idx) => ({
+        id: idx + 1,
+        customer: loan.customerName || loan.customerId,
+        loanId: loan.loanId,
+        dpdBucket: loan.dpd ? (loan.dpd <= 15 ? '0-15' : loan.dpd <= 30 ? '15-30' : loan.dpd <= 60 ? '30-60' : '60+') : '0-15',
+        amount: `₹${(loan.loanAmount || 0).toLocaleString()}`,
+        lastPayment: loan.lastPaymentDate || 'N/A',
+        nextDue: loan.nextDueDate || 'N/A',
+        callStatus: loan.collectionStatus || 'pending',
+        promiseToPayDate: loan.promiseToPayDate || null,
+        remainingAmount: loan.remainingAmount || 0,
+        dpd: loan.dpd || 0,
+        callLogs: [
+          { date: new Date().toISOString(), duration: '0 min', notes: 'Case loaded from database' }
+        ],
+      }));
+      setCollectionsData(cases);
+      if (cases.length > 0) {
+        setSelectedCase(cases[0]);
+      }
+    } catch (err) {
+      console.error('Error fetching collections:', err);
+      setCollectionsData([]);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const getDPDCounts = () => {
+    return {
+      '0-15': collectionsData.filter(c => c.dpdBucket === '0-15').length,
+      '15-30': collectionsData.filter(c => c.dpdBucket === '15-30').length,
+      '30-60': collectionsData.filter(c => c.dpdBucket === '30-60').length,
+      '60+': collectionsData.filter(c => c.dpdBucket === '60+').length,
+    };
+  };
+
+  const handlePaymentSubmit = async () => {
+    if (!selectedCase || !paymentAmount) return;
+    try {
+      setPaymentLoading(true);
+      await paymentsService.recordPayment(selectedCase.loanId, {
+        amount: parseFloat(paymentAmount),
+        date: new Date(),
+        paymentMethod: 'manual'
+      });
+      setPaymentAmount('');
+      fetchCollections();
+    } catch (err) {
+      console.error('Error recording payment:', err);
+    } finally {
+      setPaymentLoading(false);
+    }
+  };
+
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center h-96">
+        <Loader className="w-8 h-8 animate-spin text-blue-600" />
+      </div>
+    );
+  }
+
+  const dpdCounts = getDPDCounts();
   const filteredCases = collectionsData.filter(
     (c) => filterBucket === 'all' || c.dpdBucket === filterBucket
   );
@@ -74,16 +105,16 @@ export default function ModernCollections() {
       {/* Page Header */}
       <div>
         <h1 className="text-3xl font-bold text-gray-900">Collections</h1>
-        <p className="text-gray-600 mt-1">Manage DPD cases and follow-ups</p>
+        <p className="text-gray-600 mt-1">Manage DPD cases and follow-ups - {collectionsData.length} cases</p>
       </div>
 
       {/* DPD Summary Cards */}
       <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
         {[
-          { label: '0-15 DPD', count: 12, color: 'green' },
-          { label: '15-30 DPD', count: 8, color: 'yellow' },
-          { label: '30-60 DPD', count: 5, color: 'orange' },
-          { label: '60+ DPD', count: 3, color: 'red' },
+          { label: '0-15 DPD', bucket: '0-15', count: dpdCounts['0-15'], color: 'green' },
+          { label: '15-30 DPD', bucket: '15-30', count: dpdCounts['15-30'], color: 'yellow' },
+          { label: '30-60 DPD', bucket: '30-60', count: dpdCounts['30-60'], color: 'orange' },
+          { label: '60+ DPD', bucket: '60+', count: dpdCounts['60+'], color: 'red' },
         ].map((bucket) => (
           <div
             key={bucket.label}
@@ -96,7 +127,7 @@ export default function ModernCollections() {
                 ? 'bg-orange-50 border border-orange-200'
                 : 'bg-red-50 border border-red-200'
             }`}
-            onClick={() => setFilterBucket(bucket.label.split(' ')[0] === '0-15' ? '0-15' : bucket.label.split(' ')[0] === '15-30' ? '15-30' : bucket.label.split(' ')[0] === '30-60' ? '30-60' : '60+')}
+            onClick={() => setFilterBucket(bucket.bucket)}
           >
             <p className={`text-sm font-medium ${
               bucket.color === 'green'
@@ -260,6 +291,30 @@ export default function ModernCollections() {
                       </div>
                     </div>
                   ))}
+                </div>
+              </div>
+
+              {/* Payment Section */}
+              <div className="pt-4 border-t border-gray-200">
+                <h3 className="text-lg font-semibold text-gray-900 mb-4">Record Payment</h3>
+                <div className="space-y-3">
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">Amount (₹)</label>
+                    <input
+                      type="number"
+                      value={paymentAmount}
+                      onChange={(e) => setPaymentAmount(e.target.value)}
+                      placeholder="Enter payment amount"
+                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
+                    />
+                  </div>
+                  <button
+                    onClick={handlePaymentSubmit}
+                    disabled={!paymentAmount || paymentLoading}
+                    className="w-full px-4 py-2.5 bg-green-600 text-white rounded-lg font-medium hover:bg-green-700 transition disabled:opacity-50"
+                  >
+                    {paymentLoading ? 'Recording...' : 'Record Payment'}
+                  </button>
                 </div>
               </div>
 

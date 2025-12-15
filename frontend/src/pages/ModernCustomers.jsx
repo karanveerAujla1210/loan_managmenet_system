@@ -1,7 +1,10 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
+import { useQuery } from '@tanstack/react-query';
 import { Search, Filter, ChevronRight, Eye } from 'lucide-react';
+import * as customerService from '../services/customers';
 
-const customersData = [
+// Fallback data
+const defaultCustomersData = [
   {
     id: 1,
     name: 'Rajesh Kumar',
@@ -12,50 +15,6 @@ const customersData = [
     dpd: 0,
     emi: '₹8,500',
     nextPayment: '2024-01-15',
-  },
-  {
-    id: 2,
-    name: 'Priya Singh',
-    email: 'priya@example.com',
-    phone: '+91 98765 43211',
-    loanAmount: '₹1,80,000',
-    status: 'active',
-    dpd: 0,
-    emi: '₹6,200',
-    nextPayment: '2024-01-16',
-  },
-  {
-    id: 3,
-    name: 'Amit Patel',
-    email: 'amit@example.com',
-    phone: '+91 98765 43212',
-    loanAmount: '₹3,50,000',
-    status: 'dpd',
-    dpd: 15,
-    emi: '₹12,000',
-    nextPayment: '2023-12-20',
-  },
-  {
-    id: 4,
-    name: 'Neha Sharma',
-    email: 'neha@example.com',
-    phone: '+91 98765 43213',
-    loanAmount: '₹1,50,000',
-    status: 'active',
-    dpd: 0,
-    emi: '₹5,200',
-    nextPayment: '2024-01-18',
-  },
-  {
-    id: 5,
-    name: 'Vikram Desai',
-    email: 'vikram@example.com',
-    phone: '+91 98765 43214',
-    loanAmount: '₹2,80,000',
-    status: 'closed',
-    dpd: 0,
-    emi: '₹9,500',
-    nextPayment: 'Closed',
   },
 ];
 
@@ -69,12 +28,31 @@ export default function ModernCustomers() {
   const [searchTerm, setSearchTerm] = useState('');
   const [filterStatus, setFilterStatus] = useState('all');
   const [selectedCustomer, setSelectedCustomer] = useState(null);
+  const [customers, setCustomers] = useState(defaultCustomersData);
+  const [loading, setLoading] = useState(false);
 
-  const filteredCustomers = customersData.filter((customer) => {
+  useEffect(() => {
+    const fetchCustomers = async () => {
+      setLoading(true);
+      try {
+        const data = await customerService.getAllCustomers();
+        if (data && data.length > 0) {
+          setCustomers(data);
+        }
+      } catch (error) {
+        console.error('Error fetching customers:', error);
+      } finally {
+        setLoading(false);
+      }
+    };
+    fetchCustomers();
+  }, []);
+
+  const filteredCustomers = customers.filter((customer) => {
     const matchesSearch =
       customer.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      customer.email.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      customer.phone.includes(searchTerm);
+      customer.email?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      customer.phone?.includes(searchTerm);
     const matchesFilter = filterStatus === 'all' || customer.status === filterStatus;
     return matchesSearch && matchesFilter;
   });

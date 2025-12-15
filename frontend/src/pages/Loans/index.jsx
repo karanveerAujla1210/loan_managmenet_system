@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { Card, CardContent, CardHeader, CardTitle } from '../../components/ui/Card';
 import { Button } from '../../components/ui/Button';
@@ -7,15 +7,18 @@ import { formatCurrency } from '../../lib/format';
 import FilterBar from '../../components/FilterBar';
 import Pagination from '../../components/Pagination';
 import { toast } from 'react-hot-toast';
-import { FileText, DollarSign, Users, AlertCircle } from 'lucide-react';
+import { FileText, DollarSign, Users, AlertCircle, Filter, Search } from 'lucide-react';
 
 const Loans = () => {
   const [searchTerm, setSearchTerm] = useState('');
-  const [statusFilter, setStatusFilter] = useState('all');
+  const [statusFilter, setStatusFilter] = useState('disbursed');
+  const [branchFilter, setBranchFilter] = useState('');
+  const [dateFilter, setDateFilter] = useState('');
   const [pageSize, setPageSize] = useState(10);
   const [currentPage, setCurrentPage] = useState(1);
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
   const [editingLoan, setEditingLoan] = useState(null);
+  const [branches, setBranches] = useState([]);
   const [formData, setFormData] = useState({
     customerId: '',
     principalAmount: '',
@@ -27,13 +30,23 @@ const Loans = () => {
 
   const queryClient = useQueryClient();
 
-  const { data: loans, isLoading } = useQuery(
+  const { data: loansResponse, isLoading } = useQuery(
     ['loans', { search: searchTerm, status: statusFilter, page: currentPage, limit: pageSize }],
     () => getLoans({ search: searchTerm, status: statusFilter, page: currentPage, limit: pageSize }),
     {
       keepPreviousData: true,
     }
   );
+
+  // Extract unique branches from loans
+  useEffect(() => {
+    if (loansResponse?.data) {
+      const uniqueBranches = [...new Set(loansResponse.data.map(l => l.metadata?.branch).filter(Boolean))];
+      setBranches(uniqueBranches);
+    }
+  }, [loansResponse]);
+
+  const loans = loansResponse || {};
 
   const createMutation = useMutation(createLoan, {
     onSuccess: () => {
@@ -188,129 +201,113 @@ const Loans = () => {
 
       <Card>
         <CardHeader>
-          <CardTitle>Loan Applications</CardTitle>
-          <div className="mt-4">
-            <FilterBar
-              searchTerm={searchTerm}
-              onSearch={(v) => setSearchTerm(v)}
-              status={statusFilter}
-              onStatusChange={(v) => setStatusFilter(v)}
-              pageSize={pageSize}
-              onPageSizeChange={(v) => setPageSize(v)}
-            />
+          <CardTitle>Disbursed Loans by Branch & Date</CardTitle>
+          <div className="mt-6 space-y-4">
+            {/* Search and Filter Row 1 */}
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+              <div className="flex items-center space-x-2">
+                <Search className="w-5 h-5 text-gray-400" />
+                <input
+                  type="text"
+                  placeholder="Search by Loan ID or Customer..."
+                  value={searchTerm}
+                  onChange={(e) => setSearchTerm(e.target.value)}
+                  className="flex-1 px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#1741FF] outline-none"
+                />
+              </div>
+              <div className="flex items-center space-x-2">
+                <Filter className="w-5 h-5 text-gray-400" />
+                <select
+                  value={branchFilter}
+                  onChange={(e) => setBranchFilter(e.target.value)}
+                  className="flex-1 px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#1741FF] outline-none"
+                >
+                  <option value="">All Branches</option>
+                  {branches.map(branch => (
+                    <option key={branch} value={branch}>{branch}</option>
+                  ))}
+                </select>
+              </div>
+              <input
+                type="date"
+                value={dateFilter}
+                onChange={(e) => setDateFilter(e.target.value)}
+                className="px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#1741FF] outline-none"
+              />
+            </div>
           </div>
         </CardHeader>
         <CardContent>
-          <div className="overflow-x-auto">
-            <table className="min-w-full divide-y divide-gray-200">
-              <thead className="bg-gray-50">
-                <tr>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Loan ID
-                  </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Customer
-                  </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Amount
-                  </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Interest Rate
-                  </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Tenure
-                  </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Status
-                  </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Actions
-                  </th>
-                </tr>
-              </thead>
-              <tbody className="bg-white divide-y divide-gray-200">
-                {loans?.data?.map((loan) => (
-                  <tr key={loan.id} tabIndex={0} className="focus:outline-none focus:ring-2 focus:ring-indigo-200" onKeyDown={(e) => { if (e.key === 'Enter') { /* noop - row clickable handlers could go here */ } }}>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                      {loan.loanId}
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap">
-                      <div className="text-sm font-medium text-gray-900">{loan.customerName}</div>
-                      <div className="text-sm text-gray-500">{loan.customerEmail}</div>
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                      {formatCurrency(loan.principalAmount)}
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                      {loan.interestRate}%
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                      {loan.tenure} months
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap">
-                      <span className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${
-                        loan.status === 'approved'
-                          ? 'bg-green-100 text-green-800'
-                          : loan.status === 'rejected'
-                          ? 'bg-red-100 text-red-800'
-                          : loan.status === 'disbursed'
-                          ? 'bg-blue-100 text-blue-800'
-                          : loan.status === 'closed'
-                          ? 'bg-gray-100 text-gray-800'
-                          : 'bg-yellow-100 text-yellow-800'
-                      }`}>
-                        {loan.status}
-                      </span>
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
-                      {loan.status === 'pending' && (
-                        <>
-                          <Button
-                            size="sm"
-                            className="mr-2"
-                            onClick={() => handleApprove(loan.id)}
-                            disabled={approveMutation.isLoading}
-                          >
-                            Approve
-                          </Button>
-                          <Button
-                            size="sm"
-                            variant="outline"
-                            onClick={() => handleReject(loan.id)}
-                            disabled={rejectMutation.isLoading}
-                          >
-                            Reject
-                          </Button>
-                        </>
-                      )}
-                      {loan.status === 'approved' && (
-                        <Button size="sm">Disburse</Button>
-                      )}
-                      <Button
-                        size="sm"
-                        variant="outline"
-                        className="ml-2"
-                        onClick={() => handleEdit(loan)}
-                      >
-                        Edit
-                      </Button>
-                    </td>
+          {isLoading ? (
+            <div className="text-center py-8">Loading loans...</div>
+          ) : !loans?.data || loans.data.length === 0 ? (
+            <div className="text-center py-8 text-gray-500">No loans found</div>
+          ) : (
+            <div className="overflow-x-auto">
+              <table className="min-w-full divide-y divide-gray-200">
+                <thead className="bg-gray-50">
+                  <tr>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                      Loan ID
+                    </th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                      Customer
+                    </th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                      Amount
+                    </th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                      Branch
+                    </th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                      Disbursement Date
+                    </th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                      Status
+                    </th>
                   </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-          {(!loans?.data || loans?.data?.length === 0) && (
-            <div className="empty-state">
-              <p className="text-gray-500">No loan applications found.</p>
+                </thead>
+                <tbody className="bg-white divide-y divide-gray-200">
+                  {loans.data.map((loan) => (
+                    <tr key={loan._id || loan.loanId} className="hover:bg-gray-50">
+                      <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
+                        {loan.loanId}
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap">
+                        <div className="text-sm font-medium text-gray-900">{loan.customerName || 'N/A'}</div>
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                        ₹{loan.principal?.toLocaleString()}
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                        {loan.metadata?.branch || 'N/A'}
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                        {new Date(loan.disbursementDate).toLocaleDateString()}
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap">
+                        <span className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${
+                          loan.status === 'disbursed'
+                            ? 'bg-blue-100 text-blue-800'
+                            : 'bg-gray-100 text-gray-800'
+                        }`}>
+                          {loan.status}
+                        </span>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
             </div>
           )}
+          
+          {loans?.pagination && (
+            <Pagination
+              pagination={loans.pagination}
+              onPageChange={(p) => setCurrentPage(p)}
+            />
+          )}
         </CardContent>
-
-        <Pagination
-          pagination={loans?.pagination}
-          onPageChange={(p) => setCurrentPage(p)}
-        />
       </Card>
 
       {isCreateModalOpen && (

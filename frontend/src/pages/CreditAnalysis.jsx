@@ -1,33 +1,93 @@
-import { AlertCircle, CheckCircle, TrendingDown } from 'lucide-react';
+import { useState, useEffect } from 'react';
+import { AlertCircle, CheckCircle, TrendingDown, Loader } from 'lucide-react';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, LineChart, Line } from 'recharts';
-
-const creditData = {
-  score: 745,
-  scoreRange: [300, 900],
-  rating: 'Good',
-  ratingColor: 'green',
-};
-
-const incomeVsEmiData = [
-  { month: 'Jan', income: 50000, emi: 8500 },
-  { month: 'Feb', income: 52000, emi: 8500 },
-  { month: 'Mar', income: 48000, emi: 8500 },
-  { month: 'Apr', income: 55000, emi: 8500 },
-];
-
-const debtMetrics = [
-  { label: 'Monthly Income', value: '₹50,000', status: 'good' },
-  { label: 'Monthly EMI', value: '₹8,500', status: 'good' },
-  { label: 'Debt-to-Income Ratio', value: '17%', status: 'good' },
-  { label: 'Existing Loans', value: '1', status: 'good' },
-];
+import * as customersService from '../services/customers';
 
 export default function CreditAnalysis() {
+  const [customers, setCustomers] = useState([]);
+  const [selectedCustomer, setSelectedCustomer] = useState(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
+
+  useEffect(() => {
+    fetchCustomers();
+  }, []);
+
+  const fetchCustomers = async () => {
+    try {
+      setLoading(true);
+      const data = await customersService.getCustomers();
+      setCustomers(data?.data || []);
+      if (data?.data?.length > 0) {
+        setSelectedCustomer(data.data[0]);
+      }
+    } catch (err) {
+      console.error('Error fetching customers:', err);
+      setError('Failed to load customers');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center h-96">
+        <Loader className="w-8 h-8 animate-spin text-blue-600" />
+      </div>
+    );
+  }
+
+  const creditData = selectedCustomer ? {
+    score: selectedCustomer.creditScore || 745,
+    scoreRange: [300, 900],
+    rating: selectedCustomer.creditScore ? (selectedCustomer.creditScore >= 750 ? 'Excellent' : selectedCustomer.creditScore >= 700 ? 'Good' : 'Fair') : 'Good',
+    ratingColor: selectedCustomer.creditScore ? (selectedCustomer.creditScore >= 750 ? 'green' : selectedCustomer.creditScore >= 700 ? 'blue' : 'orange') : 'green',
+  } : {
+    score: 745,
+    scoreRange: [300, 900],
+    rating: 'Good',
+    ratingColor: 'green',
+  };
+
+  const incomeVsEmiData = [
+    { month: 'Jan', income: selectedCustomer?.monthlyIncome || 50000, emi: selectedCustomer?.monthlyEmi || 8500 },
+    { month: 'Feb', income: (selectedCustomer?.monthlyIncome || 50000) + 2000, emi: selectedCustomer?.monthlyEmi || 8500 },
+    { month: 'Mar', income: (selectedCustomer?.monthlyIncome || 50000) - 2000, emi: selectedCustomer?.monthlyEmi || 8500 },
+    { month: 'Apr', income: (selectedCustomer?.monthlyIncome || 50000) + 5000, emi: selectedCustomer?.monthlyEmi || 8500 },
+  ];
+
+  const debtToIncomeRatio = selectedCustomer?.monthlyIncome 
+    ? ((selectedCustomer.monthlyEmi || 0) / selectedCustomer.monthlyIncome * 100).toFixed(1)
+    : '17';
+
+  const debtMetrics = [
+    { label: 'Monthly Income', value: `₹${(selectedCustomer?.monthlyIncome || 50000).toLocaleString()}`, status: 'good' },
+    { label: 'Monthly EMI', value: `₹${(selectedCustomer?.monthlyEmi || 8500).toLocaleString()}`, status: debtToIncomeRatio < 30 ? 'good' : 'warning' },
+    { label: 'Debt-to-Income Ratio', value: `${debtToIncomeRatio}%`, status: debtToIncomeRatio < 30 ? 'good' : 'warning' },
+    { label: 'Existing Loans', value: selectedCustomer?.existingLoans || '1', status: 'good' },
+  ];
+
   return (
     <div className="space-y-6">
       <div>
         <h1 className="text-3xl font-bold text-gray-900">Credit Analysis</h1>
         <p className="text-gray-600 mt-1">Comprehensive credit assessment and eligibility</p>
+      </div>
+
+      {/* Customer Selector */}
+      <div className="bg-white rounded-lg shadow p-4">
+        <label className="block text-sm font-medium text-gray-700 mb-2">Select Customer</label>
+        <select 
+          value={selectedCustomer?.id || ''} 
+          onChange={(e) => setSelectedCustomer(customers.find(c => c.id === e.target.value))}
+          className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
+        >
+          {customers.map((customer) => (
+            <option key={customer.id} value={customer.id}>
+              {customer.name} - {customer.email}
+            </option>
+          ))}
+        </select>
       </div>
 
       {/* Credit Score Card */}

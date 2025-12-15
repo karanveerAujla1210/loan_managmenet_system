@@ -1,17 +1,73 @@
-import { Clock, CheckCircle, AlertCircle } from 'lucide-react';
-
-const operationsData = [
-  { id: 1, task: 'Document Verification', customer: 'Rajesh Kumar', status: 'pending', dueDate: '2024-01-15' },
-  { id: 2, task: 'Credit Check', customer: 'Priya Singh', status: 'completed', dueDate: '2024-01-10' },
-  { id: 3, task: 'Disbursement Processing', customer: 'Amit Patel', status: 'in-progress', dueDate: '2024-01-12' },
-];
+import { useState, useEffect } from 'react';
+import { Clock, CheckCircle, AlertCircle, Loader } from 'lucide-react';
+import * as loansService from '../services/loans';
 
 export default function Operations() {
+  const [operations, setOperations] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [filter, setFilter] = useState('all');
+
+  useEffect(() => {
+    fetchOperations();
+  }, []);
+
+  const fetchOperations = async () => {
+    try {
+      setLoading(true);
+      const data = await loansService.getLoans();
+      // Transform loan data to operations format
+      const operationsData = (data?.data || []).map((loan, idx) => ({
+        id: idx + 1,
+        loanId: loan.loanId,
+        task: loan.status === 'pending' ? 'Document Verification' : loan.status === 'approved' ? 'Disbursement Processing' : 'Loan Monitoring',
+        customer: loan.customerName || loan.customerId,
+        status: loan.status,
+        dueDate: loan.disbursementDate || loan.createdAt,
+        amount: loan.loanAmount
+      }));
+      setOperations(operationsData);
+    } catch (err) {
+      console.error('Error fetching operations:', err);
+      setOperations([]);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const filteredOps = filter === 'all' 
+    ? operations 
+    : operations.filter(op => op.status === filter);
+
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center h-96">
+        <Loader className="w-8 h-8 animate-spin text-blue-600" />
+      </div>
+    );
+  }
+
   return (
     <div className="space-y-6">
       <div>
         <h1 className="text-3xl font-bold text-gray-900">Operations</h1>
         <p className="text-gray-600 mt-1">Manage operational tasks and workflows</p>
+      </div>
+
+      {/* Filter */}
+      <div className="flex gap-2">
+        {['all', 'pending', 'approved', 'disbursed'].map(s => (
+          <button
+            key={s}
+            onClick={() => setFilter(s)}
+            className={`px-4 py-2 rounded-lg font-medium transition ${
+              filter === s
+                ? 'bg-blue-600 text-white'
+                : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+            }`}
+          >
+            {s.charAt(0).toUpperCase() + s.slice(1)}
+          </button>
+        ))}
       </div>
 
       <div className="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">

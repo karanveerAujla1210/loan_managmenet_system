@@ -1,30 +1,48 @@
+import { useEffect, useState } from 'react';
+import { useQuery } from '@tanstack/react-query';
 import { Users, TrendingUp, DollarSign, AlertCircle, BarChart3, PieChart } from 'lucide-react';
 import KPICard from '../components/ui/KPICard';
 import { LineChart, Line, BarChart, Bar, PieChart as PieChartComponent, Pie, Cell, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts';
-
-const performanceData = [
-  { month: 'Jan', disbursed: 45000, collected: 38000 },
-  { month: 'Feb', disbursed: 52000, collected: 41000 },
-  { month: 'Mar', disbursed: 48000, collected: 45000 },
-  { month: 'Apr', disbursed: 61000, collected: 52000 },
-  { month: 'May', disbursed: 55000, collected: 48000 },
-  { month: 'Jun', disbursed: 67000, collected: 61000 },
-];
-
-const statusData = [
-  { name: 'Active', value: 245, color: '#1741FF' },
-  { name: 'Closed', value: 89, color: '#22c55e' },
-  { name: 'DPD', value: 34, color: '#ef4444' },
-];
-
-const recentActivity = [
-  { id: 1, customer: 'Rajesh Kumar', action: 'Loan Disbursed', amount: '₹2,50,000', time: '2 hours ago', status: 'success' },
-  { id: 2, customer: 'Priya Singh', action: 'Payment Received', amount: '₹15,000', time: '4 hours ago', status: 'success' },
-  { id: 3, customer: 'Amit Patel', action: 'DPD Alert', amount: '₹8,500', time: '6 hours ago', status: 'warning' },
-  { id: 4, customer: 'Neha Sharma', action: 'Document Uploaded', amount: '-', time: '1 day ago', status: 'info' },
-];
+import * as dashboardService from '../services/dashboard';
 
 export default function ModernDashboard() {
+  const [dashboardData, setDashboardData] = useState(null);
+
+  useEffect(() => {
+    const fetchDashboard = async () => {
+      try {
+        const data = await dashboardService.getDashboardStats();
+        setDashboardData(data);
+      } catch (error) {
+        console.error('Error loading dashboard:', error);
+      }
+    };
+    fetchDashboard();
+  }, []);
+
+  // Fallback data while loading
+  const stats = dashboardData || {
+    totalCustomers: 1250,
+    activeLoans: 890,
+    totalDisbursed: 45000000,
+    pendingApprovals: 23,
+  };
+
+  const performanceData = [
+    { month: 'Jan', disbursed: 45000, collected: 38000 },
+    { month: 'Feb', disbursed: 52000, collected: 41000 },
+    { month: 'Mar', disbursed: 48000, collected: 45000 },
+    { month: 'Apr', disbursed: 61000, collected: 52000 },
+    { month: 'May', disbursed: 55000, collected: 48000 },
+    { month: 'Jun', disbursed: 67000, collected: 61000 },
+  ];
+
+  const statusData = [
+    { name: 'Active', value: stats.activeLoans || 245, color: '#1741FF' },
+    { name: 'Closed', value: 89, color: '#22c55e' },
+    { name: 'DPD', value: stats.overdueLoans || 34, color: '#ef4444' },
+  ];
+
   return (
     <div className="space-y-8">
       {/* Page Header */}
@@ -36,8 +54,8 @@ export default function ModernDashboard() {
       {/* KPI Cards */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
         <KPICard
-          label="Total Leads"
-          value="1,248"
+          label="Total Customers"
+          value={stats.totalCustomers?.toLocaleString()}
           icon={Users}
           trend="up"
           trendValue="12"
@@ -45,15 +63,15 @@ export default function ModernDashboard() {
         />
         <KPICard
           label="Active Loans"
-          value="368"
+          value={stats.activeLoans?.toLocaleString()}
           icon={TrendingUp}
           trend="up"
           trendValue="8"
           color="green"
         />
         <KPICard
-          label="Collections"
-          value="₹45.2L"
+          label="Total Disbursed"
+          value={`₹${(stats.totalDisbursed / 100000).toFixed(1)}L`}
           icon={DollarSign}
           trend="up"
           trendValue="15"
