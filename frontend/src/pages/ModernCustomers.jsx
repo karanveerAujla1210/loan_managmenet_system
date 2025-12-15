@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { useQuery } from '@tanstack/react-query';
+import { useNavigate } from 'react-router-dom';
 import { Search, Filter, ChevronRight, Eye } from 'lucide-react';
 import * as customerService from '../services/customers';
 
@@ -25,6 +25,7 @@ const statusBadges = {
 };
 
 export default function ModernCustomers() {
+  const navigate = useNavigate();
   const [searchTerm, setSearchTerm] = useState('');
   const [filterStatus, setFilterStatus] = useState('all');
   const [selectedCustomer, setSelectedCustomer] = useState(null);
@@ -241,10 +242,19 @@ export default function ModernCustomers() {
 
               {/* Action Buttons */}
               <div className="flex space-x-3 pt-4 border-t border-gray-200">
-                <button className="flex-1 px-4 py-2.5 bg-[#1741FF] text-white rounded-lg font-medium hover:bg-[#1230cc] transition">
+                <button
+                  onClick={() => {
+                    navigate(`/customers/${selectedCustomer.id}`);
+                    setSelectedCustomer(null);
+                  }}
+                  className="flex-1 px-4 py-2.5 bg-[#1741FF] text-white rounded-lg font-medium hover:bg-[#1230cc] transition"
+                >
                   View Full Profile
                 </button>
-                <button className="flex-1 px-4 py-2.5 border border-gray-300 text-gray-700 rounded-lg font-medium hover:bg-gray-50 transition">
+                <button
+                  onClick={() => setSelectedCustomer(null)}
+                  className="flex-1 px-4 py-2.5 border border-gray-300 text-gray-700 rounded-lg font-medium hover:bg-gray-50 transition"
+                >
                   Close
                 </button>
               </div>

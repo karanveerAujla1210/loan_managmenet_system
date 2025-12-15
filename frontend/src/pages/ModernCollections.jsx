@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { Phone, MessageSquare, Clock, AlertCircle, CheckCircle, Filter, Loader, Search, Download, Plus } from 'lucide-react';
-import toast from 'react-hot-toast';
+import { toast } from 'react-hot-toast';
 import * as loansService from '../services/loans';
 import * as paymentsService from '../services/payments';
 
@@ -451,7 +451,16 @@ export default function ModernCollections() {
 
               {/* Action Buttons */}
               <div className="flex space-x-3 pt-4 border-t">
-                <button className="flex-1 px-4 py-2.5 bg-blue-600 text-white rounded-lg font-medium hover:bg-blue-700 transition flex items-center justify-center space-x-2">
+                <button
+                  onClick={() => {
+                    if (selectedCase?.mobileNo && selectedCase.mobileNo !== 'N/A') {
+                      window.location.href = `tel:${selectedCase.mobileNo}`;
+                    } else {
+                      toast.error('Mobile number not available');
+                    }
+                  }}
+                  className="flex-1 px-4 py-2.5 bg-blue-600 text-white rounded-lg font-medium hover:bg-blue-700 transition flex items-center justify-center space-x-2"
+                >
                   <Phone className="w-4 h-4" />
                   <span>Make Call</span>
                 </button>

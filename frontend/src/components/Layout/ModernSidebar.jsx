@@ -1,22 +1,8 @@
 import React from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import { motion } from 'framer-motion';
-import {
-  LayoutDashboard,
-  Users,
-  UserPlus,
-  CreditCard,
-  TrendingUp,
-  Settings,
-  Banknote,
-  FileText,
-  Phone,
-  BarChart3,
-  User,
-  LogOut,
-  ChevronLeft,
-  ChevronRight
-} from 'lucide-react';
+import { LogOut, ChevronLeft, ChevronRight } from 'lucide-react';
+import NAV_ITEMS from '../../config/nav';
 import { cn } from '../../lib/utils';
 import { useAuth } from '../../context/AuthContext';
 
@@ -24,124 +10,7 @@ const ModernSidebar = ({ isCollapsed, setIsCollapsed }) => {
   const location = useLocation();
   const { user, logout } = useAuth();
 
-  const menuItems = [
-    {
-      title: 'Dashboard',
-      icon: LayoutDashboard,
-      path: '/dashboard',
-      roles: ['all']
-    },
-    {
-      title: 'Customers',
-      icon: Users,
-      path: '/customers',
-      roles: ['all']
-    },
-    {
-      title: 'Leads',
-      icon: UserPlus,
-      path: '/leads',
-      roles: ['counsellor', 'advisor', 'manager', 'admin']
-    },
-    {
-      title: 'Loans',
-      icon: CreditCard,
-      path: '/loans',
-      roles: ['all']
-    },
-    {
-      title: 'Credit Analysis',
-      icon: TrendingUp,
-      path: '/credit-analysis',
-      roles: ['advisor', 'manager', 'admin']
-    },
-    {
-      title: 'Operations',
-      icon: Settings,
-      path: '/operations',
-      roles: ['manager', 'admin']
-    },
-    {
-      title: 'Disbursements',
-      icon: Banknote,
-      path: '/disbursements',
-      roles: ['manager', 'admin']
-    },
-    {
-      title: 'Collections',
-      icon: Phone,
-      path: '/collections',
-      roles: ['collector', 'manager', 'admin']
-    },
-    {
-      title: 'Collector Dashboard',
-      icon: Phone,
-      path: '/collector/dashboard',
-      roles: ['collector']
-    },
-    {
-      title: 'My Workbench',
-      icon: Phone,
-      path: '/collector-work',
-      roles: ['collector']
-    },
-    {
-      title: 'My Cases',
-      icon: FileText,
-      path: '/collector/cases',
-      roles: ['collector']
-    },
-    {
-      title: 'Team Supervision',
-      icon: BarChart3,
-      path: '/manager-supervision',
-      roles: ['manager']
-    },
-    {
-      title: 'Manager Dashboard',
-      icon: BarChart3,
-      path: '/manager/dashboard',
-      roles: ['manager']
-    },
-    {
-      title: 'Legal Cases',
-      icon: FileText,
-      path: '/legal-cases',
-      roles: ['legal', 'admin']
-    },
-    {
-      title: 'Legal Dashboard',
-      icon: FileText,
-      path: '/legal/dashboard',
-      roles: ['legal']
-    },
-    {
-      title: 'Audit Trail',
-      icon: BarChart3,
-      path: '/audit-trail',
-      roles: ['manager', 'admin']
-    },
-    {
-      title: 'Reports',
-      icon: BarChart3,
-      path: '/reports',
-      roles: ['manager', 'admin']
-    },
-    {
-      title: 'MIS Reports',
-      icon: BarChart3,
-      path: '/mis/reports',
-      roles: ['manager', 'admin', 'investor']
-    },
-    {
-      title: 'Profile',
-      icon: User,
-      path: '/profile',
-      roles: ['all']
-    }
-  ];
-
-  const filteredMenuItems = menuItems.filter(item => 
+  const filteredMenuItems = NAV_ITEMS.filter(item =>
     item.roles.includes('all') || item.roles.includes(user?.role)
   );
 
@@ -163,7 +32,7 @@ const ModernSidebar = ({ isCollapsed, setIsCollapsed }) => {
             exit={{ opacity: 0 }}
             className="flex items-center"
           >
-            <div className="w-8 h-8 bg-primary-500 rounded-lg flex items-center justify-center mr-3">
+            <div className="w-8 h-8 bg-blue-600 rounded-lg flex items-center justify-center mr-3">
               <CreditCard className="w-4 h-4 text-white" />
             </div>
             <div>
@@ -198,13 +67,13 @@ const ModernSidebar = ({ isCollapsed, setIsCollapsed }) => {
               className={cn(
                 'flex items-center px-3 py-3 rounded-xl text-sm font-medium transition-all duration-200 group relative',
                 active
-                  ? 'bg-primary-50 text-primary-700 shadow-sm'
+                  ? 'bg-blue-50 text-blue-700 shadow-sm'
                   : 'text-gray-600 hover:bg-gray-50 hover:text-gray-900'
               )}
             >
               <Icon className={cn(
                 'w-5 h-5 flex-shrink-0',
-                active ? 'text-primary-600' : 'text-gray-400 group-hover:text-gray-600'
+                active ? 'text-blue-600' : 'text-gray-400 group-hover:text-gray-600'
               )} />
               
               {!isCollapsed && (
@@ -221,7 +90,7 @@ const ModernSidebar = ({ isCollapsed, setIsCollapsed }) => {
               {active && (
                 <motion.div
                   layoutId="activeTab"
-                  className="absolute right-2 w-2 h-2 bg-primary-500 rounded-full"
+                  className="absolute right-2 w-2 h-2 bg-blue-600 rounded-full"
                 />
               )}
             </Link>
@@ -239,8 +108,8 @@ const ModernSidebar = ({ isCollapsed, setIsCollapsed }) => {
             className="mb-4 p-3 bg-gray-50 rounded-xl"
           >
             <div className="flex items-center">
-              <div className="w-8 h-8 bg-primary-100 rounded-full flex items-center justify-center mr-3">
-                <User className="w-4 h-4 text-primary-600" />
+              <div className="w-8 h-8 bg-blue-100 rounded-full flex items-center justify-center mr-3">
+                <User className="w-4 h-4 text-blue-600" />
               </div>
               <div className="flex-1 min-w-0">
                 <p className="text-sm font-medium text-gray-900 truncate">

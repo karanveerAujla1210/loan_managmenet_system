@@ -1,106 +1,16 @@
 import React, { useState } from 'react';
+import NAV_ITEMS from '../config/nav';
 
 const Sidebar = ({ isOpen, setIsOpen }) => {
   const [activeMenu, setActiveMenu] = useState('dashboard');
 
-  const menuItems = [
-    {
-      id: 'dashboard',
-      name: 'Dashboard',
-      icon: '📊',
-      path: '/dashboard'
-    },
-    {
-      id: 'credit',
-      name: 'Credit Management',
-      icon: '💳',
-      submenu: [
-        { name: 'Customer Credit Analysis', path: '/credit/analysis' },
-        { name: 'Credit Health Summary', path: '/credit/health' },
-        { name: 'Loan-wise Credit Score', path: '/credit/scores' }
-      ]
-    },
-    {
-      id: 'loans',
-      name: 'Disbursed Loans',
-      icon: '💰',
-      submenu: [
-        { name: 'Active Portfolio', path: '/loans/active' },
-        { name: 'Loan Search', path: '/loans/search' },
-        { name: 'Performance Analytics', path: '/loans/analytics' }
-      ]
-    },
-    {
-      id: 'overdue',
-      name: 'Overdue Management',
-      icon: '⚠️',
-      submenu: [
-        { name: 'DPD Bucket View', path: '/overdue/buckets' },
-        { name: 'Aging Analysis', path: '/overdue/aging' },
-        { name: 'Follow-up Scheduler', path: '/overdue/followup' }
-      ]
-    },
-    {
-      id: 'legal',
-      name: 'Legal Cases',
-      icon: '⚖️',
-      submenu: [
-        { name: 'Notice Management', path: '/legal/notices' },
-        { name: 'Court Case Tracking', path: '/legal/cases' },
-        { name: 'Document Upload', path: '/legal/documents' }
-      ]
-    },
-    {
-      id: 'payments',
-      name: 'Payment Processing',
-      icon: '💸',
-      submenu: [
-        { name: 'Manual Payment Entry', path: '/payments/manual' },
-        { name: 'Bulk Payment Upload', path: '/payments/bulk' },
-        { name: 'Payment Allocation', path: '/payments/allocation' }
-      ]
-    },
-    {
-      id: 'reconciliation',
-      name: 'Bank Reconciliation',
-      icon: '🏦',
-      submenu: [
-        { name: 'UTR Matching', path: '/reconciliation/utr' },
-        { name: 'Statement Upload', path: '/reconciliation/upload' },
-        { name: 'Mismatch Resolution', path: '/reconciliation/mismatches' }
-      ]
-    },
-    {
-      id: 'customers',
-      name: 'Customer Management',
-      icon: '👤',
-      submenu: [
-        { name: 'Customer Profile', path: '/customers/profile' },
-        { name: 'Loan History', path: '/customers/history' },
-        { name: 'Call Log Management', path: '/customers/calls' }
-      ]
-    },
-    {
-      id: 'reports',
-      name: 'Reports & Analytics',
-      icon: '📊',
-      submenu: [
-        { name: 'Collection Performance', path: '/reports/collection' },
-        { name: 'Aging Reports', path: '/reports/aging' },
-        { name: 'Branch Performance', path: '/reports/branch' }
-      ]
-    },
-    {
-      id: 'settings',
-      name: 'Settings',
-      icon: '⚙️',
-      submenu: [
-        { name: 'User Management', path: '/settings/users' },
-        { name: 'Role & Permissions', path: '/settings/roles' },
-        { name: 'System Configuration', path: '/settings/config' }
-      ]
-    }
-  ];
+  // Transform central nav into sidebar-friendly structure (simple submenu-less mapping)
+  const menuItems = NAV_ITEMS.map((item) => ({
+    id: item.id || item.title,
+    name: item.title,
+    icon: item.icon ? item.icon : '📁',
+    path: item.path,
+  }));
 
   return (
     <>
@@ -143,7 +53,11 @@ const Sidebar = ({ isOpen, setIsOpen }) => {
                 }`}
               >
                 <div className="flex items-center space-x-3">
-                  <span className="text-lg">{item.icon}</span>
+                  {typeof item.icon === 'function' ? (
+                    <item.icon className="w-5 h-5" />
+                  ) : (
+                    <span className="text-lg">{item.icon}</span>
+                  )}
                   <span className="font-medium text-sm">{item.name}</span>
                 </div>
                 {item.submenu && (

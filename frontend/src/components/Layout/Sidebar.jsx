@@ -12,16 +12,13 @@ import {
   Settings,
 } from 'lucide-react';
 
-const menuItems = [
-  { label: 'Dashboard', path: '/', icon: LayoutDashboard },
-  { label: 'Customers', path: '/customers', icon: Users },
-  { label: 'Leads', path: '/leads', icon: Zap },
-  { label: 'Credit Analysis', path: '/credit-analysis', icon: CreditCard },
-  { label: 'Operations', path: '/operations', icon: Briefcase },
-  { label: 'Disbursement', path: '/disbursement', icon: TrendingUp },
-  { label: 'Collections', path: '/collections', icon: Phone },
-  { label: 'Reports', path: '/reports', icon: BarChart3 },
-];
+import NAV_ITEMS from '../../config/nav';
+
+const menuItems = NAV_ITEMS.filter(i => i.roles.includes('all') || i.roles.length > 0).map(i => ({
+  label: i.title,
+  path: i.path,
+  icon: i.icon,
+}));
 
 const bottomItems = [
   { label: 'Profile', path: '/profile', icon: User },

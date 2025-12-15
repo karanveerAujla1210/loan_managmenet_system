@@ -5,6 +5,7 @@ import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { Toaster } from 'react-hot-toast';
 import { AuthProvider } from './context/AuthContext';
 import ProtectedRoute from './components/ProtectedRoute';
+import ErrorBoundary from './components/ErrorBoundary';
 
 // Import modern pages
 import Welcome from './pages/Welcome';
@@ -38,6 +39,9 @@ import LoanDetail from './pages/Collector/LoanDetail';
 import ManagerDashboard from './pages/Manager/ManagerDashboard';
 import LegalDashboard from './pages/Legal/LegalDashboard';
 import MISReports from './pages/Reports/MISReports';
+import CreditAnalysis from './pages/CreditAnalysis';
+import Operations from './pages/Operations';
+import Disbursement from './pages/Disbursement';
 
 // Modern Layout wrapper
 const ModernLayoutWrapper = () => {
@@ -105,6 +109,7 @@ const routerWithLayout = createBrowserRouter(
   [
     {
       element: <AppContent />,
+      errorElement: <ErrorBoundary />,
       children: [
         { path: '/', element: <Welcome /> },
         { path: '/welcome', element: <Welcome /> },
@@ -142,6 +147,9 @@ const routerWithLayout = createBrowserRouter(
             { path: '/audit', element: <AuditLog /> },
             { path: '/upload', element: <Upload /> },
             { path: '/profile', element: <Profile /> },
+            { path: '/credit-analysis', element: <CreditAnalysis /> },
+            { path: '/operations', element: <Operations /> },
+            { path: '/disbursements', element: <Disbursement /> },
           ],
         },
         { path: '*', element: <Navigate to="/" replace /> },
