@@ -5,14 +5,6 @@ import * as authService from '../services/auth';
 
 const AuthContext = createContext();
 
-// Mock users for demo (fallback)
-const MOCK_USERS = [
-  { id: 'user1', name: 'Karanveer Singh', email: 'karanveer@loancrm.com', password: 'mbl123', role: 'admin' },
-  { id: 'user2', name: 'Arvind', email: 'arvind@loancrm.com', password: 'mbl123', role: 'manager' },
-  { id: 'user3', name: 'Admin', email: 'admin@loancrm.com', password: 'mbl123', role: 'admin' },
-  { id: 'user4', name: 'Manish', email: 'manish@loancrm.com', password: 'mbl123', role: 'collector' }
-];
-
 export const AuthProvider = ({ children }) => {
   const [user, setUser] = useState(null);
   const [token, setToken] = useState(null);
@@ -25,8 +17,8 @@ export const AuthProvider = ({ children }) => {
   // Load user on initial load
   useEffect(() => {
     const initializeAuth = async () => {
-      const storedToken = localStorage.getItem('token');
-      const storedUser = localStorage.getItem('user');
+      const storedToken = sessionStorage.getItem('token');
+      const storedUser = sessionStorage.getItem('user');
       
       if (storedToken && storedUser) {
         setToken(storedToken);
@@ -45,7 +37,6 @@ export const AuthProvider = ({ children }) => {
   // Load user data from backend
   const loadUser = async () => {
     try {
-      // Set a timeout for profile check - if it takes too long, just proceed with localStorage data
       const timeoutPromise = new Promise((_, reject) => 
         setTimeout(() => reject(new Error('Timeout')), 5000)
       );
@@ -56,18 +47,15 @@ export const AuthProvider = ({ children }) => {
           setUser(response.data);
           setIsAuthenticated(true);
         } else {
-          // Keep the user from localStorage if profile check fails
           setIsAuthenticated(true);
         }
       } catch (timeoutErr) {
-        // Timeout or error - keep the user from localStorage
-        console.log('Profile check timed out, using localStorage data');
+        console.log('Profile check timed out, using sessionStorage data');
         setIsAuthenticated(true);
       }
     } catch (err) {
       console.error('Error loading user:', err);
-      // Try mock authentication as fallback
-      const storedUser = localStorage.getItem('user');
+      const storedUser = sessionStorage.getItem('user');
       if (storedUser) {
         setUser(JSON.parse(storedUser));
         setIsAuthenticated(true);
@@ -86,10 +74,10 @@ export const AuthProvider = ({ children }) => {
       if (response?.success) {
         const { token, user } = response.data || {};
         if (token) {
-          localStorage.setItem('token', token);
+          sessionStorage.setItem('token', token);
         }
         if (user) {
-          localStorage.setItem('user', JSON.stringify(user));
+          sessionStorage.setItem('user', JSON.stringify(user));
           setUser(user);
         }
         setToken(token || null);
@@ -129,13 +117,12 @@ export const AuthProvider = ({ children }) => {
       const response = await authService.login(formData);
       if (response?.success) {
         const { token, user } = response.data || {};
-        if (token) localStorage.setItem('token', token);
-        if (user) localStorage.setItem('user', JSON.stringify(user));
+        if (token) sessionStorage.setItem('token', token);
+        if (user) sessionStorage.setItem('user', JSON.stringify(user));
         setToken(token || null);
         setUser(user || null);
         setIsAuthenticated(!!token);
         toast.success(`Welcome back, ${user?.name || 'user'}!`);
-        // Navigate to role-based dashboard
         const redirectPath = getRoleBasedPath(user?.role);
         navigate(redirectPath);
         return { success: true };
@@ -143,36 +130,9 @@ export const AuthProvider = ({ children }) => {
       toast.error(response?.message || 'Login failed');
       return { success: false, error: response?.message };
     } catch (err) {
-      // Fallback to mock authentication
-      const mockUser = MOCK_USERS.find(u => 
-        u.email === formData.email && u.password === formData.password
-      );
-      
-      if (mockUser) {
-        const mockToken = 'mock-jwt-token-' + mockUser.id;
-        const userData = {
-          id: mockUser.id,
-          name: mockUser.name,
-          email: mockUser.email,
-          role: mockUser.role
-        };
-        
-        localStorage.setItem('token', mockToken);
-        localStorage.setItem('user', JSON.stringify(userData));
-        
-        setToken(mockToken);
-        setUser(userData);
-        setIsAuthenticated(true);
-        
-        toast.success(`Welcome back, ${mockUser.name}!`);
-        // Navigate to role-based dashboard
-        const redirectPath = getRoleBasedPath(mockUser.role);
-        navigate(redirectPath);
-        return { success: true };
-      } else {
-        toast.error('Invalid email or password');
-        return { success: false, error: 'Invalid credentials' };
-      }
+      const errorMessage = err.response?.data?.error || err.message || 'Login failed';
+      toast.error(errorMessage);
+      return { success: false, error: errorMessage };
     }
   };
 
@@ -183,8 +143,8 @@ export const AuthProvider = ({ children }) => {
     } catch (err) {
       console.error('Logout error:', err);
     } finally {
-      localStorage.removeItem('token');
-      localStorage.removeItem('user');
+      sessionStorage.removeItem('token');
+      sessionStorage.removeItem('user');
       setToken(null);
       setUser(null);
       setIsAuthenticated(false);
@@ -199,7 +159,7 @@ export const AuthProvider = ({ children }) => {
       const res = await authService.updateProfile(formData);
       if (res?.success) {
         setUser(res.data);
-        localStorage.setItem('user', JSON.stringify(res.data));
+        sessionStorage.setItem('user', JSON.stringify(res.data));
         toast.success('Profile updated successfully');
         return { success: true };
       }

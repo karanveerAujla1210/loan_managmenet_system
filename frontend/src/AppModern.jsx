@@ -6,21 +6,8 @@ import { Toaster } from 'react-hot-toast';
 import { AuthProvider } from './context/AuthContext';
 import ProtectedRoute from './components/ProtectedRoute';
 import ErrorBoundary from './components/ErrorBoundary';
-
-// Import modern pages
-import Welcome from './pages/Welcome';
-import ModernLogin from './pages/ModernLogin';
-import ModernDashboard from './pages/ModernDashboard';
-import ModernCustomers from './pages/ModernCustomers';
-import ModernLeads from './pages/ModernLeads';
-import ModernCollections from './pages/ModernCollections';
-import CollectorWorkbench from './pages/CollectorWorkbench';
-import ManagerSupervision from './pages/ManagerSupervision';
-import LegalCaseManagement from './pages/LegalCaseManagement';
-import AuditTrail from './pages/AuditTrail';
 import ModernLayout from './components/Layout/ModernLayout';
 
-// Import existing pages for fallback
 import Login from './pages/Login';
 import Dashboard from './pages/Dashboard';
 import Customers from './pages/Customers';
@@ -30,139 +17,79 @@ import Register from './pages/Register';
 import ForgotPassword from './pages/ForgotPassword';
 import ResetPassword from './pages/ResetPassword';
 import AuditLog from './pages/AuditLog';
-import Collections from './pages/Collections';
 import Upload from './pages/Upload';
 import Profile from './pages/Profile';
-import CollectorDashboard from './pages/Collector/CollectorDashboard';
-import MyCases from './pages/Collector/MyCases';
-import LoanDetail from './pages/Collector/LoanDetail';
-import ManagerDashboard from './pages/Manager/ManagerDashboard';
-import LegalDashboard from './pages/Legal/LegalDashboard';
-import MISReports from './pages/Reports/MISReports';
-import CreditAnalysis from './pages/CreditAnalysis';
-import Operations from './pages/Operations';
-import Disbursement from './pages/Disbursement';
+import CreditManagement from './pages/CreditManagement/index';
+import OverdueBuckets from './pages/Overdue/OverdueBuckets';
+import BankReconciliation from './pages/Reconciliation/BankReconciliation';
+import PaymentProcessing from './pages/PaymentProcessing/index';
+import MISReports from './pages/MISReports/index';
+import LegalCases from './pages/Legal/LegalCases';
+import Settings from './pages/Settings/index';
 
-// Modern Layout wrapper
-const ModernLayoutWrapper = () => {
-  return (
-    <ModernLayout>
-      <Outlet />
-    </ModernLayout>
-  );
-};
-
-
+const ModernLayoutWrapper = () => (
+  <ModernLayout>
+    <Outlet />
+  </ModernLayout>
+);
 
 const queryClient = new QueryClient({
   defaultOptions: {
     queries: {
-      staleTime: 10 * 60 * 1000, // 10 minutes
-      gcTime: 30 * 60 * 1000, // 30 minutes
+      staleTime: 10 * 60 * 1000,
+      gcTime: 30 * 60 * 1000,
       retry: 1,
       refetchOnWindowFocus: false,
-      refetchOnReconnect: false,
-      refetchInterval: false,
-      networkMode: 'online',
-    },
-    mutations: {
-      retry: 1,
-      networkMode: 'online',
     },
   },
 });
 
-// Inner component that uses router context
-const AppContent = () => {
-  return (
-    <AuthProvider>
-      <div className="min-h-screen bg-gray-50 font-sans">
-        <Outlet />
-        <Toaster 
-          position="top-right"
-          toastOptions={{
-            duration: 4000,
-            style: {
-              background: '#363636',
-              color: '#fff',
-              borderRadius: '12px',
-            },
-            success: {
-              style: {
-                background: '#10b981',
-              },
-            },
-            error: {
-              style: {
-                background: '#ef4444',
-              },
-            },
-          }}
-        />
-      </div>
-    </AuthProvider>
-  );
-};
-
-// Update router to include AppContent as root layout
-const routerWithLayout = createBrowserRouter(
-  [
-    {
-      element: <AppContent />,
-      errorElement: <ErrorBoundary />,
-      children: [
-        { path: '/', element: <Welcome /> },
-        { path: '/welcome', element: <Welcome /> },
-        { path: '/login', element: <ModernLogin /> },
-        { path: '/login-old', element: <Login /> },
-        { path: '/register', element: <Register /> },
-        { path: '/forgot-password', element: <ForgotPassword /> },
-        { path: '/reset-password', element: <ResetPassword /> },
-        {
-          element: (
-            <ProtectedRoute>
-              <ModernLayoutWrapper />
-            </ProtectedRoute>
-          ),
-          children: [
-            { path: '/dashboard', element: <ModernDashboard /> },
-            { path: '/dashboard-old', element: <Dashboard /> },
-            { path: '/customers', element: <ModernCustomers /> },
-            { path: '/customers-old', element: <Customers /> },
-            { path: '/customers/:id', element: <CustomerDetail /> },
-            { path: '/leads', element: <ModernLeads /> },
-            { path: '/collections', element: <ModernCollections /> },
-            { path: '/collections-old', element: <Collections /> },
-            { path: '/collector-work', element: <CollectorWorkbench /> },
-            { path: '/collector/dashboard', element: <CollectorDashboard /> },
-            { path: '/collector/cases', element: <MyCases /> },
-            { path: '/collector/loan/:loanId', element: <LoanDetail /> },
-            { path: '/manager/dashboard', element: <ManagerDashboard /> },
-            { path: '/manager-supervision', element: <ManagerSupervision /> },
-            { path: '/legal-cases', element: <LegalCaseManagement /> },
-            { path: '/legal/dashboard', element: <LegalDashboard /> },
-            { path: '/mis/reports', element: <MISReports /> },
-            { path: '/audit-trail', element: <AuditTrail /> },
-            { path: '/loans', element: <Loans /> },
-            { path: '/audit', element: <AuditLog /> },
-            { path: '/upload', element: <Upload /> },
-            { path: '/profile', element: <Profile /> },
-            { path: '/credit-analysis', element: <CreditAnalysis /> },
-            { path: '/operations', element: <Operations /> },
-            { path: '/disbursements', element: <Disbursement /> },
-          ],
-        },
-        { path: '*', element: <Navigate to="/" replace /> },
-      ],
-    },
-  ],
-  {
-    future: {
-      v7_startTransition: true,
-      v7_relativeSplatPath: true,
-    },
-  }
+const AppContent = () => (
+  <AuthProvider>
+    <div className="min-h-screen bg-gray-50 font-sans">
+      <Outlet />
+      <Toaster position="top-right" />
+    </div>
+  </AuthProvider>
 );
+
+const routerWithLayout = createBrowserRouter([
+  {
+    element: <AppContent />,
+    errorElement: <ErrorBoundary />,
+    children: [
+      { path: '/login', element: <Login /> },
+      { path: '/register', element: <Register /> },
+      { path: '/forgot-password', element: <ForgotPassword /> },
+      { path: '/reset-password', element: <ResetPassword /> },
+      {
+        element: (
+          <ProtectedRoute>
+            <ModernLayoutWrapper />
+          </ProtectedRoute>
+        ),
+        children: [
+          { path: '/', element: <Navigate to="/dashboard" replace /> },
+          { path: '/dashboard', element: <Dashboard /> },
+          { path: '/credit-management', element: <CreditManagement /> },
+          { path: '/loans', element: <Loans /> },
+          { path: '/overdue', element: <OverdueBuckets /> },
+          { path: '/legal', element: <LegalCases /> },
+          { path: '/payments', element: <PaymentProcessing /> },
+          { path: '/reconciliation', element: <BankReconciliation /> },
+          { path: '/customers', element: <Customers /> },
+          { path: '/customers/:id', element: <CustomerDetail /> },
+          { path: '/reports', element: <MISReports /> },
+          { path: '/settings', element: <Settings /> },
+          { path: '/audit', element: <AuditLog /> },
+          { path: '/upload', element: <Upload /> },
+          { path: '/profile', element: <Profile /> },
+        ],
+      },
+      { path: '*', element: <Navigate to="/dashboard" replace /> },
+    ],
+  },
+]);
 
 function AppModern() {
   return (

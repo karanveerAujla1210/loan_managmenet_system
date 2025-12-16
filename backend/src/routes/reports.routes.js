@@ -1,29 +1,45 @@
 const express = require('express');
-const router = express.Router();
-const Loan = require('../models/loan.model');
-const Installment = require('../models/disbursement.model');
+const Loan = require('../models/Loan');
+const Installment = require('../models/installment.model');
+const LegalCase = require('../models/LegalCase');
+const CollectorPerformance = require('../models/collector-performance.model');
 const { protect, authorize } = require('../middlewares/auth.middleware');
 
-router.get('/mis', protect, authorize('admin', 'manager'), async (req, res) => {
+const router = express.Router();
+
+// Portfolio snapshot
+router.get('/portfolio', protect, authorize('admin', 'manager'), async (req, res) => {
   try {
-    const portfolioSnapshot = await Loan.aggregate([
-      { $match: { status: { $in: ['ACTIVE', 'LEGAL'] } } },
+    const result = await Loan.aggregate([
+      { $match: { status: { $in: ['ACTIVE', 'CLOSED'] } } },
       {
         $group: {
           _id: null,
           totalLoans: { $sum: 1 },
-          totalPrincipal: { $sum: '$principal' },
-          totalOutstanding: { $sum: '$outstandingAmount' },
-          totalInterest: { $sum: '$interest' }
+          totalPrincipal: { $sum: '$loanAmount' },
+          totalOutstanding: { $sum: '$outstandingAmount' }
         }
       }
     ]);
 
-    const bucketExposure = await Loan.aggregate([
-      { $match: { status: { $in: ['ACTIVE', 'LEGAL'] } } },
+    res.json({
+      success: true,
+      data: result[0] || { totalLoans: 0, totalPrincipal: 0, totalOutstanding: 0 },
+      meta: { timestamp: new Date().toISOString() }
+    });
+  } catch (error) {
+    res.status(400).json({ success: false, message: error.message });
+  }
+});
+
+// Bucket-wise exposure (using status as bucket proxy)
+router.get('/buckets', protect, authorize('admin', 'manager'), async (req, res) => {
+  try {
+    const result = await Loan.aggregate([
+      { $match: { status: { $in: ['ACTIVE', 'CLOSED'] } } },
       {
         $group: {
-          _id: '$bucket',
+          _id: '$status',
           loanCount: { $sum: 1 },
           outstandingAmount: { $sum: '$outstandingAmount' }
         }
@@ -31,7 +47,20 @@ router.get('/mis', protect, authorize('admin', 'manager'), async (req, res) => {
       { $sort: { _id: 1 } }
     ]);
 
-    const collectionEfficiency = await Installment.aggregate([
+    res.json({
+      success: true,
+      data: result,
+      meta: { timestamp: new Date().toISOString() }
+    });
+  } catch (error) {
+    res.status(400).json({ success: false, message: error.message });
+  }
+});
+
+// Collection efficiency
+router.get('/efficiency', protect, authorize('admin', 'manager'), async (req, res) => {
+  try {
+    const result = await Installment.aggregate([
       {
         $group: {
           _id: null,
@@ -41,11 +70,13 @@ router.get('/mis', protect, authorize('admin', 'manager'), async (req, res) => {
       },
       {
         $project: {
+          dueAmount: 1,
+          collectedAmount: 1,
           efficiency: {
             $cond: [
               { $eq: ['$dueAmount', 0] },
               0,
-              { $divide: ['$collectedAmount', '$dueAmount'] }
+              { $multiply: [{ $divide: ['$collectedAmount', '$dueAmount'] }, 100] }
             ]
           }
         }
@@ -54,15 +85,82 @@ router.get('/mis', protect, authorize('admin', 'manager'), async (req, res) => {
 
     res.json({
       success: true,
-      data: {
-        portfolioSnapshot: portfolioSnapshot[0] || {},
-        bucketExposure,
-        collectionEfficiency: collectionEfficiency[0] || {}
-      },
-      meta: { timestamp: new Date().toISOString(), role: req.user.role }
+      data: result[0] || { dueAmount: 0, collectedAmount: 0, efficiency: 0 },
+      meta: { timestamp: new Date().toISOString() }
     });
   } catch (error) {
-    res.status(500).json({ success: false, message: error.message });
+    res.status(400).json({ success: false, message: error.message });
+  }
+});
+
+// Legal exposure
+router.get('/legal', protect, authorize('admin', 'manager'), async (req, res) => {
+  try {
+    const totalCases = await LegalCase.countDocuments();
+    const result = await LegalCase.aggregate([
+      {
+        $group: {
+          _id: '$status',
+          count: { $sum: 1 }
+        }
+      }
+    ]);
+
+    res.json({
+      success: true,
+      data: { totalCases, breakdown: result },
+      meta: { timestamp: new Date().toISOString() }
+    });
+  } catch (error) {
+    res.status(400).json({ success: false, message: error.message });
+  }
+});
+
+// Collector performance
+router.get('/collectors', protect, authorize('admin', 'manager'), async (req, res) => {
+  try {
+    const result = await CollectorPerformance.find()
+      .populate('userId', 'name email')
+      .sort({ weekStartDate: -1 })
+      .limit(50);
+
+    res.json({
+      success: true,
+      data: result,
+      meta: { timestamp: new Date().toISOString() }
+    });
+  } catch (error) {
+    res.status(400).json({ success: false, message: error.message });
+  }
+});
+
+// Aging analysis
+router.get('/aging', protect, authorize('admin', 'manager'), async (req, res) => {
+  try {
+    const result = await Installment.aggregate([
+      {
+        $group: {
+          _id: '$status',
+          loanCount: { $sum: 1 },
+          totalAmount: { $sum: '$emiAmount' }
+        }
+      },
+      { $sort: { _id: 1 } }
+    ]);
+
+    const aging = result.map(r => ({
+      period: r._id,
+      loanCount: r.loanCount,
+      outstandingAmount: r.totalAmount
+    }));
+
+    res.json({
+      success: true,
+      data: aging,
+      meta: { timestamp: new Date().toISOString() }
+    });
+  } catch (error) {
+    res.status(400).json({ success: false, message: error.message });
   }
 });
 

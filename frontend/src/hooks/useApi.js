@@ -1,6 +1,6 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import axios from 'axios';
-import { toast } from 'react-hot-toast';
+import toast from 'react-hot-toast';
 
 const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000/api/v1';
 
@@ -31,7 +31,6 @@ api.interceptors.response.use(
   (response) => response,
   (error) => {
     if (error.response?.status === 401) {
-      // Handle unauthorized errors (e.g., token expired)
       localStorage.removeItem('token');
       window.location.href = '/login';
     }
@@ -145,6 +144,48 @@ export const useDelete = (key, url, options = {}) => {
     },
     ...options,
   });
+};
+
+// Custom hook for direct API calls
+export const useApi = () => {
+  return {
+    get: async (url) => {
+      try {
+        const response = await api.get(url);
+        return response.data;
+      } catch (error) {
+        toast.error(error.response?.data?.message || 'Error fetching data');
+        throw error;
+      }
+    },
+    post: async (url, data) => {
+      try {
+        const response = await api.post(url, data);
+        return response.data;
+      } catch (error) {
+        toast.error(error.response?.data?.message || 'Error posting data');
+        throw error;
+      }
+    },
+    put: async (url, data) => {
+      try {
+        const response = await api.put(url, data);
+        return response.data;
+      } catch (error) {
+        toast.error(error.response?.data?.message || 'Error updating data');
+        throw error;
+      }
+    },
+    delete: async (url) => {
+      try {
+        const response = await api.delete(url);
+        return response.data;
+      } catch (error) {
+        toast.error(error.response?.data?.message || 'Error deleting data');
+        throw error;
+      }
+    }
+  };
 };
 
 export default api;

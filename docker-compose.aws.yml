@@ -1,0 +1,77 @@
+version: '3.8'
+
+services:
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile.prod
+    container_name: loan-crm-backend
+    ports:
+      - "5000:5000"
+    environment:
+      NODE_ENV: production
+      PORT: 5000
+      MONGODB_URI: ${MONGODB_URI}
+      JWT_SECRET: ${JWT_SECRET}
+      JWT_EXPIRY: 8h
+      CRON_ENABLED: "true"
+      REDIS_URL: ${REDIS_URL}
+      LOG_LEVEL: info
+      CORS_ORIGIN: ${CORS_ORIGIN}
+    depends_on:
+      - redis
+    networks:
+      - loan-crm-network
+    restart: always
+    logging:
+      driver: "awslogs"
+      options:
+        awslogs-group: "/aws/ecs/loan-crm-backend"
+        awslogs-region: "ap-south-1"
+        awslogs-stream-prefix: "ecs"
+
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile.prod
+    container_name: loan-crm-frontend
+    ports:
+      - "80:80"
+    environment:
+      VITE_API_URL: ${VITE_API_URL}
+    depends_on:
+      - backend
+    networks:
+      - loan-crm-network
+    restart: always
+    logging:
+      driver: "awslogs"
+      options:
+        awslogs-group: "/aws/ecs/loan-crm-frontend"
+        awslogs-region: "ap-south-1"
+        awslogs-stream-prefix: "ecs"
+
+  redis:
+    image: redis:7-alpine
+    container_name: loan-crm-redis
+    ports:
+      - "6379:6379"
+    command: redis-server --appendonly yes --requirepass ${REDIS_PASSWORD}
+    volumes:
+      - redis-data:/data
+    networks:
+      - loan-crm-network
+    restart: always
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+volumes:
+  redis-data:
+    driver: local
+
+networks:
+  loan-crm-network:
+    driver: bridge

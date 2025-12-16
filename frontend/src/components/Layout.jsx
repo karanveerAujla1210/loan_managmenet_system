@@ -14,7 +14,7 @@ import {
   ClipboardDocumentListIcon,
   PresentationChartLineIcon,
   FolderOpenIcon,
-  CheckCircleIcon
+  ExclamationTriangleIcon
 } from '@heroicons/react/24/outline';
 import Button from './ui/Button';
 
@@ -25,14 +25,39 @@ const Layout = ({ children }) => {
 
   const navigation = [
     { name: 'Dashboard', href: '/dashboard', icon: HomeIcon },
+    { name: 'Credit Management', href: '/credit-management', icon: ChartBarIcon },
+    { name: 'Disbursed Loans', href: '/loans', icon: DocumentTextIcon },
+    { 
+      name: 'Overdue Management', 
+      href: '/overdue', 
+      icon: ExclamationTriangleIcon,
+      subItems: [
+        { name: 'Overdue Buckets', href: '/overdue/buckets' },
+        { name: 'Overdue Aging', href: '/overdue/aging' },
+        { name: 'Follow-up Scheduler', href: '/overdue/followup' }
+      ]
+    },
+    { name: 'Legal Cases', href: '/legal', icon: ClipboardDocumentListIcon },
+    { name: 'Payment Processing', href: '/payments', icon: CurrencyDollarIcon },
+    { name: 'Bank Reconciliation', href: '/reconciliation', icon: FolderOpenIcon },
     { name: 'Customers', href: '/customers', icon: UsersIcon },
-    { name: 'Leads', href: '/leads', icon: ClipboardDocumentListIcon },
-    { name: 'Credit Analysis', href: '/credit-analysis', icon: ChartBarIcon },
-    { name: 'Operations', href: '/operations', icon: CogIcon },
-    { name: 'Disbursement', href: '/disbursement', icon: CurrencyDollarIcon },
-    { name: 'Collections', href: '/collections', icon: FolderOpenIcon },
-    { name: 'Reports', href: '/reports', icon: PresentationChartLineIcon },
-    { name: 'Case Closure', href: '/case-closure', icon: CheckCircleIcon },
+    { name: 'Reports & Analytics', href: '/reports', icon: PresentationChartLineIcon },
+    { 
+      name: 'Collections',
+      href: '/disputes',
+      icon: CurrencyDollarIcon,
+      subItems: [
+        { name: 'Disputes', href: '/disputes' },
+        { name: 'Promises', href: '/promises' },
+        { name: 'Collector Performance', href: '/collector-performance' }
+      ]
+    },
+    { name: 'Data Management', href: '/import', icon: FolderOpenIcon, subItems: [
+      { name: 'Import', href: '/import' },
+      { name: 'Upload', href: '/upload' },
+      { name: 'Audit Log', href: '/audit' }
+    ]},
+    { name: 'Settings', href: '/settings', icon: CogIcon },
   ];
 
   const handleLogout = () => {
@@ -53,21 +78,66 @@ const Layout = ({ children }) => {
           </div>
           <nav className="flex-1 space-y-1 px-2 py-4">
             {navigation.map((item) => {
-              const isActive = location.pathname === item.href;
+              const isActive = location.pathname === item.href || (item.subItems && item.subItems.some(subItem => location.pathname === subItem.href));
+              const [isSubmenuOpen, setIsSubmenuOpen] = useState(false);
+              
               return (
-                <Link
-                  key={item.name}
-                  to={item.href}
-                  className={`group flex items-center px-2 py-2 text-base font-medium rounded-lg transition-colors ${
-                    isActive
-                      ? 'bg-primary-50 text-primary-600'
-                      : 'text-gray-600 hover:bg-gray-50 hover:text-gray-900'
-                  }`}
-                  onClick={() => setSidebarOpen(false)}
-                >
-                  <item.icon className={`mr-3 h-6 w-6 ${isActive ? 'text-primary-500' : 'text-gray-400'}`} />
-                  {item.name}
-                </Link>
+                <div key={item.name}>
+                  {item.subItems ? (
+                    <div>
+                      <button
+                        onClick={() => setIsSubmenuOpen(!isSubmenuOpen)}
+                        className={`w-full group flex items-center justify-between px-2 py-2 text-base font-medium rounded-lg transition-colors ${
+                          isActive
+                            ? 'bg-primary-50 text-primary-600'
+                            : 'text-gray-600 hover:bg-gray-50 hover:text-gray-900'
+                        }`}
+                      >
+                        <div className="flex items-center">
+                          <item.icon className={`mr-3 h-6 w-6 ${isActive ? 'text-primary-500' : 'text-gray-400'}`} />
+                          {item.name}
+                        </div>
+                        <svg className={`h-5 w-5 transform transition-transform ${isSubmenuOpen ? 'rotate-180' : ''}`} fill="currentColor" viewBox="0 0 20 20">
+                          <path fillRule="evenodd" d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" clipRule="evenodd" />
+                        </svg>
+                      </button>
+                      {isSubmenuOpen && (
+                        <div className="mt-1 space-y-1">
+                          {item.subItems.map((subItem) => {
+                            const isSubActive = location.pathname === subItem.href;
+                            return (
+                              <Link
+                                key={subItem.name}
+                                to={subItem.href}
+                                className={`group flex items-center px-10 py-2 text-sm font-medium rounded-lg transition-colors ${
+                                  isSubActive
+                                    ? 'bg-primary-50 text-primary-600'
+                                    : 'text-gray-600 hover:bg-gray-50 hover:text-gray-900'
+                                }`}
+                                onClick={() => setSidebarOpen(false)}
+                              >
+                                {subItem.name}
+                              </Link>
+                            );
+                          })}
+                        </div>
+                      )}
+                    </div>
+                  ) : (
+                    <Link
+                      to={item.href}
+                      className={`group flex items-center px-2 py-2 text-base font-medium rounded-lg transition-colors ${
+                        isActive
+                          ? 'bg-primary-50 text-primary-600'
+                          : 'text-gray-600 hover:bg-gray-50 hover:text-gray-900'
+                      }`}
+                      onClick={() => setSidebarOpen(false)}
+                    >
+                      <item.icon className={`mr-3 h-6 w-6 ${isActive ? 'text-primary-500' : 'text-gray-400'}`} />
+                      {item.name}
+                    </Link>
+                  )}
+                </div>
               );
             })}
           </nav>
@@ -82,20 +152,64 @@ const Layout = ({ children }) => {
           </div>
           <nav className="flex-1 space-y-1 px-2 py-4">
             {navigation.map((item) => {
-              const isActive = location.pathname === item.href;
+              const isActive = location.pathname === item.href || (item.subItems && item.subItems.some(subItem => location.pathname === subItem.href));
+              const [isSubmenuOpen, setIsSubmenuOpen] = useState(false);
+              
               return (
-                <Link
-                  key={item.name}
-                  to={item.href}
-                  className={`group flex items-center px-2 py-2 text-base font-medium rounded-lg transition-colors ${
-                    isActive
-                      ? 'bg-primary-50 text-primary-600'
-                      : 'text-gray-600 hover:bg-gray-50 hover:text-gray-900'
-                  }`}
-                >
-                  <item.icon className={`mr-3 h-6 w-6 ${isActive ? 'text-primary-500' : 'text-gray-400'}`} />
-                  {item.name}
-                </Link>
+                <div key={item.name}>
+                  {item.subItems ? (
+                    <div>
+                      <button
+                        onClick={() => setIsSubmenuOpen(!isSubmenuOpen)}
+                        className={`w-full group flex items-center justify-between px-2 py-2 text-base font-medium rounded-lg transition-colors ${
+                          isActive
+                            ? 'bg-primary-50 text-primary-600'
+                            : 'text-gray-600 hover:bg-gray-50 hover:text-gray-900'
+                        }`}
+                      >
+                        <div className="flex items-center">
+                          <item.icon className={`mr-3 h-6 w-6 ${isActive ? 'text-primary-500' : 'text-gray-400'}`} />
+                          {item.name}
+                        </div>
+                        <svg className={`h-5 w-5 transform transition-transform ${isSubmenuOpen ? 'rotate-180' : ''}`} fill="currentColor" viewBox="0 0 20 20">
+                          <path fillRule="evenodd" d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" clipRule="evenodd" />
+                        </svg>
+                      </button>
+                      {isSubmenuOpen && (
+                        <div className="mt-1 space-y-1">
+                          {item.subItems.map((subItem) => {
+                            const isSubActive = location.pathname === subItem.href;
+                            return (
+                              <Link
+                                key={subItem.name}
+                                to={subItem.href}
+                                className={`group flex items-center px-10 py-2 text-sm font-medium rounded-lg transition-colors ${
+                                  isSubActive
+                                    ? 'bg-primary-50 text-primary-600'
+                                    : 'text-gray-600 hover:bg-gray-50 hover:text-gray-900'
+                                }`}
+                              >
+                                {subItem.name}
+                              </Link>
+                            );
+                          })}
+                        </div>
+                      )}
+                    </div>
+                  ) : (
+                    <Link
+                      to={item.href}
+                      className={`group flex items-center px-2 py-2 text-base font-medium rounded-lg transition-colors ${
+                        isActive
+                          ? 'bg-primary-50 text-primary-600'
+                          : 'text-gray-600 hover:bg-gray-50 hover:text-gray-900'
+                      }`}
+                    >
+                      <item.icon className={`mr-3 h-6 w-6 ${isActive ? 'text-primary-500' : 'text-gray-400'}`} />
+                      {item.name}
+                    </Link>
+                  )}
+                </div>
               );
             })}
           </nav>

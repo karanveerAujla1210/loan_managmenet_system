@@ -11,6 +11,7 @@ const adminRoutes = require('./admin');
 const auditRoutes = require('./audit');
 const reassignRoutes = require('./reassign');
 const promiseRoutes = require('./promise');
+const legalRoutes = require('./legal');
 
 // Health check
 router.get('/health', (req, res) => {
@@ -32,5 +33,6 @@ router.use('/audit', auditRoutes);
 router.use('/loans', promiseRoutes);
 router.use('/promises', promiseRoutes);
 router.use('/loans', reassignRoutes);
+router.use('/legal', legalRoutes);
 
 module.exports = router;

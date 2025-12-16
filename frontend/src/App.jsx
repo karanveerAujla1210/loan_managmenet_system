@@ -7,18 +7,10 @@ import { AuthProvider } from './context/AuthContext';
 import ProtectedRoute from './components/ProtectedRoute';
 import Layout from './components/Layout';
 
-// Import pages directly
 import Login from './pages/Login';
 import Dashboard from './pages/Dashboard';
 import Customers from './pages/Customers';
 import CustomerDetail from './pages/Customers/Detail';
-import Leads from './pages/Leads';
-import CreditAnalysis from './pages/CreditAnalysis';
-import Operations from './pages/Operations';
-import Disbursement from './pages/Disbursement';
-import Collections from './pages/Collections';
-import Reports from './pages/Reports';
-import CaseClosure from './pages/CaseClosure';
 import Loans from './pages/Loans';
 import Register from './pages/Register';
 import ForgotPassword from './pages/ForgotPassword';
@@ -26,73 +18,81 @@ import ResetPassword from './pages/ResetPassword';
 import AuditLog from './pages/AuditLog';
 import Upload from './pages/Upload';
 import Profile from './pages/Profile';
+import CreditManagement from './pages/CreditManagement/index';
+import OverdueBuckets from './pages/Overdue/OverdueBucketsNew';
+import OverdueAging from './pages/Overdue/OverdueAging';
+import FollowUpScheduler from './pages/Overdue/FollowUpScheduler';
+import BankReconciliation from './pages/Reconciliation/BankReconciliation';
+import PaymentProcessing from './pages/PaymentProcessing/index';
+import MISReports from './pages/MISReports/index';
+import LegalCases from './pages/Legal/LegalCases';
+import Settings from './pages/Settings/index';
+import Unauthorized from './pages/Unauthorized/index';
+import Disputes from './pages/Disputes';
+import Promises from './pages/Promises';
+import CollectorPerformance from './pages/CollectorPerformance';
+import Import from './pages/Import';
 
-// Layout wrapper component
-const LayoutWrapper = () => {
-  return (
-    <Layout>
-      <Outlet />
-    </Layout>
-  );
-};
-
-// Build a route tree and opt-in to future v7 behaviors to silence warnings
-const router = createBrowserRouter(
-  [
-    { path: '/login', element: <Login /> },
-    { path: '/register', element: <Register /> },
-    { path: '/forgot-password', element: <ForgotPassword /> },
-    { path: '/reset-password', element: <ResetPassword /> },
-    {
-      element: (
-        <AuthProvider>
-          <ProtectedRoute>
-            <LayoutWrapper />
-          </ProtectedRoute>
-        </AuthProvider>
-      ),
-      children: [
-        { path: '/dashboard', element: <Dashboard /> },
-        { path: '/', element: <Navigate to="/dashboard" replace /> },
-        { path: '/customers', element: <Customers /> },
-        { path: '/customers/:id', element: <CustomerDetail /> },
-        { path: '/leads', element: <Leads /> },
-        { path: '/credit-analysis', element: <CreditAnalysis /> },
-        { path: '/operations', element: <Operations /> },
-        { path: '/disbursement', element: <Disbursement /> },
-        { path: '/collections', element: <Collections /> },
-        { path: '/reports', element: <Reports /> },
-        { path: '/case-closure', element: <CaseClosure /> },
-        { path: '/loans', element: <Loans /> },
-        { path: '/audit', element: <AuditLog /> },
-        { path: '/upload', element: <Upload /> },
-        { path: '/profile', element: <Profile /> },
-      ],
-    },
-    { path: '*', element: <Navigate to="/dashboard" replace /> },
-  ],
-  {
-    future: {
-      v7_startTransition: true,
-      v7_relativeSplatPath: true,
-    },
-  }
+const LayoutWrapper = () => (
+  <Layout>
+    <Outlet />
+  </Layout>
 );
+
+const router = createBrowserRouter([
+  { path: '/login', element: <Login /> },
+  { path: '/register', element: <Register /> },
+  { path: '/forgot-password', element: <ForgotPassword /> },
+  { path: '/reset-password', element: <ResetPassword /> },
+  { path: '/unauthorized', element: <Unauthorized /> },
+  {
+    element: (
+      <AuthProvider>
+        <ProtectedRoute>
+          <LayoutWrapper />
+        </ProtectedRoute>
+      </AuthProvider>
+    ),
+    children: [
+      { path: '/', element: <Navigate to="/dashboard" replace /> },
+      { path: '/dashboard', element: <Dashboard /> },
+      { path: '/credit-management', element: <CreditManagement /> },
+      { path: '/loans', element: <Loans /> },
+      { 
+        path: '/overdue', 
+        element: <OverdueBuckets />,
+        children: [
+          { path: '/overdue/buckets', element: <OverdueBuckets /> },
+          { path: '/overdue/aging', element: <OverdueAging /> },
+          { path: '/overdue/followup', element: <FollowUpScheduler /> }
+        ]
+      },
+      { path: '/legal', element: <LegalCases /> },
+      { path: '/payments', element: <PaymentProcessing /> },
+      { path: '/reconciliation', element: <BankReconciliation /> },
+      { path: '/customers', element: <Customers /> },
+      { path: '/customers/:id', element: <CustomerDetail /> },
+      { path: '/reports', element: <MISReports /> },
+      { path: '/settings', element: <Settings /> },
+      { path: '/audit', element: <AuditLog /> },
+      { path: '/disputes', element: <Disputes /> },
+      { path: '/promises', element: <Promises /> },
+      { path: '/collector-performance', element: <CollectorPerformance /> },
+      { path: '/import', element: <Import /> },
+      { path: '/upload', element: <Upload /> },
+      { path: '/profile', element: <Profile /> },
+    ],
+  },
+  { path: '*', element: <Navigate to="/dashboard" replace /> },
+]);
 
 const queryClient = new QueryClient({
   defaultOptions: {
     queries: {
-      staleTime: 10 * 60 * 1000, // 10 minutes
-      gcTime: 30 * 60 * 1000, // 30 minutes (renamed from cacheTime)
+      staleTime: 10 * 60 * 1000,
+      gcTime: 30 * 60 * 1000,
       retry: 1,
       refetchOnWindowFocus: false,
-      refetchOnReconnect: false,
-      refetchInterval: false,
-      networkMode: 'online',
-    },
-    mutations: {
-      retry: 1,
-      networkMode: 'online',
     },
   },
 });

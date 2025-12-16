@@ -1,10 +1,14 @@
 import { Navigate } from 'react-router-dom';
-import { RequireAuth, RequireRole } from './guards';
+import { RequireAuth, RequireRole } from './guards/RoleGuard';
 import Dashboard from './pages/Dashboard';
 import Login from './pages/Login';
 import Unauthorized from './pages/Unauthorized/index';
+import Disputes from './pages/Disputes';
+import Promises from './pages/Promises';
+import CollectorPerformance from './pages/CollectorPerformance';
+import MISReports from './pages/MISReports';
+import Import from './pages/Import';
 
-// Lazy load pages
 const CreditAnalysis = () => <div>Credit Analysis</div>;
 const ActiveLoans = () => <div>Active Loans</div>;
 const OverdueBuckets = () => <div>Overdue Buckets</div>;
@@ -12,7 +16,6 @@ const LegalCases = () => <div>Legal Cases</div>;
 const ManualPayment = () => <div>Manual Payment</div>;
 const BankReconciliation = () => <div>Bank Reconciliation</div>;
 const CustomerProfile = () => <div>Customer Profile</div>;
-const MISReports = () => <div>MIS Reports</div>;
 const Settings = () => <div>Settings</div>;
 
 export const routes = [
@@ -54,6 +57,18 @@ export const routes = [
         element: <RequireRole roles={['admin']}><BankReconciliation /></RequireRole>
       },
       {
+        path: 'disputes',
+        element: <RequireRole roles={['manager', 'admin']}><Disputes /></RequireRole>
+      },
+      {
+        path: 'promises',
+        element: <RequireRole roles={['collector', 'manager', 'admin']}><Promises /></RequireRole>
+      },
+      {
+        path: 'collector-performance',
+        element: <RequireRole roles={['manager', 'admin']}><CollectorPerformance /></RequireRole>
+      },
+      {
         path: 'customers/:id',
         element: <CustomerProfile />
       },
@@ -64,6 +79,10 @@ export const routes = [
       {
         path: 'settings',
         element: <RequireRole roles={['admin']}><Settings /></RequireRole>
+      },
+      {
+        path: 'import',
+        element: <RequireRole roles={['admin']}><Import /></RequireRole>
       }
     ]
   },

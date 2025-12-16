@@ -2,6 +2,9 @@ require('dotenv').config();
 const app = require('./app');
 const { connectDB } = require('./config/database-optimized');
 const { initDPDCron } = require('./jobs/dpdUpdateJob');
+const { initLegalEscalationCron } = require('./jobs/legal-escalation-cron');
+const { initCollectorScoringCron } = require('./jobs/collector-scoring-cron');
+const { initPromiseReminderCron } = require('./jobs/promise-reminder-cron');
 
 const PORT = process.env.PORT || 5000;
 
@@ -11,10 +14,13 @@ const startServer = async () => {
     // Connect to database
     await connectDB();
     
-    // Initialize DPD cron job (runs at 2:30 AM daily)
+    // Initialize cron jobs
     if (process.env.CRON_ENABLED !== 'false') {
       initDPDCron();
-      console.log('DPD cron job initialized'.green);
+      initLegalEscalationCron();
+      initCollectorScoringCron();
+      initPromiseReminderCron();
+      console.log('All cron jobs initialized'.green);
     }
     
     // Start HTTP server

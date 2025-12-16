@@ -25,6 +25,7 @@ const loans = require('./routes/loans');
 const payments = require('./routes/payments');
 const loanEngine = require('./routes/loanEngine');
 const dashboardApi = require('./routes/apiDashboard');
+const overdueReports = require('./routes/overdueReports');
 
 const app = express();
 
@@ -78,6 +79,7 @@ app.use('/api/v1/loans', loans);
 app.use('/api/v1/payments', payments);
 app.use('/api/v1/loan-engine', loanEngine);
 app.use('/api/v1/dashboard', dashboardApi);
+app.use('/api/v1/overdue-reports', overdueReports);
 
 // Error handler middleware
 app.use(errorHandler);
