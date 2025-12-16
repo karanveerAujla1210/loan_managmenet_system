@@ -1,7 +1,6 @@
 #!/bin/bash
 
-# EC2 Deployment Script - Amazon Linux
-# Usage: ./ec2-deploy-amazon-linux.sh [install|deploy|update|restart|health]
+# EC2 Deployment with AWS DocumentDB + ElastiCache
 
 set -e
 
@@ -17,40 +16,21 @@ YELLOW='\033[1;33m'
 NC='\033[0m'
 
 log_info() { echo -e "${GREEN}[INFO]${NC} $1"; }
-log_warn() { echo -e "${YELLOW}[WARN]${NC} $1"; }
 log_error() { echo -e "${RED}[ERROR]${NC} $1"; }
 
 # ==========================================
-# INSTALL PHASE
+# INSTALL PHASE (No MongoDB/Redis)
 # ==========================================
 
 install_dependencies() {
-  log_info "Installing dependencies for Amazon Linux..."
+  log_info "Installing dependencies..."
 
-  # Update system
   sudo yum update -y
   sudo yum upgrade -y
 
   # Install Node.js 18
   curl -fsSL https://rpm.nodesource.com/setup_18.x | sudo bash -
   sudo yum install -y nodejs
-
-  # Install MongoDB
-  cat | sudo tee /etc/yum.repos.d/mongodb-org-6.0.repo > /dev/null << 'EOF'
-[mongodb-org-6.0]
-name=MongoDB Repository
-baseurl=https://repo.mongodb.org/yum/amazon/2/mongodb-org/6.0/x86_64/
-gpgcheck=1
-enabled=1
-gpgkey=https://www.mongodb.org/static/pgp/server-6.0.asc
-EOF
-
-  sudo yum install -y mongodb-org
-
-  # Install Redis
-  sudo amazon-linux-extras install -y redis6
-  sudo systemctl start redis
-  sudo systemctl enable redis
 
   # Install Nginx
   sudo amazon-linux-extras install -y nginx1
@@ -66,30 +46,7 @@ EOF
   # Install Git
   sudo yum install -y git
 
-  # Install Fail2Ban
-  sudo yum install -y fail2ban
-  sudo systemctl start fail2ban
-  sudo systemctl enable fail2ban
-
   log_info "Dependencies installed successfully"
-}
-
-start_services() {
-  log_info "Starting services..."
-
-  sudo systemctl start mongod
-  sudo systemctl enable mongod
-
-  sudo systemctl start redis
-  sudo systemctl enable redis
-
-  sudo systemctl start nginx
-  sudo systemctl enable nginx
-
-  sudo systemctl start fail2ban
-  sudo systemctl enable fail2ban
-
-  log_info "Services started successfully"
 }
 
 # ==========================================
@@ -110,28 +67,13 @@ deploy_backend() {
 
   cd $BACKEND_DIR
 
+  # Copy production .env
   if [ ! -f ".env" ]; then
-    cat > .env << 'EOF'
-NODE_ENV=production
-PORT=5000
-
-MONGODB_URI=mongodb://localhost:27017/loan-management
-JWT_SECRET=$(openssl rand -base64 32)
-JWT_EXPIRY=8h
-
-CRON_ENABLED=true
-
-REDIS_URL=redis://localhost:6379
-
-LOG_LEVEL=info
-
-CORS_ORIGIN=https://your-domain.com
-EOF
-    log_info "Created .env file"
+    cp .env.production .env
+    log_info "Created .env from .env.production"
   fi
 
   npm ci --production
-
   mkdir -p logs
 
   cat > ecosystem.config.js << 'EOF'
@@ -202,7 +144,6 @@ server {
 
     gzip on;
     gzip_types text/plain text/css text/javascript application/json application/javascript;
-    gzip_min_length 1000;
 
     location / {
         root /var/www/loan-crm-frontend;
@@ -255,39 +196,25 @@ setup_ssl() {
 }
 
 # ==========================================
-# UPDATE PHASE
+# UPDATE & RESTART
 # ==========================================
 
-update_backend() {
-  log_info "Updating backend..."
+update_code() {
+  log_info "Updating code..."
 
   cd $BACKEND_DIR
-
   git pull origin main
   npm ci --production
-
   pm2 restart loan-crm-api
 
-  log_info "Backend updated successfully"
-}
-
-update_frontend() {
-  log_info "Updating frontend..."
-
   cd $FRONTEND_DIR
-
   git pull origin main
   npm ci
   npm run build
-
   cp -r dist/* $FRONTEND_SERVE_DIR/
 
-  log_info "Frontend updated successfully"
+  log_info "Code updated successfully"
 }
-
-# ==========================================
-# RESTART PHASE
-# ==========================================
 
 restart_services() {
   log_info "Restarting services..."
@@ -317,18 +244,6 @@ health_check() {
     log_error "✗ Frontend is not responding"
   fi
 
-  if mongosh --eval "db.adminCommand('ping')" > /dev/null 2>&1; then
-    log_info "✓ MongoDB is running"
-  else
-    log_error "✗ MongoDB is not responding"
-  fi
-
-  if redis-cli ping > /dev/null 2>&1; then
-    log_info "✓ Redis is running"
-  else
-    log_error "✗ Redis is not responding"
-  fi
-
   if pm2 status | grep -q "online"; then
     log_info "✓ PM2 processes are running"
   else
@@ -343,7 +258,6 @@ health_check() {
 case $1 in
   install)
     install_dependencies
-    start_services
     ;;
   deploy)
     deploy_backend
@@ -353,8 +267,7 @@ case $1 in
     health_check
     ;;
   update)
-    update_backend
-    update_frontend
+    update_code
     restart_services
     health_check
     ;;
