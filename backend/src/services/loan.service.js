@@ -200,15 +200,16 @@ class LoanService {
    */
   static async getLoansByStatus(status, page = 1, limit = 20) {
     const skip = (page - 1) * limit;
+    const query = status ? { status } : {};
     
-    const loans = await Loan.find({ status })
+    const loans = await Loan.find(query)
       .populate('customerId', 'firstName lastName phone')
       .populate('assignedAgent', 'name')
       .sort({ createdAt: -1 })
       .skip(skip)
       .limit(limit);
 
-    const total = await Loan.countDocuments({ status });
+    const total = await Loan.countDocuments(query);
     
     return {
       loans,

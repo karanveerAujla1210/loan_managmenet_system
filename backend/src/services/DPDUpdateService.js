@@ -1,0 +1,47 @@
+const Loan = require('../models/loan.model');
+const Installment = require('../models/disbursement.model');
+const LegalCase = require('../models/LegalCase');
+const LoanBucketHistory = require('../models/LoanBucketHistory');
+const { updateDPDAndBucket } = require('../utils/dpdBucketEngine');
+
+const updateAllLoans = async () => {
+  try {
+    const loans = await Loan.find({ status: { $in: ['ACTIVE', 'LEGAL'] } });
+    
+    for (const loan of loans) {
+      const installments = await Installment.find({ loanId: loan._id });
+      const updates = updateDPDAndBucket(loan, installments);
+      
+      if (updates.bucket !== loan.bucket) {
+        await LoanBucketHistory.create({
+          loanId: loan._id,
+          previousBucket: loan.bucket,
+          currentBucket: updates.bucket,
+          dpd: updates.dpd
+        });
+      }
+      
+      if (updates.dpd >= 90 && loan.status !== 'LEGAL') {
+        await LegalCase.create({
+          loanId: loan._id,
+          dpdAtEntry: updates.dpd,
+          status: 'OPEN'
+        });
+      }
+      
+      await Loan.findByIdAndUpdate(loan._id, {
+        dpd: updates.dpd,
+        bucket: updates.bucket,
+        status: updates.status
+      });
+    }
+    
+    return { success: true, loansUpdated: loans.length };
+  } catch (error) {
+    throw new Error(`DPD update failed: ${error.message}`);
+  }
+};
+
+module.exports = {
+  updateAllLoans
+};

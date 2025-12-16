@@ -1,0 +1,109 @@
+openapi: 3.0.3
+info:
+  title: Business Loan CRM API
+  version: 1.0.0
+  description: Post-disbursement loan collections & risk-control system
+
+servers:
+  - url: /api/v1
+
+security:
+  - BearerAuth: []
+
+components:
+  securitySchemes:
+    BearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+
+  responses:
+    StandardResponse:
+      description: Standard API response
+      content:
+        application/json:
+          schema:
+            type: object
+            properties:
+              success:
+                type: boolean
+              data:
+                type: object
+              meta:
+                type: object
+
+paths:
+  /auth/login:
+    post:
+      summary: Login user
+      security: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              required: [email, password]
+              properties:
+                email: { type: string }
+                password: { type: string }
+      responses:
+        "200": { $ref: "#/components/responses/StandardResponse" }
+
+  /loans/active:
+    get:
+      summary: Get active loans
+      responses:
+        "200": { $ref: "#/components/responses/StandardResponse" }
+
+  /loans/{loanId}:
+    get:
+      summary: Get loan details
+      parameters:
+        - name: loanId
+          in: path
+          required: true
+          schema: { type: string }
+      responses:
+        "200": { $ref: "#/components/responses/StandardResponse" }
+
+  /loans/{loanId}/schedule:
+    get:
+      summary: Get loan installment schedule
+      responses:
+        "200": { $ref: "#/components/responses/StandardResponse" }
+
+  /payments/manual:
+    post:
+      summary: Record manual payment
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              required: [loanId, amount, paymentDate, mode]
+              properties:
+                loanId: { type: string }
+                amount: { type: number }
+                paymentDate: { type: string, format: date }
+                mode: { type: string }
+                utr: { type: string }
+      responses:
+        "200": { $ref: "#/components/responses/StandardResponse" }
+
+  /overdue/buckets:
+    get:
+      summary: Bucket-wise overdue data
+      responses:
+        "200": { $ref: "#/components/responses/StandardResponse" }
+
+  /legal/cases:
+    get:
+      summary: Get legal cases (90+ DPD)
+      responses:
+        "200": { $ref: "#/components/responses/StandardResponse" }
+
+  /reconciliation/upload:
+    post:
+      summary: Upload bank statement
+      responses:
+        "200": { $ref: "#/components/responses/StandardResponse" }

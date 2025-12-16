@@ -1,5 +1,6 @@
 const LoanService = require('../services/loan.service');
 const { body, validationResult } = require('express-validator');
+const Loan = require('../models/loan.model');
 
 class LoanController {
   /**
@@ -44,27 +45,7 @@ class LoanController {
       if (status) {
         result = await LoanService.getLoansByStatus(status, parseInt(page), parseInt(limit));
       } else {
-        // Get all loans with pagination
-        const skip = (page - 1) * limit;
-        const loans = await require('../models/loan.model')
-          .find()
-          .populate('customerId', 'firstName lastName phone')
-          .populate('assignedAgent', 'name')
-          .sort({ createdAt: -1 })
-          .skip(skip)
-          .limit(parseInt(limit));
-
-        const total = await require('../models/loan.model').countDocuments();
-        
-        result = {
-          loans,
-          pagination: {
-            page: parseInt(page),
-            limit: parseInt(limit),
-            total,
-            pages: Math.ceil(total / limit)
-          }
-        };
+        result = await LoanService.getLoansByStatus(null, parseInt(page), parseInt(limit));
       }
 
       res.json({

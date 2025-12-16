@@ -7,19 +7,19 @@ const xss = require('xss-clean');
 const rateLimit = require('express-rate-limit');
 const hpp = require('hpp');
 const cookieParser = require('cookie-parser');
-const compression = require('../middleware/compression');
-const { cacheManager } = require('../middleware/caching');
 
 // Route imports
 const authRoutes = require('./routes/auth.new');
 const loanRoutes = require('./routes/loans.new');
 const uploadRoutes = require('./routes/upload.routes');
-const dashboardOptimizedRoutes = require('../routes/dashboard-optimized');
+const branchRoutes = require('./routes/branches');
+const overdueRoutes = require('./routes/overdue.routes');
+const legalRoutes = require('./routes/legal.routes');
+const reconciliationRoutes = require('./routes/reconciliation.routes');
+const paymentRoutes = require('./routes/payments.routes');
+const reportsRoutes = require('./routes/reports.routes');
 
 const app = express();
-
-// Compression middleware (should be early in the stack)
-app.use(compression);
 
 // Body parser
 app.use(express.json({ limit: '10mb' }));
@@ -68,24 +68,12 @@ app.get('/health', (req, res) => {
 app.use('/api/v1/auth', authRoutes);
 app.use('/api/v1/loans', loanRoutes);
 app.use('/api/v1/upload', uploadRoutes);
-app.use('/api/v1/dashboard', dashboardOptimizedRoutes);
-
-// Cache status endpoint
-app.get('/api/v1/cache/status', (req, res) => {
-  res.json({
-    success: true,
-    data: {
-      size: cacheManager.size(),
-      timestamp: new Date()
-    }
-  });
-});
-
-// Cache clear endpoint
-app.delete('/api/v1/cache', (req, res) => {
-  cacheManager.clear();
-  res.json({ success: true, message: 'Cache cleared' });
-});
+app.use('/api/v1/branches', branchRoutes);
+app.use('/api/v1/overdue', overdueRoutes);
+app.use('/api/v1/legal', legalRoutes);
+app.use('/api/v1/reconciliation', reconciliationRoutes);
+app.use('/api/v1/payments', paymentRoutes);
+app.use('/api/v1/reports', reportsRoutes);
 
 // Handle 404
 app.use('*', (req, res) => {

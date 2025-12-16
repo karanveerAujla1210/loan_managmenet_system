@@ -1,0 +1,22 @@
+[
+  {
+    "Employee_Name":"Karanveer",
+    "User_ID":"Karan001",
+    "Password":"Loan@123"
+  },
+  {
+    "Employee_Name":"Manish",
+    "User_ID":"Manish002",
+    "Password":"Loan@123"
+  },
+  {
+    "Employee_Name":"Arvind",
+    "User_ID":"Arvind003",
+    "Password":"Loan@123"
+  },
+  {
+    "Employee_Name":"Avinash",
+    "User_ID":"Avinash004",
+    "Password":"Loan@123"
+  }
+]
