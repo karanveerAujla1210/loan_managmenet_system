@@ -1,0 +1,11 @@
+// Export all UI components for easy importing
+export { default as ModernLayout } from './ModernLayout';
+export { default as DashboardCard } from './DashboardCard';
+export { default as DataTable } from './DataTable';
+export { default as Modal } from './Modal';
+export { default as FormField } from './FormField';
+export { default as StatusBadge } from './StatusBadge';
+export { default as LoadingSpinner } from './LoadingSpinner';
+export { default as Alert } from './Alert';
+export { default as ProtectedRoute } from './ProtectedRoute';
+export { default as ErrorBoundary } from './ErrorBoundary';

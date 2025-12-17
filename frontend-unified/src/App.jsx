@@ -4,10 +4,10 @@ import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { Toaster } from 'react-hot-toast';
 import { AuthProvider } from './context/AuthContext';
 import ProtectedRoute from './components/ProtectedRoute';
-import Layout from './components/Layout';
+import ModernLayout from './components/ModernLayout';
 
-import Login from './pages/Login';
-import Dashboard from './pages/Dashboard';
+import ModernLogin from './pages/ModernLogin';
+import ModernDashboard from './pages/ModernDashboard';
 import Customers from './pages/Customers';
 import CustomerDetail from './pages/Customers/Detail';
 import Loans from './pages/Loans';
@@ -33,13 +33,13 @@ import CollectorPerformance from './pages/CollectorPerformance';
 import Import from './pages/Import';
 
 const LayoutWrapper = () => (
-  <Layout>
+  <ModernLayout>
     <Outlet />
-  </Layout>
+  </ModernLayout>
 );
 
 const router = createBrowserRouter([
-  { path: '/login', element: <Login /> },
+  { path: '/login', element: <ModernLogin /> },
   { path: '/register', element: <Register /> },
   { path: '/forgot-password', element: <ForgotPassword /> },
   { path: '/reset-password', element: <ResetPassword /> },
@@ -54,7 +54,7 @@ const router = createBrowserRouter([
     ),
     children: [
       { path: '/', element: <Navigate to="/dashboard" replace /> },
-      { path: '/dashboard', element: <Dashboard /> },
+      { path: '/dashboard', element: <ModernDashboard /> },
       { path: '/credit-management', element: <CreditManagement /> },
       { path: '/loans', element: <Loans /> },
       { 
