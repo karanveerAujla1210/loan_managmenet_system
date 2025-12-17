@@ -1,7 +1,0 @@
-import ReactDOM from 'react-dom/client'
-import AppModern from './AppModern.jsx'
-import './index.css'
-
-ReactDOM.createRoot(document.getElementById('root')).render(
-  <AppModern />
-)
