@@ -1,0 +1,10 @@
+{
+  "buildCommand": "cd frontend-unified && npm run build:vite",
+  "outputDirectory": "frontend-unified/dist",
+  "rewrites": [
+    {
+      "source": "/(.*)",
+      "destination": "/index.html"
+    }
+  ]
+}
