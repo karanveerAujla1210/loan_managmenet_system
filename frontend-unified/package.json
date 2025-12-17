@@ -4,18 +4,14 @@
   "private": true,
   "type": "module",
   "scripts": {
-    "dev": "next dev",
-    "dev:vite": "vite --host 0.0.0.0",
-    "build": "next build",
-    "build:vite": "vite build",
-    "start": "next start",
+    "dev": "vite --host 0.0.0.0",
+    "build": "vite build",
     "preview": "vite preview",
-    "lint": "eslint . --ext js,jsx,ts,tsx --report-unused-disable-directives --max-warnings 0",
+    "lint": "eslint . --ext js,jsx --report-unused-disable-directives --max-warnings 0",
     "test": "vitest",
     "test:watch": "vitest --watch"
   },
   "dependencies": {
-    "next": "16.0.10",
     "react": "^18.2.0",
     "react-dom": "^18.2.0",
     "@headlessui/react": "^2.2.9",
@@ -42,27 +38,18 @@
     "@testing-library/jest-dom": "^6.0.0",
     "@testing-library/react": "^14.0.0",
     "@testing-library/user-event": "^14.0.0",
-    "@tailwindcss/postcss": "^4",
-    "@types/node": "^20",
     "@types/react": "^18.2.43",
     "@types/react-dom": "^18.2.17",
     "@vitejs/plugin-react": "^4.2.1",
     "autoprefixer": "^10.4.16",
-    "babel-plugin-react-compiler": "1.0.0",
-    "eslint": "^9.0.0",
-    "eslint-config-next": "16.0.10",
+    "eslint": "^8.55.0",
     "eslint-plugin-react": "^7.33.2",
     "eslint-plugin-react-hooks": "^4.6.0",
     "eslint-plugin-react-refresh": "^0.4.5",
-    "eslint-plugin-import": "^2.29.0",
     "jsdom": "^22.1.0",
     "postcss": "^8.4.32",
     "tailwindcss": "^3.3.6",
-    "typescript": "^5",
     "vite": "^7.2.7",
     "vitest": "^1.4.5"
-  },
-  "overrides": {
-    "eslint": "^9.0.0"
   }
 }
