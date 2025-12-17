@@ -1,95 +1,147 @@
-# Quick Start Guide
+# Quick Start - Server Deployment
 
-## Backend Setup
-
+## SSH into Server
 ```bash
-cd backend
-npm install
-cp .env.example .env
-npm run dev
+ssh ec2-user@<your-ec2-ip>
+cd ~/apps/loan_managmenet_system/backend
 ```
 
-## Frontend Setup
-
+## Pull Latest Code
 ```bash
-cd frontend
-npm install
-npm run dev
+git pull origin main
+npm install --production
 ```
 
-## Database Setup
+## Restart Server
 
+### Option 1: Using PM2 (Recommended)
 ```bash
-# Start MongoDB (if using Docker)
-docker-compose up -d mongodb
+# Kill old process
+pm2 delete loan-crm-api
 
-# Create indexes
-mongosh < docs/mongodb-indexes.js
+# Start new process
+pm2 start src/server.js --name loan-crm-api
+
+# Make it auto-start on reboot
+pm2 startup
+pm2 save
+
+# Check status
+pm2 status
 ```
 
-## API Endpoints
-
-### Health Check
+### Option 2: Using Bash Script
 ```bash
-curl http://localhost:5000/health
+chmod +x restart-server.sh
+./restart-server.sh
 ```
 
-### Overdue Buckets
+## Verify Server is Running
+
+### Check PM2 Status
 ```bash
-curl -H "Authorization: Bearer YOUR_TOKEN" \
-  http://localhost:5000/api/v1/overdue/buckets
+pm2 status
 ```
 
-### Legal Cases
-```bash
-curl -H "Authorization: Bearer YOUR_TOKEN" \
-  http://localhost:5000/api/v1/legal/cases
+Expected output:
+```
+┌────┬─────────────────┬─────────────┬─────────┬─────────┬──────────┬────────┬──────┬───────────┬──────────┬──────────┬──────────┬──────────┐
+│ id │ name            │ namespace   │ version │ mode    │ pid      │ uptime │ ↺    │ status    │ cpu      │ mem      │ user     │ watching │
+├────┼─────────────────┼─────────────┼─────────┼─────────┼──────────┼────────┼──────┼───────────┼──────────┼──────────┼──────────┼──────────┤
+│ 0  │ loan-crm-api    │ default     │ 1.0.0   │ fork    │ XXXXX    │ Xs     │ 0    │ online    │ 0%       │ XXmb     │ ec2-user │ disabled │
+└────┴─────────────────┴─────────────┴─────────┴─────────┴──────────┴────────┴──────┴───────────┴──────────┴──────────┴──────────┴──────────┘
 ```
 
-### Manual Payment
+### Check Logs
 ```bash
-curl -X POST http://localhost:5000/api/v1/payments/manual \
-  -H "Authorization: Bearer YOUR_TOKEN" \
-  -H "Content-Type: application/json" \
-  -d '{
-    "loanId": "loan123",
-    "amount": 5000,
-    "paymentDate": "2024-01-01",
-    "mode": "BANK_TRANSFER",
-    "utr": "UTR123456"
-  }'
+pm2 logs loan-crm-api --lines 50
 ```
 
-### MIS Reports
-```bash
-curl -H "Authorization: Bearer YOUR_TOKEN" \
-  http://localhost:5000/api/v1/reports/mis
+Expected output (no errors):
+```
+Server running in development mode on port 4000
+All cron jobs initialized
 ```
 
-## Key Files
-
-- Backend: `backend/src/server.js`
-- Frontend: `frontend/src/App.jsx`
-- Routes: `frontend/src/routes.jsx`
-- API Spec: `docs/openapi.yaml`
-- Deployment: `docs/DEPLOYMENT.md`
-
-## Testing
-
+### Test Health Endpoint
 ```bash
-# Backend tests
-cd backend
-npm test
-
-# Lint
-npm run lint
+curl http://localhost:4000/health
 ```
 
-## Production Deployment
-
-```bash
-docker-compose -f docker-compose.prod.yml build
-docker-compose -f docker-compose.prod.yml up -d
+Expected response:
+```json
+{
+  "success": true,
+  "message": "Server is running",
+  "timestamp": "2025-12-16T12:30:00.000Z"
+}
 ```
 
-See `docs/DEPLOYMENT.md` for detailed instructions.
+## Troubleshooting
+
+### If Server Won't Start
+1. Check logs: `pm2 logs loan-crm-api --lines 100`
+2. Check MongoDB connection: `echo $MONGODB_URI`
+3. Check port availability: `lsof -i :4000`
+4. Check Node version: `node --version` (should be ≥18)
+
+### If Models Error Occurs
+Verify model re-exports exist:
+```bash
+ls -la backend/models/
+```
+
+Should show:
+```
+Customer.js
+Loan.js
+Payment.js
+index.js
+```
+
+### If Port Already in Use
+```bash
+# Kill process on port 4000
+lsof -i :4000 | grep LISTEN | awk '{print $2}' | xargs kill -9
+
+# Then restart
+pm2 restart loan-crm-api
+```
+
+## Environment Variables
+Verify `.env` file has:
+```
+NODE_ENV=development
+PORT=4000
+MONGODB_URI=mongodb://localhost:27017/loan-management-system
+JWT_SECRET=your-super-secret-jwt-key-change-in-production
+CRON_ENABLED=true
+```
+
+## Monitoring
+
+### Real-time Logs
+```bash
+pm2 logs loan-crm-api
+```
+
+### Memory Usage
+```bash
+pm2 monit
+```
+
+### Restart on Crash
+```bash
+pm2 restart loan-crm-api --watch
+```
+
+## Rollback (if needed)
+```bash
+git revert HEAD
+npm install --production
+pm2 restart loan-crm-api
+```
+
+---
+
+**Status:** ✅ Ready for deployment
