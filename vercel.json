@@ -1,6 +1,7 @@
 {
-  "buildCommand": "cd frontend-unified && npm run build:vite",
+  "buildCommand": "cd frontend-unified && npm install && npm run build:vite",
   "outputDirectory": "frontend-unified/dist",
+  "installCommand": "npm install",
   "rewrites": [
     {
       "source": "/(.*)",
