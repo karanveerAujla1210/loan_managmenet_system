@@ -1,6 +1,6 @@
 const express = require('express');
 const router = express.Router();
-const LegalCase = require('../models/LegalCase');
+const LegalCase = require('../models/legal-case.model');
 const { protect } = require('../middlewares/auth.middleware');
 
 router.get('/cases', protect, async (req, res) => {

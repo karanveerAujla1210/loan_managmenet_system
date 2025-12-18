@@ -1,6 +1,7 @@
 const express = require('express');
-const LegalCase = require('../models/LegalCase');
-const { auth, authorize } = require('../middlewares/auth.middleware');
+const LegalCase = require('../models/legal-case.model');
+const { protect, authorize } = require('../middlewares/auth.middleware');
+const auth = protect;
 
 const router = express.Router();
 

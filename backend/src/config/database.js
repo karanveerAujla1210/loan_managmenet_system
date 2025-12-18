@@ -2,26 +2,23 @@ const mongoose = require('mongoose');
 
 const connectDB = async () => {
   try {
-    const conn = await mongoose.connect(process.env.MONGODB_URI, {
-      // Modern Mongoose doesn't need these options
-    });
-
-    console.log(`MongoDB Connected: ${conn.connection.host}`.cyan.underline.bold);
+    const uri = process.env.MONGODB_URI || 'mongodb://localhost:27017/loan-management';
     
-    // Handle connection events
-    mongoose.connection.on('error', (err) => {
-      console.error(`Database error: ${err}`.red);
+    await mongoose.connect(uri, {
+      useNewUrlParser: true,
+      useUnifiedTopology: true,
+      maxPoolSize: 10,
+      minPoolSize: 5,
+      serverSelectionTimeoutMS: 5000,
+      socketTimeoutMS: 45000,
     });
 
-    mongoose.connection.on('disconnected', () => {
-      console.log('Database disconnected'.yellow);
-    });
-
-    return conn;
+    console.log('MongoDB connected successfully');
+    return mongoose.connection;
   } catch (error) {
-    console.error(`Database connection error: ${error.message}`.red);
+    console.error('MongoDB connection error:', error.message);
     process.exit(1);
   }
 };
 
-module.exports = connectDB;
+module.exports = { connectDB };

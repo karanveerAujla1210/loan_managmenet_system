@@ -1,4 +1,4 @@
-const Payment = require('../models/Payment');
+const Payment = require('../models/payment.model');
 const PaymentAllocatorService = require('../services/payment-allocator.service');
 const AuditLog = require('../models/audit-log.model');
 

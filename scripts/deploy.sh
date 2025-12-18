@@ -1,61 +1,73 @@
 #!/bin/bash
-
-# Production Deployment Script
-
 set -e
 
-echo "Starting deployment..."
+# Minimal EC2 deployment script
+DOMAIN="${1:-your-domain.com}"
+APP_DIR="/opt/loan-management-system"
 
-# Configuration
-PROJECT_DIR="/opt/loan-management-system"
-BACKUP_DIR="/opt/backups/loan-management"
-DATE=$(date +%Y%m%d_%H%M%S)
+echo "Installing dependencies..."
+sudo apt-get update
+sudo apt-get install -y curl wget git nodejs npm mongodb redis-server nginx certbot python3-certbot-nginx
 
-# Create backup before deployment
-echo "Creating pre-deployment backup..."
-mkdir -p ${BACKUP_DIR}
-docker-compose exec mongodb mongodump --out /tmp/backup_${DATE}
-docker cp $(docker-compose ps -q mongodb):/tmp/backup_${DATE} ${BACKUP_DIR}/
+echo "Cloning repository..."
+sudo mkdir -p $APP_DIR
+sudo git clone https://github.com/your-org/loan-management-system.git $APP_DIR
+sudo chown -R ubuntu:ubuntu $APP_DIR
 
-# Pull latest images
-echo "Pulling latest Docker images..."
-docker-compose pull
+echo "Setting up backend..."
+cd $APP_DIR/backend
+npm ci --production
+mkdir -p logs
 
-# Stop services
-echo "Stopping services..."
-docker-compose down
+echo "Setting up frontend..."
+cd $APP_DIR/frontend-unified
+npm ci
+npm run build
 
-# Start services with new images
-echo "Starting services with new images..."
-docker-compose up -d
+echo "Starting services..."
+sudo systemctl start mongod redis-server nginx
+sudo systemctl enable mongod redis-server nginx
 
-# Wait for services to be ready
-echo "Waiting for services to start..."
-sleep 30
+echo "Configuring Nginx..."
+sudo tee /etc/nginx/sites-available/loan-crm > /dev/null << 'EOF'
+upstream backend { server localhost:5000; }
+server {
+    listen 80;
+    server_name _;
+    return 301 https://$host$request_uri;
+}
+server {
+    listen 443 ssl http2;
+    server_name _;
+    ssl_certificate /etc/letsencrypt/live/your-domain.com/fullchain.pem;
+    ssl_certificate_key /etc/letsencrypt/live/your-domain.com/privkey.pem;
+    location / {
+        root /opt/loan-management-system/frontend-unified/dist;
+        try_files $uri $uri/ /index.html;
+    }
+    location /api/ {
+        proxy_pass http://backend;
+        proxy_set_header Host $host;
+        proxy_set_header X-Real-IP $remote_addr;
+        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+        proxy_set_header X-Forwarded-Proto $scheme;
+    }
+}
+EOF
 
-# Health check
-echo "Performing health checks..."
-if curl -f http://localhost/health > /dev/null 2>&1; then
-    echo "✅ Frontend health check passed"
-else
-    echo "❌ Frontend health check failed"
-    exit 1
-fi
+sudo ln -sf /etc/nginx/sites-available/loan-crm /etc/nginx/sites-enabled/loan-crm
+sudo rm -f /etc/nginx/sites-enabled/default
+sudo nginx -t
+sudo systemctl reload nginx
 
-if curl -f http://localhost/api/health > /dev/null 2>&1; then
-    echo "✅ Backend health check passed"
-else
-    echo "❌ Backend health check failed"
-    exit 1
-fi
+echo "Installing PM2..."
+sudo npm install -g pm2
+cd $APP_DIR/backend
+pm2 start src/server.js --name "loan-api"
+pm2 save
+pm2 startup
 
-# Clean up old images and containers
-echo "Cleaning up..."
-docker system prune -f
+echo "Setting up SSL..."
+sudo certbot certonly --nginx -d $DOMAIN --non-interactive --agree-tos -m admin@$DOMAIN
 
-echo "✅ Deployment completed successfully!"
-
-# Send notification (optional)
-# curl -X POST -H 'Content-type: application/json' \
-#   --data '{"text":"Loan Management System deployed successfully"}' \
-#   YOUR_SLACK_WEBHOOK_URL
+echo "Deployment complete!"

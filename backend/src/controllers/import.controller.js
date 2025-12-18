@@ -1,4 +1,4 @@
-const ImportService = require('../services/importService');
+const ImportService = require('../services/import.service');
 const AuditLog = require('../models/audit-log.model');
 
 class ImportController {

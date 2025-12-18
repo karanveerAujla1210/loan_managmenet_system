@@ -1,7 +1,8 @@
 const express = require('express');
 const Loan = require('../models/loan.model');
 const Installment = require('../models/installment.model');
-const { auth } = require('../middlewares/auth.middleware');
+const { protect } = require('../middlewares/auth.middleware');
+const auth = protect;
 
 const router = express.Router();
 

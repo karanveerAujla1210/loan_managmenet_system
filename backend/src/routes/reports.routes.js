@@ -1,7 +1,7 @@
 const express = require('express');
-const Loan = require('../models/Loan');
+const Loan = require('../models/loan.model');
 const Installment = require('../models/installment.model');
-const LegalCase = require('../models/LegalCase');
+const LegalCase = require('../models/legal-case.model');
 const CollectorPerformance = require('../models/collector-performance.model');
 const { protect, authorize } = require('../middlewares/auth.middleware');
 

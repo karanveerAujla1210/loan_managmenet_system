@@ -1,13 +1,13 @@
 import React from 'react';
 import { clsx } from 'clsx';
 
-const Input = ({ 
+const Input = React.forwardRef(({ 
   label, 
   error, 
   className = '', 
   required = false,
   ...props 
-}) => {
+}, ref) => {
   return (
     <div className="space-y-1">
       {label && (
@@ -17,6 +17,7 @@ const Input = ({
         </label>
       )}
       <input
+        ref={ref}
         className={clsx(
           'w-full px-3 py-2 border border-gray-300 rounded-lg shadow-sm placeholder-gray-400',
           'focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-primary-500',
@@ -31,7 +32,9 @@ const Input = ({
       )}
     </div>
   );
-};
+});
+
+Input.displayName = 'Input';
 
 export { Input };
 export default Input;

@@ -1,57 +1,29 @@
 require('dotenv').config();
 const app = require('./app');
 const { connectDB } = require('./config/database-optimized');
-const { initDPDCron } = require('./jobs/dpdUpdateJob');
-const { initLegalEscalationCron } = require('./jobs/legal-escalation-cron');
-const { initCollectorScoringCron } = require('./jobs/collector-scoring-cron');
-const { initPromiseReminderCron } = require('./jobs/promise-reminder-cron');
 
 const PORT = process.env.PORT || 5000;
 
-// Start server
 const startServer = async () => {
   try {
-    // Connect to database
     await connectDB();
     
-    // Initialize cron jobs
-    if (process.env.CRON_ENABLED !== 'false') {
-      initDPDCron();
-      initLegalEscalationCron();
-      initCollectorScoringCron();
-      initPromiseReminderCron();
-      console.log('All cron jobs initialized'.green);
-    }
-    
-    // Start HTTP server
     const server = app.listen(PORT, () => {
-      console.log(`Server running in ${process.env.NODE_ENV || 'development'} mode on port ${PORT}`.yellow.bold);
+      console.log(`Server running on port ${PORT}`);
     });
 
-    // Handle unhandled promise rejections
-    process.on('unhandledRejection', (err, promise) => {
-      console.log(`Error: ${err.message}`.red);
-      // Close server & exit process
+    process.on('unhandledRejection', (err) => {
+      console.error('Error:', err.message);
       server.close(() => process.exit(1));
     });
 
-    // Handle uncaught exceptions
-    process.on('uncaughtException', (err) => {
-      console.error(`Error: ${err.message}`.red);
-      // Close server & exit process
-      process.exit(1);
-    });
-
-    // Graceful shutdown
     process.on('SIGTERM', () => {
-      console.log('SIGTERM received. Shutting down gracefully'.yellow);
-      server.close(() => {
-        console.log('Process terminated'.red);
-      });
+      console.log('Shutting down gracefully');
+      server.close(() => process.exit(0));
     });
 
   } catch (error) {
-    console.error(`Failed to start server: ${error.message}`.red);
+    console.error('Failed to start server:', error.message);
     process.exit(1);
   }
 };

@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { useForm } from 'react-hook-form';
 import toast from 'react-hot-toast';
+import { useAuth } from '../context/AuthContext';
 import Button from '../components/ui/Button';
 import Input from '../components/ui/Input';
 import Card from '../components/ui/Card';
@@ -9,17 +10,18 @@ import Card from '../components/ui/Card';
 const Login = () => {
   const [loading, setLoading] = useState(false);
   const navigate = useNavigate();
+  const { login } = useAuth();
   const { register, handleSubmit, formState: { errors } } = useForm();
 
   const onSubmit = async (data) => {
     setLoading(true);
     try {
-      // Simulate API call
-      await new Promise(resolve => setTimeout(resolve, 1000));
-      toast.success('Login successful!');
-      navigate('/dashboard');
+      const result = await login(data);
+      if (result.success) {
+        toast.success('Login successful!');
+      }
     } catch (error) {
-      toast.error('Invalid credentials');
+      toast.error('Login error: ' + error.message);
     } finally {
       setLoading(false);
     }

@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { ChevronUpDownIcon, ChevronDownIcon, ChevronUpIcon } from '@heroicons/react/24/outline';
+import { formatCurrency } from '../../lib/format';
 
 export default function EnhancedDataTable({
   columns,
@@ -53,7 +54,7 @@ export default function EnhancedDataTable({
     }
 
     if (typeof value === 'number' && column.type === 'currency') {
-      return `₹${value.toLocaleString('en-IN')}`;
+      return formatCurrency(value);
     }
 
     if (typeof value === 'number' && column.type === 'percentage') {

@@ -1,1 +1,1 @@
-module.exports = require('../src/models/Payment');
+module.exports = require('../src/models/payment.model');

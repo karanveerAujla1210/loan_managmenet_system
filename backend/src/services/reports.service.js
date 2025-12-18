@@ -1,4 +1,7 @@
-const { Loan, Instalment, Payment, User } = require('../models');
+const Loan = require('../models/loan.model');
+const Installment = require('../models/installment.model');
+const Payment = require('../models/payment.model');
+const User = require('../models/user.model');
 
 /**
  * Portfolio Snapshot - Total deployed, outstanding, at risk
@@ -42,7 +45,7 @@ const getBucketExposure = async () => {
   const buckets = {};
 
   for (const loan of loans) {
-    const firstUnpaid = await Instalment.findOne({
+    const firstUnpaid = await Installment.findOne({
       loanId: loan._id,
       status: { $in: ['DUE', 'PARTIAL', 'OVERDUE'] }
     }).sort({ dueDate: 1 });
@@ -81,7 +84,7 @@ const getCollectionEfficiency = async () => {
   const today = new Date();
   today.setHours(0, 0, 0, 0);
 
-  const result = await Instalment.aggregate([
+  const result = await Installment.aggregate([
     { $match: { dueDate: { $lte: today } } },
     {
       $group: {

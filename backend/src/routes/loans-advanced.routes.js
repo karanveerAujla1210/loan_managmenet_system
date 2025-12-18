@@ -1,11 +1,10 @@
 const express = require('express');
 const LoanController = require('../controllers/loan.controller');
-const { auth, authorize } = require('../middlewares/auth.middleware');
+const { protect, authorize } = require('../middlewares/auth.middleware');
 
 const router = express.Router();
 
-// Get active loans by bucket
-router.get('/bucket', auth, async (req, res) => {
+router.get('/bucket', protect, async (req, res) => {
   try {
     await LoanController.getActiveLoansByBucket(req, res);
   } catch (error) {
@@ -13,8 +12,7 @@ router.get('/bucket', auth, async (req, res) => {
   }
 });
 
-// Get loan details with schedule
-router.get('/:loanId/details', auth, async (req, res) => {
+router.get('/:loanId/details', protect, async (req, res) => {
   try {
     await LoanController.getLoanDetails(req, res);
   } catch (error) {
@@ -22,8 +20,7 @@ router.get('/:loanId/details', auth, async (req, res) => {
   }
 });
 
-// Get overdue buckets summary
-router.get('/overdue/buckets', auth, authorize(['manager', 'admin']), async (req, res) => {
+router.get('/overdue/buckets', protect, authorize('manager', 'admin'), async (req, res) => {
   try {
     await LoanController.getOverdueBuckets(req, res);
   } catch (error) {

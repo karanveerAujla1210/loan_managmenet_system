@@ -1,99 +1,72 @@
-require('colors');
+require('dotenv').config();
 const express = require('express');
 const cors = require('cors');
+const helmet = require('helmet');
+const compression = require('compression');
+const mongoSanitize = require('express-mongo-sanitize');
+const rateLimit = require('express-rate-limit');
+const morgan = require('morgan');
 
 const app = express();
 
-// CORS MUST BE FIRST - before all other middleware
+app.use(helmet());
+app.use(mongoSanitize());
+
+const limiter = rateLimit({
+  windowMs: 15 * 60 * 1000,
+  max: 100
+});
+app.use('/api/', limiter);
+
+app.use(express.json({ limit: '50mb' }));
+app.use(express.urlencoded({ limit: '50mb', extended: true }));
+
 app.use(cors({
-  origin: process.env.CORS_ORIGIN || 'http://localhost:3000',
-  credentials: true,
-  methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'],
-  allowedHeaders: ['Content-Type', 'Authorization', 'X-CSRF-Token']
+  origin: process.env.CORS_ORIGIN || '*',
+  credentials: true
 }));
 
-// Body parser
-app.use(express.json({ limit: '10mb' }));
-app.use(express.urlencoded({ extended: true }));
+app.use(compression());
+app.use(morgan('combined'));
 
-// Security headers
-app.use((req, res, next) => {
-  res.setHeader('X-Content-Type-Options', 'nosniff');
-  res.setHeader('X-Frame-Options', 'DENY');
-  res.setHeader('X-XSS-Protection', '1; mode=block');
-  next();
-});
-
-// Route imports
-const authRoutes = require('./routes/auth.new');
-const loanRoutes = require('./routes/loans.new');
-const uploadRoutes = require('./routes/upload.routes');
-const branchRoutes = require('./routes/branches');
-const overdueRoutes = require('./routes/overdue.routes');
-const legalRoutes = require('./routes/legal.routes');
-const reconciliationRoutes = require('./routes/reconciliation.routes');
-const paymentRoutes = require('./routes/payments.routes');
-const reportsRoutes = require('./routes/reports.routes');
-const disputesRoutes = require('./routes/disputes.routes');
-const promisesRoutes = require('./routes/promises.routes');
-const collectorPerformanceRoutes = require('./routes/collector-performance.routes');
-const misRoutes = require('./routes/mis.routes');
-const reconciliationAdvancedRoutes = require('./routes/reconciliation-advanced.routes');
-const loansAdvancedRoutes = require('./routes/loans-advanced.routes');
-const auditRoutes = require('./routes/audit.routes');
-const legalAdvancedRoutes = require('./routes/legal.advanced.routes');
-const paymentManualRoutes = require('./routes/payment-manual.routes');
-const dashboardRoutes = require('./routes/dashboard.routes');
-const importRoutes = require('./routes/import.routes');
-const testDataRoutes = require('./routes/test-data.routes');
-
-// Health check endpoint
 app.get('/health', (req, res) => {
-  res.status(200).json({
-    success: true,
-    message: 'Server is running',
-    timestamp: new Date().toISOString()
-  });
+  res.status(200).json({ status: 'ok', timestamp: new Date() });
 });
 
-// Mount routers
-app.use('/api/v1/auth', authRoutes);
-app.use('/api/v1/loans', loanRoutes);
-app.use('/api/v1/upload', uploadRoutes);
-app.use('/api/v1/branches', branchRoutes);
-app.use('/api/v1/overdue', overdueRoutes);
-app.use('/api/v1/legal', legalRoutes);
-app.use('/api/v1/reconciliation', reconciliationRoutes);
-app.use('/api/v1/reconciliation-advanced', reconciliationAdvancedRoutes);
-app.use('/api/v1/payments', paymentRoutes);
-app.use('/api/v1/reports', reportsRoutes);
-app.use('/api/v1/disputes', disputesRoutes);
-app.use('/api/v1/promises', promisesRoutes);
-app.use('/api/v1/collector-performance', collectorPerformanceRoutes);
-app.use('/api/v1/mis', misRoutes);
-app.use('/api/v1/loans-advanced', loansAdvancedRoutes);
-app.use('/api/v1/audit', auditRoutes);
-app.use('/api/v1/legal-advanced', legalAdvancedRoutes);
-app.use('/api/v1/payments-manual', paymentManualRoutes);
-app.use('/api/v1/dashboard', dashboardRoutes);
-app.use('/api/v1/import', importRoutes);
-app.use('/api/v1/test-data', testDataRoutes);
+try {
+  app.use('/api/v1/auth', require('../routes/auth'));
+} catch (e) {
+  console.error('Auth route error:', e.message);
+}
 
-// Handle 404
-app.use('*', (req, res) => {
-  res.status(404).json({
-    success: false,
-    message: `Route ${req.originalUrl} not found`
-  });
-});
+try {
+  app.use('/api/v1/loans', require('../routes/loans'));
+} catch (e) {
+  console.error('Loans route error:', e.message);
+}
 
-// Global error handler
+try {
+  app.use('/api/v1/customers', require('../routes/customers'));
+} catch (e) {
+  console.error('Customers route error:', e.message);
+}
+
+try {
+  app.use('/api/v1/payments', require('../routes/payments'));
+} catch (e) {
+  console.error('Payments route error:', e.message);
+}
+
+try {
+  app.use('/api/v1/dashboard', require('../routes/dashboard'));
+} catch (e) {
+  console.error('Dashboard route error:', e.message);
+}
+
 app.use((err, req, res, next) => {
   console.error(err.stack);
-  const statusCode = err.statusCode || 500;
-  res.status(statusCode).json({
-    success: false,
-    message: err.message || 'Server Error'
+  res.status(err.status || 500).json({
+    error: err.message || 'Internal Server Error'
   });
 });
 

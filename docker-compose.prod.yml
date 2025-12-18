@@ -1,7 +1,6 @@
 version: '3.8'
 
 services:
-  # MongoDB Database with replica set for production
   mongodb:
     image: mongo:7.0
     container_name: loan-mongodb-prod
@@ -14,7 +13,6 @@ services:
       - "27017:27017"
     volumes:
       - mongodb_data:/data/db
-      - ./scripts/mongo-init.js:/docker-entrypoint-initdb.d/mongo-init.js:ro
       - ./backups:/backups
     networks:
       - loan-network
@@ -25,7 +23,6 @@ services:
         max-size: "10m"
         max-file: "3"
 
-  # Redis for Caching and Sessions
   redis:
     image: redis:7.2-alpine
     container_name: loan-redis-prod
@@ -43,9 +40,10 @@ services:
         max-size: "10m"
         max-file: "3"
 
-  # Backend API
   backend:
-    image: ${DOCKER_USERNAME}/loan-backend:latest
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
     container_name: loan-backend-prod
     restart: always
     environment:
@@ -54,20 +52,15 @@ services:
       MONGO_URI: mongodb://${MONGO_ROOT_USERNAME}:${MONGO_ROOT_PASSWORD}@mongodb:27017/${MONGO_DB_NAME}?authSource=admin
       REDIS_URL: redis://:${REDIS_PASSWORD}@redis:6379
       JWT_SECRET: ${JWT_SECRET}
-      JWT_EXPIRE: ${JWT_EXPIRE}
       CORS_ORIGIN: ${CORS_ORIGIN}
-      SMTP_HOST: ${SMTP_HOST}
-      SMTP_PORT: ${SMTP_PORT}
-      SMTP_EMAIL: ${SMTP_EMAIL}
-      SMTP_PASSWORD: ${SMTP_PASSWORD}
     ports:
       - "5000:5000"
     depends_on:
       - mongodb
       - redis
     volumes:
-      - ./logs:/app/logs
-      - ./uploads:/app/uploads
+      - ./backend/logs:/app/logs
+      - ./backend/uploads:/app/uploads
     networks:
       - loan-network
     deploy:
@@ -82,9 +75,10 @@ services:
         max-size: "10m"
         max-file: "3"
 
-  # Frontend Web App
   frontend:
-    image: ${DOCKER_USERNAME}/loan-frontend:latest
+    build:
+      context: ./frontend-unified
+      dockerfile: Dockerfile
     container_name: loan-frontend-prod
     restart: always
     ports:
@@ -105,7 +99,6 @@ services:
         max-size: "10m"
         max-file: "3"
 
-  # Nginx Reverse Proxy with SSL
   nginx:
     image: nginx:alpine
     container_name: loan-nginx-prod
@@ -114,8 +107,8 @@ services:
       - "80:80"
       - "443:443"
     volumes:
-      - ./nginx/nginx.conf:/etc/nginx/nginx.conf:ro
-      - ./nginx/ssl:/etc/nginx/ssl:ro
+      - ./nginx.conf:/etc/nginx/nginx.conf:ro
+      - ./ssl:/etc/nginx/ssl:ro
       - ./logs/nginx:/var/log/nginx
     depends_on:
       - frontend
@@ -134,53 +127,12 @@ services:
         max-size: "10m"
         max-file: "3"
 
-  # Monitoring with Prometheus (optional)
-  prometheus:
-    image: prom/prometheus:latest
-    container_name: loan-prometheus
-    restart: always
-    ports:
-      - "9090:9090"
-    volumes:
-      - ./monitoring/prometheus.yml:/etc/prometheus/prometheus.yml:ro
-      - prometheus_data:/prometheus
-    networks:
-      - loan-network
-    command:
-      - '--config.file=/etc/prometheus/prometheus.yml'
-      - '--storage.tsdb.path=/prometheus'
-      - '--web.console.libraries=/etc/prometheus/console_libraries'
-      - '--web.console.templates=/etc/prometheus/consoles'
-      - '--storage.tsdb.retention.time=200h'
-      - '--web.enable-lifecycle'
-
-  # Grafana for monitoring dashboards (optional)
-  grafana:
-    image: grafana/grafana:latest
-    container_name: loan-grafana
-    restart: always
-    ports:
-      - "3001:3000"
-    environment:
-      GF_SECURITY_ADMIN_PASSWORD: ${GRAFANA_PASSWORD}
-    volumes:
-      - grafana_data:/var/lib/grafana
-    networks:
-      - loan-network
-
 volumes:
   mongodb_data:
     driver: local
   redis_data:
     driver: local
-  prometheus_data:
-    driver: local
-  grafana_data:
-    driver: local
 
 networks:
   loan-network:
     driver: bridge
-    ipam:
-      config:
-        - subnet: 172.20.0.0/16

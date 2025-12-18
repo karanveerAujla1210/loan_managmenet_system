@@ -1,6 +1,6 @@
 const express = require('express');
 const router = express.Router();
-const { matchPayments, reconcilePayments } = require('../services/BankReconciliationService');
+const { matchPayments, reconcilePayments } = require('../services/bank-reconciliation.service');
 const { protect } = require('../middlewares/auth.middleware');
 
 router.post('/upload', protect, async (req, res) => {

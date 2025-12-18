@@ -1,5 +1,5 @@
 const express = require('express');
-const { LoanController, loanValidation } = require('../controllers/loan.controller');
+const LoanController = require('../controllers/loan.controller');
 const { protect, authorize } = require('../middlewares/auth.middleware');
 
 const router = express.Router();
@@ -12,7 +12,7 @@ router.get('/', LoanController.getLoans);
 router.get('/:id', LoanController.getLoan);
 
 // Customer can apply for loan
-router.post('/apply', loanValidation, LoanController.applyLoan);
+router.post('/apply', LoanController.applyLoan);
 
 // Manager/Admin only routes
 router.put('/:id/approve', authorize('manager', 'admin'), LoanController.approveLoan);
