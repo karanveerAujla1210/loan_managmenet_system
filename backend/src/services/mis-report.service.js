@@ -1,113 +1,119 @@
 const Loan = require('../models/loan.model');
-const Installment = require('../models/installment.model');
-const LegalCase = require('../models/LegalCase');
-const moment = require('moment');
+const Payment = require('../models/payment.model');
 
 class MISReportService {
-  static async getPortfolioSnapshot() {
-    const loans = await Loan.find({ status: { $in: ['ACTIVE', 'LEGAL'] } });
-    
-    const totalLoans = loans.length;
-    const totalPrincipal = loans.reduce((sum, l) => sum + l.principal, 0);
-    
-    const installments = await Installment.find({ 
-      loanId: { $in: loans.map(l => l._id) } 
-    });
-    
-    const totalOutstanding = installments.reduce((sum, i) => sum + i.remainingAmount, 0);
-    const totalInterest = loans.reduce((sum, l) => sum + (l.interest || 0), 0);
+  async generateDailyMIS(reportDate = new Date()) {
+    const dayStart = new Date(reportDate);
+    dayStart.setHours(0, 0, 0, 0);
 
-    return {
-      totalLoans,
-      totalPrincipal,
-      totalOutstanding,
-      totalInterest,
-      timestamp: new Date()
-    };
-  }
+    const dayEnd = new Date(reportDate);
+    dayEnd.setHours(23, 59, 59, 999);
 
-  static async getBucketExposure() {
-    const buckets = ['CURRENT', '1-7', '8-15', '16-22', '23-29', '30+', '60+', 'LEGAL'];
-    const exposure = {};
-
-    for (const bucket of buckets) {
-      const loans = await Loan.find({ bucket, status: { $in: ['ACTIVE', 'LEGAL'] } });
-      const loanIds = loans.map(l => l._id);
-      
-      const outstanding = await Installment.aggregate([
-        { $match: { loanId: { $in: loanIds } } },
-        { $group: { _id: null, total: { $sum: '$remainingAmount' } } }
-      ]);
-
-      exposure[bucket] = {
-        loanCount: loans.length,
-        outstandingAmount: outstanding[0]?.total || 0
-      };
-    }
-
-    return exposure;
-  }
-
-  static async getCollectionEfficiency(date = new Date()) {
-    const startOfDay = moment(date).startOf('day').toDate();
-    const endOfDay = moment(date).endOf('day').toDate();
-
-    const dueInstallments = await Installment.find({
-      dueDate: { $gte: startOfDay, $lte: endOfDay }
+    const totalActiveLoan = await Loan.countDocuments({
+      status: { $in: ['active', 'npa'] }
     });
 
-    const dueAmount = dueInstallments.reduce((sum, i) => sum + i.emiAmount, 0);
-    const collectedAmount = dueInstallments.reduce((sum, i) => sum + i.paidAmount, 0);
-
-    return {
-      dueAmount,
-      collectedAmount,
-      efficiency: dueAmount > 0 ? (collectedAmount / dueAmount) * 100 : 0,
-      date
-    };
-  }
-
-  static async getRollRateAnalysis() {
-    const loans = await Loan.find({ status: { $in: ['ACTIVE', 'LEGAL'] } });
-    const buckets = ['CURRENT', '1-7', '8-15', '16-22', '23-29', '30+', '60+', 'LEGAL'];
-    
-    const rollRate = {};
-    for (const bucket of buckets) {
-      rollRate[bucket] = {
-        improved: 0,
-        stable: 0,
-        deteriorated: 0
-      };
-    }
-
-    // Simplified: count loans in each bucket
-    for (const loan of loans) {
-      if (rollRate[loan.bucket]) {
-        rollRate[loan.bucket].stable++;
+    const outstandingAgg = await Loan.aggregate([
+      {
+        $match: { status: { $in: ['active', 'npa'] } }
+      },
+      {
+        $group: {
+          _id: null,
+          totalOutstanding: { $sum: '$outstandingAmount' }
+        }
       }
-    }
+    ]);
+    const totalOutstanding = outstandingAgg[0]?.totalOutstanding || 0;
 
-    return rollRate;
-  }
-
-  static async getLegalExposure() {
-    const legalCases = await LegalCase.find();
-    const loanIds = legalCases.map(c => c.loanId);
-    
-    const loans = await Loan.find({ _id: { $in: loanIds } });
-    const totalOutstanding = loans.reduce((sum, l) => sum + (l.outstandingAmount || 0), 0);
-
-    const byStatus = {};
-    for (const status of ['OPEN', 'NOTICE_SENT', 'COURT_FILED', 'RESOLVED', 'CLOSED']) {
-      byStatus[status] = await LegalCase.countDocuments({ status });
-    }
+    const todaysPayments = await Payment.find({
+      paymentDate: { $gte: dayStart, $lte: dayEnd },
+      status: 'confirmed'
+    });
+    const todaysCollection = todaysPayments.reduce((sum, p) => sum + (p.amount || 0), 0);
 
     return {
-      totalCases: legalCases.length,
-      totalOutstanding,
-      byStatus
+      reportDate,
+      metrics: {
+        totalActiveLoan,
+        totalOutstanding,
+        todaysCollection,
+        collectionEfficiency: totalOutstanding > 0 ? ((todaysCollection / totalOutstanding) * 100).toFixed(2) : 0
+      }
+    };
+  }
+
+  async generatePortfolioHealth(reportDate = new Date()) {
+    const bucketDistribution = await Loan.aggregate([
+      {
+        $match: { status: { $in: ['active', 'npa'] } }
+      },
+      {
+        $group: {
+          _id: '$bucket',
+          count: { $sum: 1 },
+          totalAmount: { $sum: '$outstandingAmount' },
+          avgDPD: { $avg: '$dpd' }
+        }
+      },
+      {
+        $sort: { _id: 1 }
+      }
+    ]);
+
+    const totalCount = bucketDistribution.reduce((sum, b) => sum + (b.count || 0), 0);
+    const totalAmount = bucketDistribution.reduce((sum, b) => sum + (b.totalAmount || 0), 0);
+
+    const buckets = {};
+    bucketDistribution.forEach(bucket => {
+      buckets[bucket._id] = {
+        count: bucket.count,
+        amount: bucket.totalAmount,
+        percentage: ((bucket.totalAmount / totalAmount) * 100).toFixed(2),
+        avgDPD: bucket.avgDPD.toFixed(1)
+      };
+    });
+
+    return {
+      reportDate,
+      portfolioSummary: {
+        totalActiveLoans: totalCount,
+        totalOutstanding: totalAmount
+      },
+      bucketDistribution: buckets
+    };
+  }
+
+  async generateLegalLossReport(reportDate = new Date()) {
+    const legalLoans = await Loan.find({
+      bucket: 'LEGAL',
+      status: { $in: ['active', 'npa'] }
+    });
+
+    const totalLegalCases = legalLoans.length;
+    const totalLegalOutstanding = legalLoans.reduce((sum, l) => sum + (l.outstandingAmount || 0), 0);
+    const avgDPDLegal = legalLoans.length > 0
+      ? (legalLoans.reduce((sum, l) => sum + (l.dpd || 0), 0) / legalLoans.length).toFixed(1)
+      : 0;
+
+    const allActiveLoans = await Loan.find({
+      status: { $in: ['active', 'npa'] }
+    });
+    const portfolioAmount = allActiveLoans.reduce((sum, l) => sum + (l.outstandingAmount || 0), 0);
+    const legalPercentage = portfolioAmount > 0
+      ? ((totalLegalOutstanding / portfolioAmount) * 100).toFixed(2)
+      : 0;
+
+    return {
+      reportDate,
+      legal: {
+        totalLegalCases,
+        totalLegalOutstanding,
+        avgDPDLegal,
+        legalPercentageOfPortfolio: parseFloat(legalPercentage)
+      }
     };
   }
 }
 
-module.exports = MISReportService;
+module.exports = new MISReportService();

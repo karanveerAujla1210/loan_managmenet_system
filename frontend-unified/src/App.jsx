@@ -6,7 +6,7 @@ import { AuthProvider } from './context/AuthContext';
 import ProtectedRoute from './components/ProtectedRoute';
 import ModernLayout from './components/ModernLayout';
 
-import ModernLogin from './pages/ModernLogin';
+import EnhancedLogin from './pages/Login/EnhancedLogin';
 import ModernDashboard from './pages/ModernDashboard';
 import Customers from './pages/Customers';
 import CustomerDetail from './pages/Customers/Detail';
@@ -31,15 +31,16 @@ import Disputes from './pages/Disputes';
 import Promises from './pages/Promises';
 import CollectorPerformance from './pages/CollectorPerformance';
 import Import from './pages/Import';
+import EnhancedLayout from './components/EnhancedLayout';
 
 const LayoutWrapper = () => (
-  <ModernLayout>
+  <EnhancedLayout>
     <Outlet />
-  </ModernLayout>
+  </EnhancedLayout>
 );
 
 const router = createBrowserRouter([
-  { path: '/login', element: <ModernLogin /> },
+  { path: '/login', element: <EnhancedLogin /> },
   { path: '/register', element: <Register /> },
   { path: '/forgot-password', element: <ForgotPassword /> },
   { path: '/reset-password', element: <ResetPassword /> },

@@ -1,6 +1,5 @@
 const Loan = require('../models/loan.model');
 const Installment = require('../models/installment.model');
-const LegalCase = require('../models/LegalCase');
 const AuditLog = require('../models/audit-log.model');
 const moment = require('moment');
 
@@ -18,7 +17,7 @@ const BUCKET_RANGES = {
 class DPDUpdateService {
   static calculateDPD(installments) {
     const unpaid = installments.find(inst => 
-      inst.status === 'PENDING' || inst.status === 'PARTIAL' || inst.status === 'OVERDUE'
+      inst.status === 'pending' || inst.status === 'partially_paid' || inst.status === 'overdue'
     );
     
     if (!unpaid) return 0;
@@ -35,12 +34,12 @@ class DPDUpdateService {
   }
 
   static async updateAllLoans() {
-    const loans = await Loan.find({ status: { $in: ['ACTIVE', 'LEGAL'] } });
+    const loans = await Loan.find({ status: { $in: ['active', 'npa'] } });
     let updated = 0;
     let legalEscalated = 0;
 
     for (const loan of loans) {
-      const installments = await Installment.find({ loanId: loan._id }).sort({ installmentNo: 1 });
+      const installments = await Installment.find({ loanId: loan._id }).sort({ sequence: 1 });
       
       const dpd = this.calculateDPD(installments);
       const bucket = this.assignBucket(dpd);
@@ -50,26 +49,14 @@ class DPDUpdateService {
         loan.dpd = dpd;
         loan.bucket = bucket;
 
-        // Auto-escalate to legal at DPD >= 90
-        if (dpd >= 90 && loan.status !== 'LEGAL') {
-          loan.status = 'LEGAL';
-          
-          // Create legal case
-          const existingCase = await LegalCase.findOne({ loanId: loan._id });
-          if (!existingCase) {
-            await LegalCase.create({
-              loanId: loan._id,
-              dpdAtEntry: dpd,
-              status: 'OPEN'
-            });
-            legalEscalated++;
-          }
+        if (dpd >= 90 && loan.status !== 'npa') {
+          loan.status = 'npa';
+          legalEscalated++;
         }
 
         await loan.save();
         updated++;
 
-        // Audit log
         await AuditLog.create({
           action: 'DPD_UPDATED',
           entity: 'LOAN',
