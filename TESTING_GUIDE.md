@@ -1,466 +1,287 @@
-# TESTING_GUIDE.md
+# TESTING GUIDE - Technical Operating Spec Implementation
 
-**Complete testing procedures for MIS Reports System**
+## 🧪 POSTMAN COLLECTION
 
----
+### 1. Test Loan State Transition
 
-## 🧪 Unit Tests
+**Request:**
+```
+POST http://localhost:5000/api/v1/loans/:id/transition
+Authorization: Bearer <token>
+Content-Type: application/json
 
-### Test 1: Portfolio Endpoint
-```bash
-curl -X GET http://localhost:3000/api/v1/reports/portfolio \
-  -H "Authorization: Bearer <admin_token>" \
-  -H "Content-Type: application/json"
+{
+  "action": "APPROVE",
+  "metadata": {
+    "reason": "Good credit profile"
+  }
+}
 ```
 
-**Expected Response:**
+**Expected Response (200):**
 ```json
 {
   "success": true,
   "data": {
-    "totalLoans": <number>,
-    "totalPrincipal": <number>,
-    "totalOutstanding": <number>
-  },
-  "meta": { "timestamp": "<ISO_DATE>" }
+    "state": "APPROVED",
+    "allowedActions": ["DISBURSED", "REJECTED"]
+  }
 }
 ```
 
-**Verification:**
-- ✅ Status code: 200
-- ✅ success: true
-- ✅ data is object (not null)
-- ✅ totalLoans ≥ 0
-- ✅ totalPrincipal ≥ 0
-- ✅ totalOutstanding ≥ 0
-
----
-
-### Test 2: Buckets Endpoint
-```bash
-curl -X GET http://localhost:3000/api/v1/reports/buckets \
-  -H "Authorization: Bearer <admin_token>" \
-  -H "Content-Type: application/json"
-```
-
-**Expected Response:**
-```json
-{
-  "success": true,
-  "data": [
-    { "_id": "current", "loanCount": <number>, "outstandingAmount": <number>, "avgDPD": <number> },
-    { "_id": "X", "loanCount": <number>, "outstandingAmount": <number>, "avgDPD": <number> },
-    ...
-  ],
-  "meta": { "timestamp": "<ISO_DATE>" }
-}
-```
-
-**Verification:**
-- ✅ Status code: 200
-- ✅ data is array
-- ✅ Contains buckets: current, X, Y, M1, M2, M3, NPA
-- ✅ Each bucket has loanCount, outstandingAmount, avgDPD
-- ✅ All values ≥ 0
-- ✅ Sum of outstandingAmount ≤ portfolio outstanding
-
----
-
-### Test 3: Efficiency Endpoint
-```bash
-curl -X GET http://localhost:3000/api/v1/reports/efficiency \
-  -H "Authorization: Bearer <admin_token>" \
-  -H "Content-Type: application/json"
-```
-
-**Expected Response:**
-```json
-{
-  "success": true,
-  "data": {
-    "dueAmount": <number>,
-    "collectedAmount": <number>,
-    "efficiency": <number>
-  },
-  "meta": { "timestamp": "<ISO_DATE>" }
-}
-```
-
-**Verification:**
-- ✅ Status code: 200
-- ✅ dueAmount ≥ 0
-- ✅ collectedAmount ≥ 0
-- ✅ efficiency ≥ 0 and ≤ 100
-- ✅ collectedAmount ≤ dueAmount
-
----
-
-### Test 4: Legal Endpoint
-```bash
-curl -X GET http://localhost:3000/api/v1/reports/legal \
-  -H "Authorization: Bearer <admin_token>" \
-  -H "Content-Type: application/json"
-```
-
-**Expected Response:**
-```json
-{
-  "success": true,
-  "data": {
-    "totalCases": <number>,
-    "breakdown": [
-      { "_id": "<status>", "count": <number> },
-      ...
-    ]
-  },
-  "meta": { "timestamp": "<ISO_DATE>" }
-}
-```
-
-**Verification:**
-- ✅ Status code: 200
-- ✅ totalCases ≥ 0
-- ✅ breakdown is array
-- ✅ Sum of breakdown counts = totalCases
-
----
-
-### Test 5: Collectors Endpoint
-```bash
-curl -X GET http://localhost:3000/api/v1/reports/collectors \
-  -H "Authorization: Bearer <admin_token>" \
-  -H "Content-Type: application/json"
-```
-
-**Expected Response:**
-```json
-{
-  "success": true,
-  "data": [
-    {
-      "_id": "<id>",
-      "userId": { "name": "<name>", "email": "<email>" },
-      "weekStartDate": "<ISO_DATE>",
-      "totalScore": <number>,
-      "incentivePercentage": <number>
-    },
-    ...
-  ],
-  "meta": { "timestamp": "<ISO_DATE>" }
-}
-```
-
-**Verification:**
-- ✅ Status code: 200
-- ✅ data is array
-- ✅ Each item has userId, weekStartDate, totalScore, incentivePercentage
-- ✅ totalScore ≥ 0 and ≤ 100
-- ✅ incentivePercentage ≥ 0
-
----
-
-### Test 6: Aging Endpoint
-```bash
-curl -X GET http://localhost:3000/api/v1/reports/aging \
-  -H "Authorization: Bearer <admin_token>" \
-  -H "Content-Type: application/json"
-```
-
-**Expected Response:**
-```json
-{
-  "success": true,
-  "data": [
-    { "period": "0-30 days", "loanCount": <number>, "outstandingAmount": <number> },
-    { "period": "31-60 days", "loanCount": <number>, "outstandingAmount": <number> },
-    { "period": "61-90 days", "loanCount": <number>, "outstandingAmount": <number> },
-    { "period": "90+ days", "loanCount": <number>, "outstandingAmount": <number> }
-  ],
-  "meta": { "timestamp": "<ISO_DATE>" }
-}
-```
-
-**Verification:**
-- ✅ Status code: 200
-- ✅ data is array with 4 periods
-- ✅ Periods: 0-30, 31-60, 61-90, 90+
-- ✅ All loanCount ≥ 0
-- ✅ All outstandingAmount ≥ 0
-- ✅ Sum of outstandingAmount ≤ portfolio outstanding
-
----
-
-## 🔐 Authentication Tests
-
-### Test 7: Missing Token
-```bash
-curl -X GET http://localhost:3000/api/v1/reports/portfolio
-```
-
-**Expected:** 401 Unauthorized
-
----
-
-### Test 8: Invalid Token
-```bash
-curl -X GET http://localhost:3000/api/v1/reports/portfolio \
-  -H "Authorization: Bearer invalid_token"
-```
-
-**Expected:** 401 Unauthorized
-
----
-
-### Test 9: Insufficient Permissions
-```bash
-curl -X GET http://localhost:3000/api/v1/reports/portfolio \
-  -H "Authorization: Bearer <collector_token>"
-```
-
-**Expected:** 403 Forbidden (only admin/manager allowed)
-
----
-
-## 📊 Data Validation Tests
-
-### Test 10: Bucket Totals
-```javascript
-// Verify: Sum of bucket outstanding = portfolio outstanding
-const portfolio = await fetch('/api/v1/reports/portfolio').then(r => r.json());
-const buckets = await fetch('/api/v1/reports/buckets').then(r => r.json());
-
-const bucketTotal = buckets.data.reduce((sum, b) => sum + b.outstandingAmount, 0);
-console.assert(bucketTotal === portfolio.data.totalOutstanding, 'Bucket totals mismatch');
-```
-
----
-
-### Test 11: Efficiency Bounds
-```javascript
-// Verify: Efficiency is between 0 and 100
-const efficiency = await fetch('/api/v1/reports/efficiency').then(r => r.json());
-console.assert(efficiency.data.efficiency >= 0 && efficiency.data.efficiency <= 100, 'Efficiency out of bounds');
-```
-
----
-
-### Test 12: Aging Totals
-```javascript
-// Verify: Sum of aging outstanding ≤ portfolio outstanding
-const portfolio = await fetch('/api/v1/reports/portfolio').then(r => r.json());
-const aging = await fetch('/api/v1/reports/aging').then(r => r.json());
-
-const agingTotal = aging.data.reduce((sum, a) => sum + a.outstandingAmount, 0);
-console.assert(agingTotal <= portfolio.data.totalOutstanding, 'Aging totals exceed portfolio');
-```
-
----
-
-## 🖥️ Frontend Tests
-
-### Test 13: MISReports Page Loads
-1. Navigate to `/reports` or MISReports page
-2. Verify page loads without errors
-3. Check browser console for errors
-
-**Expected:**
-- ✅ Page loads
-- ✅ No console errors
-- ✅ No 404s in network tab
-
----
-
-### Test 14: All Tabs Display Data
-1. Click Portfolio tab → Data displays
-2. Click Buckets tab → Data displays
-3. Click Efficiency tab → Data displays
-4. Click Legal tab → Data displays
-5. Click Collectors tab → Data displays
-6. Click Aging tab → Data displays
-
-**Expected:**
-- ✅ All tabs load
-- ✅ All tabs display data
-- ✅ No loading spinners stuck
-
----
-
-### Test 15: Export Functionality
-1. Click Export button
-2. Verify JSON file downloads
-3. Verify file contains all report data
-
-**Expected:**
-- ✅ File downloads
-- ✅ File is valid JSON
-- ✅ Contains all 6 report sections
-
----
-
-## 🚨 Error Handling Tests
-
-### Test 16: Database Connection Error
-1. Stop MongoDB
-2. Call any endpoint
-3. Verify error response
-
-**Expected:**
+**Error Response (409):**
 ```json
 {
   "success": false,
-  "message": "<error_message>"
+  "error": {
+    "code": "LOAN_STATE_INVALID",
+    "message": "Invalid loan state transition",
+    "details": {
+      "currentState": "LEAD"
+    }
+  }
 }
 ```
 
 ---
 
-### Test 17: Invalid Query Parameters
+### 2. Test Idempotent Payment
+
+**Request 1:**
+```
+POST http://localhost:5000/api/v1/payments
+Authorization: Bearer <token>
+Content-Type: application/json
+
+{
+  "loanId": "loan-123",
+  "amount": 5000,
+  "method": "TRANSFER",
+  "reference": "UTR-12345",
+  "idempotencyKey": "payment-key-001"
+}
+```
+
+**Response 1 (200):**
+```json
+{
+  "success": true,
+  "data": {
+    "_id": "payment-123",
+    "loanId": "loan-123",
+    "amount": 5000,
+    "status": "confirmed"
+  }
+}
+```
+
+**Request 2 (Same idempotencyKey):**
+```
+POST http://localhost:5000/api/v1/payments
+Authorization: Bearer <token>
+Content-Type: application/json
+
+{
+  "loanId": "loan-123",
+  "amount": 5000,
+  "method": "TRANSFER",
+  "reference": "UTR-12345",
+  "idempotencyKey": "payment-key-001"
+}
+```
+
+**Response 2 (Same as Response 1 - No duplicate):**
+```json
+{
+  "success": true,
+  "data": {
+    "_id": "payment-123",
+    "loanId": "loan-123",
+    "amount": 5000,
+    "status": "confirmed"
+  }
+}
+```
+
+---
+
+### 3. Test Collections Dashboard
+
+**Request:**
+```
+GET http://localhost:5000/api/v1/collections/dashboard
+Authorization: Bearer <token>
+```
+
+**Expected Response (200):**
+```json
+{
+  "success": true,
+  "data": {
+    "totalLoans": 1250,
+    "totalOutstanding": 12500000,
+    "atRisk": 450,
+    "riskPercentage": "36.00",
+    "buckets": {
+      "CURRENT": { "count": 800, "amount": 5000000 },
+      "X": { "count": 150, "amount": 2000000 },
+      "Y": { "count": 100, "amount": 1500000 },
+      "M1": { "count": 80, "amount": 1200000 },
+      "M2": { "count": 60, "amount": 900000 },
+      "M3": { "count": 40, "amount": 600000 },
+      "NPA": { "count": 20, "amount": 300000 }
+    }
+  }
+}
+```
+
+---
+
+### 4. Test Allowed Actions
+
+**Request:**
+```
+GET http://localhost:5000/api/v1/loans/:id/allowed-actions
+Authorization: Bearer <token>
+```
+
+**Expected Response (200):**
+```json
+{
+  "success": true,
+  "data": {
+    "state": "APPROVED",
+    "allowedActions": ["DISBURSED", "REJECTED"]
+  }
+}
+```
+
+---
+
+## 🔍 VERIFICATION TESTS
+
+### Test 1: State Transition Validation
 ```bash
-curl -X GET "http://localhost:3000/api/v1/reports/portfolio?invalid=param" \
-  -H "Authorization: Bearer <token>"
+# Should succeed
+POST /api/v1/loans/:id/transition
+{ "action": "APPROVE" }
+# Response: 200 OK
+
+# Should fail (invalid transition)
+POST /api/v1/loans/:id/transition
+{ "action": "CLOSE" }
+# Response: 409 Conflict
 ```
 
-**Expected:** 200 OK (parameters ignored, not used)
-
----
-
-## 📈 Performance Tests
-
-### Test 18: Response Time
+### Test 2: Idempotent Payments
 ```bash
-time curl -X GET http://localhost:3000/api/v1/reports/portfolio \
-  -H "Authorization: Bearer <token>"
+# First payment
+POST /api/v1/payments
+{ "loanId": "loan-123", "amount": 5000, "idempotencyKey": "key-1" }
+# Response: 200 OK, payment created
+
+# Same payment again
+POST /api/v1/payments
+{ "loanId": "loan-123", "amount": 5000, "idempotencyKey": "key-1" }
+# Response: 200 OK, same payment returned (no duplicate)
 ```
 
-**Expected:** < 1 second
-
----
-
-### Test 19: Large Dataset
-1. Create 10,000+ loans in database
-2. Call endpoints
-3. Verify response time < 5 seconds
-
-**Expected:** All endpoints respond within acceptable time
-
----
-
-## ✅ Verification Checklist
-
-### Before Deployment
-- [ ] All 6 endpoints return 200 OK
-- [ ] All endpoints return valid JSON
-- [ ] Authentication works correctly
-- [ ] Authorization works correctly
-- [ ] Bucket totals = portfolio outstanding
-- [ ] Efficiency ≤ 100%
-- [ ] Aging totals ≤ portfolio
-- [ ] Frontend displays all data
-- [ ] Export functionality works
-- [ ] No console errors
-- [ ] No 404s
-- [ ] Response times acceptable
-- [ ] Error handling works
-
-### After Deployment
-- [ ] Monitor error logs
-- [ ] Monitor response times
-- [ ] Gather user feedback
-- [ ] Check for edge cases
-- [ ] Verify data accuracy
-
----
-
-## 🔧 Debugging
-
-### Common Issues
-
-**Issue: 404 Not Found**
-- Check routes registered in app.js
-- Check routes registered in app-production.js
-- Restart backend
-
-**Issue: 401 Unauthorized**
-- Check token is valid
-- Check token is in Authorization header
-- Check token hasn't expired
-
-**Issue: 403 Forbidden**
-- Check user role is admin or manager
-- Check authorization middleware
-
-**Issue: Empty Data**
-- Check database has data
-- Check aggregation pipeline
-- Check field names are correct
-
-**Issue: Wrong Calculations**
-- Check DPD field is populated
-- Check disbursementDate field is populated
-- Check schedule array is populated
-- Check aggregation logic
-
----
-
-## 📝 Test Report Template
-
+### Test 3: Audit Logging
+```bash
+# Check audit logs
+GET /api/v1/audit-log?entityType=LOAN&action=APPROVE
+# Should show all loan approvals with user, timestamp, before/after
 ```
-Date: YYYY-MM-DD
-Tester: <name>
-Environment: <dev/staging/prod>
 
-UNIT TESTS:
-[ ] Portfolio endpoint
-[ ] Buckets endpoint
-[ ] Efficiency endpoint
-[ ] Legal endpoint
-[ ] Collectors endpoint
-[ ] Aging endpoint
+### Test 4: Cron Jobs
+```bash
+# Check server logs at 2:30 AM
+# Should see: "[DPD Engine] Starting..."
+# Should see: "[DPD Engine] Completed"
 
-AUTHENTICATION:
-[ ] Missing token
-[ ] Invalid token
-[ ] Insufficient permissions
-
-DATA VALIDATION:
-[ ] Bucket totals
-[ ] Efficiency bounds
-[ ] Aging totals
-
-FRONTEND:
-[ ] Page loads
-[ ] All tabs display data
-[ ] Export works
-
-ERROR HANDLING:
-[ ] Database error
-[ ] Invalid parameters
-
-PERFORMANCE:
-[ ] Response time < 1s
-[ ] Large dataset handling
-
-ISSUES FOUND:
-<list any issues>
-
-NOTES:
-<any additional notes>
-
-APPROVED: [ ] Yes [ ] No
+# Check server logs at 3:00 AM
+# Should see: "[State Escalation] Starting..."
+# Should see: "[State Escalation] Completed"
 ```
 
 ---
 
-## 🚀 Deployment Checklist
+## 📊 DATABASE VERIFICATION
 
-Before deploying to production:
+### Check Loan State History
+```javascript
+db.loans.findOne({ _id: ObjectId("...") })
+// Should have stateHistory array with all transitions
+```
 
-- [ ] All tests pass
-- [ ] Code reviewed
-- [ ] No breaking changes
-- [ ] Documentation updated
-- [ ] Rollback plan ready
-- [ ] Monitoring configured
-- [ ] Alerts configured
-- [ ] Team notified
+### Check Audit Logs
+```javascript
+db.auditlogs.find({ entityType: "LOAN" })
+// Should have entry for each state transition
+```
 
+### Check Payments
+```javascript
+db.payments.find({ loanId: ObjectId("...") })
+// Should have all payments with idempotencyKey
+```
+
+### Check Installments
+```javascript
+db.installments.find({ loanId: ObjectId("...") })
+// Should have updated dpd and status
+```
+
+---
+
+## 🚨 ERROR SCENARIOS
+
+### Scenario 1: Invalid State Transition
+```
+Current State: LEAD
+Action: CLOSE
+Expected: 409 Conflict
+Error Code: LOAN_STATE_INVALID
+```
+
+### Scenario 2: Loan Not Found
+```
+Loan ID: invalid-id
+Expected: 404 Not Found
+Error Code: LOAN_NOT_FOUND
+```
+
+### Scenario 3: Invalid Payment Amount
+```
+Amount: -5000
+Expected: 400 Bad Request
+Error Code: INVALID_AMOUNT
+```
+
+### Scenario 4: No Pending Installment
+```
+Loan: All installments paid
+Action: Record payment
+Expected: 409 Conflict
+Error Code: NO_PENDING_INSTALLMENT
+```
+
+---
+
+## ✅ FINAL CHECKLIST
+
+- [ ] Backend starts without errors
+- [ ] All routes respond with correct status codes
+- [ ] State transitions validated
+- [ ] Payments are idempotent
+- [ ] Audit logs created
+- [ ] Collections dashboard returns data
+- [ ] Cron jobs scheduled
+- [ ] Error handling consistent
+- [ ] RBAC enforced
+- [ ] Database updated correctly
+
+---
+
+**Testing Date:** 2024-01-15
+**Status:** Ready for Testing ✅

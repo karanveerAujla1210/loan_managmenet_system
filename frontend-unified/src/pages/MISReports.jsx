@@ -4,66 +4,73 @@ import { BarChart3, TrendingUp, AlertTriangle, Download } from 'lucide-react';
 const MISReports = () => {
   const [reports, setReports] = useState({});
   const [dateRange, setDateRange] = useState('today');
+  const [loading, setLoading] = useState(false);
 
   useEffect(() => {
     fetchMISReports();
   }, [dateRange]);
 
   const fetchMISReports = async () => {
+    setLoading(true);
     try {
-      // const response = await fetch(`/api/v1/mis-reports?range=${dateRange}`);
-      // const data = await response.json();
-      // setReports(data);
+      const token = localStorage.getItem('token');
+      const headers = { 'Authorization': `Bearer ${token}` };
+      
+      const [portfolio, buckets, efficiency, legal, collectors, aging] = await Promise.all([
+        fetch('/api/v1/reports/portfolio', { headers }).then(r => r.json()),
+        fetch('/api/v1/reports/buckets', { headers }).then(r => r.json()),
+        fetch('/api/v1/reports/efficiency', { headers }).then(r => r.json()),
+        fetch('/api/v1/reports/legal', { headers }).then(r => r.json()),
+        fetch('/api/v1/reports/collectors', { headers }).then(r => r.json()),
+        fetch('/api/v1/reports/aging', { headers }).then(r => r.json())
+      ]);
+      
+      const bucketMap = {};
+      buckets.data?.forEach(b => {
+        bucketMap[b._id] = { count: b.loanCount, amount: b.outstandingAmount, percentage: 0 };
+      });
+      
+      const totalOutstanding = Object.values(bucketMap).reduce((sum, b) => sum + b.amount, 0);
+      Object.values(bucketMap).forEach(b => {
+        b.percentage = totalOutstanding > 0 ? ((b.amount / totalOutstanding) * 100).toFixed(1) : 0;
+      });
+      
       setReports({
-        portfolio: {
-          totalLoans: 281,
-          totalPrincipal: 8500000,
-          totalOutstanding: 7850000,
-          totalInterest: 1200000
-        },
-        buckets: {
-          'CURRENT': { count: 150, amount: 5000000, percentage: 63.7 },
-          '1-7': { count: 45, amount: 1200000, percentage: 15.3 },
-          '8-15': { count: 28, amount: 850000, percentage: 10.8 },
-          '16-22': { count: 15, amount: 450000, percentage: 5.7 },
-          '23-29': { count: 12, amount: 380000, percentage: 4.8 },
-          '30+': { count: 8, amount: 250000, percentage: 3.2 },
-          '60+': { count: 5, amount: 180000, percentage: 2.3 },
-          'LEGAL': { count: 3, amount: 120000, percentage: 1.5 }
-        },
-        efficiency: {
-          dueAmount: 450000,
-          collectedAmount: 380000,
-          efficiency: 84.4
-        },
-        legal: {
-          totalCases: 3,
-          totalOutstanding: 120000,
-          avgDPD: 95,
-          percentage: 1.5
-        },
-        collectors: [
-          { name: 'Rajesh Kumar', cases: 45, collected: 380000, efficiency: 26.7 },
-          { name: 'Priya Singh', cases: 38, collected: 420000, efficiency: 39.5 },
-          { name: 'Amit Patel', cases: 42, collected: 350000, efficiency: 23.8 },
-          { name: 'Neha Sharma', cases: 35, collected: 410000, efficiency: 40.0 }
-        ]
+        portfolio: portfolio.data || {},
+        buckets: bucketMap,
+        efficiency: efficiency.data || {},
+        legal: legal.data || {},
+        collectors: collectors.data || [],
+        aging: aging.data || []
       });
     } catch (error) {
       console.error('Failed to fetch MIS reports:', error);
+      setReports({
+        portfolio: {},
+        buckets: {},
+        efficiency: {},
+        legal: {},
+        collectors: [],
+        aging: []
+      });
+    } finally {
+      setLoading(false);
     }
   };
 
   const bucketColors = {
-    'CURRENT': '#10B981',
-    '1-7': '#F59E0B',
-    '8-15': '#EF4444',
-    '16-22': '#DC2626',
-    '23-29': '#991B1B',
-    '30+': '#7C2D12',
-    '60+': '#6366F1',
-    'LEGAL': '#4F46E5'
+    'current': '#10B981',
+    'X': '#F59E0B',
+    'Y': '#EF4444',
+    'M1': '#DC2626',
+    'M2': '#991B1B',
+    'M3': '#7C2D12',
+    'NPA': '#6366F1'
   };
+
+  if (loading) {
+    return <div className="p-6 text-center">Loading reports...</div>;
+  }
 
   return (
     <div className="p-6 space-y-6">
@@ -94,23 +101,23 @@ const MISReports = () => {
       <div className="grid grid-cols-4 gap-4">
         <div className="bg-white p-6 rounded-lg border border-gray-200">
           <div className="text-sm text-gray-600 mb-2">Total Active Loans</div>
-          <div className="text-3xl font-bold text-blue-600">{reports.portfolio?.totalLoans}</div>
+          <div className="text-3xl font-bold text-blue-600">{reports.portfolio?.totalLoans || 0}</div>
           <div className="text-xs text-gray-500 mt-2">Portfolio size</div>
         </div>
         <div className="bg-white p-6 rounded-lg border border-gray-200">
           <div className="text-sm text-gray-600 mb-2">Total Outstanding</div>
-          <div className="text-3xl font-bold text-green-600">₹{(reports.portfolio?.totalOutstanding / 1000000).toFixed(1)}M</div>
+          <div className="text-3xl font-bold text-green-600">₹{((reports.portfolio?.totalOutstanding || 0) / 1000000).toFixed(1)}M</div>
           <div className="text-xs text-gray-500 mt-2">At risk</div>
         </div>
         <div className="bg-white p-6 rounded-lg border border-gray-200">
           <div className="text-sm text-gray-600 mb-2">Collection Efficiency</div>
-          <div className="text-3xl font-bold text-orange-600">{reports.efficiency?.efficiency?.toFixed(1)}%</div>
+          <div className="text-3xl font-bold text-orange-600">{(reports.efficiency?.efficiency || 0).toFixed(1)}%</div>
           <div className="text-xs text-gray-500 mt-2">Today's collection</div>
         </div>
         <div className="bg-white p-6 rounded-lg border border-gray-200">
           <div className="text-sm text-gray-600 mb-2">Legal Exposure</div>
-          <div className="text-3xl font-bold text-red-600">₹{(reports.legal?.totalOutstanding / 100000).toFixed(1)}L</div>
-          <div className="text-xs text-gray-500 mt-2">{reports.legal?.totalCases} cases</div>
+          <div className="text-3xl font-bold text-red-600">₹{((reports.legal?.totalOutstanding || 0) / 100000).toFixed(1)}L</div>
+          <div className="text-xs text-gray-500 mt-2">{reports.legal?.totalCases || 0} cases</div>
         </div>
       </div>
 
@@ -125,7 +132,7 @@ const MISReports = () => {
                 <div className="flex items-center gap-3">
                   <div
                     className="w-3 h-3 rounded-full"
-                    style={{ backgroundColor: bucketColors[bucket] }}
+                    style={{ backgroundColor: bucketColors[bucket] || '#999' }}
                   />
                   <div>
                     <div className="font-medium text-gray-900">{bucket} DPD</div>
@@ -148,17 +155,17 @@ const MISReports = () => {
             {reports.collectors?.map((collector, idx) => (
               <div key={idx} className="p-3 bg-gray-50 rounded">
                 <div className="flex justify-between items-center mb-2">
-                  <div className="font-medium text-gray-900">{collector.name}</div>
-                  <div className="text-sm font-semibold text-green-600">{collector.efficiency}%</div>
+                  <div className="font-medium text-gray-900">{collector.name || 'N/A'}</div>
+                  <div className="text-sm font-semibold text-green-600">{(collector.score || 0).toFixed(1)}%</div>
                 </div>
                 <div className="flex gap-4 text-xs text-gray-600 mb-2">
-                  <span>Cases: {collector.cases}</span>
-                  <span>Collected: ₹{(collector.collected / 100000).toFixed(1)}L</span>
+                  <span>Cases: {collector.loanCount || 0}</span>
+                  <span>Collected: ₹{((collector.totalCollected || 0) / 100000).toFixed(1)}L</span>
                 </div>
                 <div className="bg-gray-200 rounded-full h-2">
                   <div
                     className="bg-green-500 h-2 rounded-full"
-                    style={{ width: `${Math.min(collector.efficiency, 100)}%` }}
+                    style={{ width: `${Math.min(collector.score || 0, 100)}%` }}
                   />
                 </div>
               </div>
@@ -177,15 +184,15 @@ const MISReports = () => {
           <div className="space-y-3">
             <div className="flex justify-between">
               <span className="text-gray-600">Current (0 DPD)</span>
-              <span className="font-semibold text-green-600">63.7%</span>
+              <span className="font-semibold text-green-600">{((reports.buckets?.current?.percentage || 0)).toFixed(1)}%</span>
             </div>
             <div className="flex justify-between">
               <span className="text-gray-600">At Risk (1-30 DPD)</span>
-              <span className="font-semibold text-orange-600">20.8%</span>
+              <span className="font-semibold text-orange-600">{((reports.buckets?.X?.percentage || 0) + (reports.buckets?.Y?.percentage || 0)).toFixed(1)}%</span>
             </div>
             <div className="flex justify-between">
               <span className="text-gray-600">Stressed (30+ DPD)</span>
-              <span className="font-semibold text-red-600">15.5%</span>
+              <span className="font-semibold text-red-600">{((reports.buckets?.M1?.percentage || 0) + (reports.buckets?.M2?.percentage || 0) + (reports.buckets?.M3?.percentage || 0) + (reports.buckets?.NPA?.percentage || 0)).toFixed(1)}%</span>
             </div>
           </div>
         </div>
@@ -198,15 +205,15 @@ const MISReports = () => {
           <div className="space-y-3">
             <div className="flex justify-between">
               <span className="text-gray-600">Due Today</span>
-              <span className="font-semibold">₹{(reports.efficiency?.dueAmount / 100000).toFixed(1)}L</span>
+              <span className="font-semibold">₹{((reports.efficiency?.dueAmount || 0) / 100000).toFixed(1)}L</span>
             </div>
             <div className="flex justify-between">
               <span className="text-gray-600">Collected</span>
-              <span className="font-semibold text-green-600">₹{(reports.efficiency?.collectedAmount / 100000).toFixed(1)}L</span>
+              <span className="font-semibold text-green-600">₹{((reports.efficiency?.collectedAmount || 0) / 100000).toFixed(1)}L</span>
             </div>
             <div className="flex justify-between">
               <span className="text-gray-600">Efficiency</span>
-              <span className="font-semibold text-blue-600">{reports.efficiency?.efficiency?.toFixed(1)}%</span>
+              <span className="font-semibold text-blue-600">{(reports.efficiency?.efficiency || 0).toFixed(1)}%</span>
             </div>
           </div>
         </div>
@@ -219,15 +226,15 @@ const MISReports = () => {
           <div className="space-y-3">
             <div className="flex justify-between">
               <span className="text-gray-600">Legal Cases</span>
-              <span className="font-semibold text-red-600">{reports.legal?.totalCases}</span>
+              <span className="font-semibold text-red-600">{reports.legal?.totalCases || 0}</span>
             </div>
             <div className="flex justify-between">
               <span className="text-gray-600">Legal Exposure</span>
-              <span className="font-semibold">₹{(reports.legal?.totalOutstanding / 100000).toFixed(1)}L</span>
+              <span className="font-semibold">₹{((reports.legal?.totalOutstanding || 0) / 100000).toFixed(1)}L</span>
             </div>
             <div className="flex justify-between">
               <span className="text-gray-600">Avg DPD (Legal)</span>
-              <span className="font-semibold text-orange-600">{reports.legal?.avgDPD} days</span>
+              <span className="font-semibold text-orange-600">{reports.legal?.avgDPD || 0} days</span>
             </div>
           </div>
         </div>

@@ -1,12 +1,18 @@
 require('dotenv').config();
 const app = require('./app');
 const { connectDB } = require('./config/database-optimized');
+const { initDPDEngine } = require('./jobs/dpdEngine');
+const { initStateEscalation } = require('./jobs/stateEscalation');
 
 const PORT = process.env.PORT || 5000;
 
 const startServer = async () => {
   try {
     await connectDB();
+    
+    // Initialize cron jobs
+    initDPDEngine();
+    initStateEscalation();
     
     const server = app.listen(PORT, () => {
       console.log(`Server running on port ${PORT}`);
