@@ -63,6 +63,12 @@ try {
   console.error('Dashboard route error:', e.message);
 }
 
+try {
+  app.use('/api/v1/reports', require('./routes/reports.routes'));
+} catch (e) {
+  console.error('Reports route error:', e.message);
+}
+
 app.use((err, req, res, next) => {
   console.error(err.stack);
   res.status(err.status || 500).json({

@@ -7,7 +7,7 @@ const InstallmentSchema = new mongoose.Schema({
     required: true,
     index: true
   },
-  installmentNo: {
+  sequence: {
     type: Number,
     required: true
   },
@@ -16,29 +16,36 @@ const InstallmentSchema = new mongoose.Schema({
     required: true,
     index: true
   },
-  emiAmount: {
+  principalDue: {
     type: Number,
     required: true
   },
-  paidAmount: {
+  interestDue: {
+    type: Number,
+    required: true
+  },
+  penaltyDue: {
     type: Number,
     default: 0
   },
-  remainingAmount: {
+  paidPrincipal: {
     type: Number,
-    required: true
+    default: 0
   },
-  penalty: {
+  paidInterest: {
+    type: Number,
+    default: 0
+  },
+  paidPenalty: {
     type: Number,
     default: 0
   },
   status: {
     type: String,
-    enum: ['PENDING', 'PAID', 'PARTIAL', 'OVERDUE'],
-    default: 'PENDING',
+    enum: ['pending', 'partially_paid', 'paid', 'overdue'],
+    default: 'pending',
     index: true
   },
-  paidDate: Date,
   createdAt: {
     type: Date,
     default: Date.now
@@ -47,9 +54,12 @@ const InstallmentSchema = new mongoose.Schema({
     type: Date,
     default: Date.now
   }
-}, { timestamps: true });
+}, {
+  timestamps: true
+});
 
-InstallmentSchema.index({ loanId: 1, installmentNo: 1 }, { unique: true });
-InstallmentSchema.index({ loanId: 1, status: 1 });
+InstallmentSchema.index({ loanId: 1, sequence: 1 });
+InstallmentSchema.index({ dueDate: 1 });
+InstallmentSchema.index({ status: 1 });
 
 module.exports = mongoose.model('Installment', InstallmentSchema);

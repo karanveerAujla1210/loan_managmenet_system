@@ -1,344 +1,410 @@
-# EC2 Deployment - Quick Reference Card
+# MIS Reports System - Quick Reference Guide
 
-## 🚀 Quick Start (5 minutes)
+## 🎯 What's Missing (TL;DR)
 
-### Automated Setup
-```bash
-# 1. SSH into EC2
-ssh -i your-key.pem ubuntu@instance-ip
+| Issue | Location | Fix | Priority |
+|-------|----------|-----|----------|
+| Routes not registered | `app.js`, `app-production.js` | Add route imports | 🔴 CRITICAL |
+| Wrong schema fields | `reports.routes.js` | Change `loanAmount` → `principal` | 🔴 CRITICAL |
+| Bucket logic wrong | `reports.routes.js` | Use DPD instead of status | 🟠 HIGH |
+| Aging logic wrong | `reports.routes.js` | Use disbursement date instead of status | 🟠 HIGH |
+| Missing model exports | `models/index.js` | Export LegalCase, CollectorPerformance | 🟠 HIGH |
+| Installment not standalone | `models/installment.model.js` | Create new file | 🟠 HIGH |
 
-# 2. Run setup
-wget https://raw.githubusercontent.com/your-org/loan-management-system/main/scripts/ec2-complete-setup.sh
-chmod +x ec2-complete-setup.sh
-./ec2-complete-setup.sh
+---
 
-# 3. Verify
-health-check.sh
+## 📊 Data Flow Summary
+
+```
+Frontend Request
+    ↓
+/api/v1/reports/portfolio
+    ↓
+❌ Route not found (404)
+    ↓
+Frontend shows empty data
 ```
 
-### Terraform Deployment
-```bash
-cd infrastructure/terraform
-cp terraform.tfvars.example terraform.tfvars
-# Edit terraform.tfvars
-terraform init && terraform plan && terraform apply
+**After Fix:**
+```
+Frontend Request
+    ↓
+/api/v1/reports/portfolio
+    ↓
+✅ Route found
+    ↓
+Middleware: Auth + Authorization
+    ↓
+Service: Query MongoDB
+    ↓
+Return: Portfolio metrics
+    ↓
+Frontend displays data
 ```
 
 ---
 
-## 📋 Essential Commands
+## 🔧 One-Line Fixes
 
-### Health & Status
-```bash
-health-check.sh                    # Full health check
-pm2 status                         # Process status
-pm2 logs loan-crm-api             # View logs
-sudo systemctl status mongod       # MongoDB status
-sudo systemctl status redis-server # Redis status
-sudo systemctl status nginx        # Nginx status
+### 1. Register Routes in app.js
+```javascript
+app.use('/api/v1/reports', require('./routes/reports.routes'));
 ```
 
-### Restart Services
-```bash
-pm2 restart loan-crm-api          # Restart backend
-sudo systemctl reload nginx        # Reload Nginx
-sudo systemctl restart mongod      # Restart MongoDB
-sudo systemctl restart redis-server # Restart Redis
+### 2. Register Routes in app-production.js
+```javascript
+app.use('/api/v1/reports', auth, authorize('admin', 'manager'), reportsRoutes);
 ```
 
-### View Logs
-```bash
-pm2 logs loan-crm-api             # Backend logs
-sudo tail -f /var/log/nginx/error.log  # Nginx errors
-sudo tail -f /var/log/mongodb/mongod.log # MongoDB logs
+### 3. Fix Portfolio Query
+```javascript
+// Change from:
+$sum: '$loanAmount'
+// To:
+$sum: '$principal'
 ```
 
-### Database
-```bash
-mongosh                            # Connect to MongoDB
-redis-cli                          # Connect to Redis
-/usr/local/bin/backup-mongodb.sh  # Manual backup
+### 4. Fix Bucket Grouping
+```javascript
+// Change from:
+$group: { _id: '$status', ... }
+// To:
+$addFields: { bucket: { $cond: [{ $lte: ['$dpd', 0] }, 'current', ...] } }
+$group: { _id: '$bucket', ... }
 ```
 
-### Update Application
-```bash
-cd /opt/loan-management-system
-git pull origin main
-cd backend && npm ci --production && pm2 restart loan-crm-api
-cd ../frontend-unified && npm ci && npm run build && sudo systemctl reload nginx
+### 5. Fix Aging Grouping
+```javascript
+// Change from:
+$group: { _id: '$status', ... }
+// To:
+$addFields: { agePeriod: { $cond: [{ $lte: ['$ageInDays', 30] }, '0-30 days', ...] } }
+$group: { _id: '$agePeriod', ... }
 ```
 
 ---
 
-## 🔧 Common Troubleshooting
+## 📋 API Endpoints
 
-### Backend Not Starting
-```bash
-pm2 logs loan-crm-api
-# Check MongoDB: mongosh --eval "db.adminCommand('ping')"
-# Check Redis: redis-cli ping
-# Check .env file: cat backend/.env
+### Portfolio Snapshot
 ```
+GET /api/v1/reports/portfolio
+Authorization: Bearer <token>
+Role: admin, manager
 
-### Frontend Not Loading
-```bash
-sudo nginx -t
-sudo tail -f /var/log/nginx/error.log
-ls -la frontend-unified/dist/
-```
-
-### Database Connection Failed
-```bash
-sudo systemctl status mongod
-sudo systemctl restart mongod
-mongosh --eval "db.adminCommand('ping')"
-```
-
-### High Memory Usage
-```bash
-ps aux | grep node
-pm2 restart loan-crm-api
-free -h
-```
-
-### SSL Certificate Issues
-```bash
-sudo certbot certificates
-sudo certbot renew --force-renewal
-openssl s_client -connect your-domain.com:443
-```
-
----
-
-## 📁 Important Paths
-
-```
-/opt/loan-management-system/       # Application root
-/opt/loan-management-system/backend # Backend code
-/opt/loan-management-system/frontend-unified # Frontend code
-/var/log/loan-crm/                 # Application logs
-/backups/mongodb/                  # Database backups
-/etc/nginx/sites-available/loan-crm # Nginx config
-/etc/letsencrypt/live/             # SSL certificates
-```
-
----
-
-## 🔐 Security Checklist
-
-- [ ] SSH key-based auth only
-- [ ] Firewall enabled: `sudo ufw status`
-- [ ] MongoDB authentication enabled
-- [ ] Redis password set
-- [ ] SSL certificate valid
-- [ ] CORS properly configured
-- [ ] Rate limiting enabled
-- [ ] Backups encrypted
-- [ ] Logs monitored
-
----
-
-## 📊 Monitoring
-
-### CloudWatch Alarms
-```bash
-# CPU > 80%
-# Memory > 85%
-# Disk > 90%
-# Error rate > 1%
-```
-
-### Health Endpoints
-```
-https://your-domain.com/health              # Frontend
-https://your-domain.com/api/v1/health       # Backend
-```
-
-### Backup Verification
-```bash
-# Daily at 2 AM
-0 2 * * * /usr/local/bin/backup-mongodb.sh
-```
-
----
-
-## 🚨 Emergency Procedures
-
-### Restart Everything
-```bash
-pm2 restart all
-sudo systemctl reload nginx
-sudo systemctl restart mongod
-sudo systemctl restart redis-server
-```
-
-### Clear Logs
-```bash
-pm2 flush
-sudo truncate -s 0 /var/log/nginx/access.log
-sudo truncate -s 0 /var/log/nginx/error.log
-```
-
-### Restore from Backup
-```bash
-# List backups
-ls -la /backups/mongodb/
-
-# Restore
-tar -xzf /backups/mongodb/backup_YYYYMMDD_HHMMSS.tar.gz -C /tmp
-mongorestore /tmp/mongodb_backup_YYYYMMDD_HHMMSS
-```
-
-### Full System Reboot
-```bash
-sudo reboot
-# Services auto-start via systemctl enable
-```
-
----
-
-## 📞 Support Resources
-
-| Resource | Link |
-|----------|------|
-| AWS EC2 Docs | https://docs.aws.amazon.com/ec2/ |
-| MongoDB Docs | https://docs.mongodb.com/ |
-| Nginx Docs | https://nginx.org/en/docs/ |
-| PM2 Docs | https://pm2.keymetrics.io/ |
-| Terraform Docs | https://www.terraform.io/docs |
-
----
-
-## 📝 Configuration Files
-
-### Backend Environment
-```
-/opt/loan-management-system/backend/.env
-```
-
-### Frontend Environment
-```
-/opt/loan-management-system/frontend-unified/.env.production
-```
-
-### Nginx Config
-```
-/etc/nginx/sites-available/loan-crm
-```
-
-### PM2 Config
-```
-/opt/loan-management-system/backend/ecosystem.config.js
-```
-
----
-
-## 🎯 Performance Optimization
-
-### Enable Gzip
-```nginx
-gzip on;
-gzip_types text/plain text/css text/javascript application/json;
-gzip_min_length 1000;
-```
-
-### Cache Static Assets
-```nginx
-location ~* \.(js|css|png|jpg|jpeg|gif|ico|svg)$ {
-    expires 1y;
-    add_header Cache-Control "public, immutable";
+Response:
+{
+  "success": true,
+  "data": {
+    "totalLoans": 1250,
+    "totalPrincipal": 50000000,
+    "totalOutstanding": 12500000,
+    "totalInterest": 2500000
+  }
 }
 ```
 
-### Connection Pooling
+### Bucket Exposure
+```
+GET /api/v1/reports/buckets
+Authorization: Bearer <token>
+Role: admin, manager
+
+Response:
+{
+  "success": true,
+  "data": [
+    { "_id": "current", "loanCount": 800, "outstandingAmount": 5000000 },
+    { "_id": "X", "loanCount": 150, "outstandingAmount": 2000000 },
+    ...
+  ]
+}
+```
+
+### Collection Efficiency
+```
+GET /api/v1/reports/efficiency
+Authorization: Bearer <token>
+Role: admin, manager
+
+Response:
+{
+  "success": true,
+  "data": {
+    "dueAmount": 5000000,
+    "collectedAmount": 4500000,
+    "efficiency": 90.0
+  }
+}
+```
+
+### Legal Exposure
+```
+GET /api/v1/reports/legal
+Authorization: Bearer <token>
+Role: admin, manager
+
+Response:
+{
+  "success": true,
+  "data": {
+    "totalCases": 45,
+    "breakdown": [
+      { "_id": "filed", "count": 20 },
+      { "_id": "in_progress", "count": 15 },
+      { "_id": "resolved", "count": 10 }
+    ]
+  }
+}
+```
+
+### Collector Performance
+```
+GET /api/v1/reports/collectors
+Authorization: Bearer <token>
+Role: admin, manager
+
+Response:
+{
+  "success": true,
+  "data": [
+    {
+      "_id": "507f1f77bcf86cd799439011",
+      "userId": { "name": "John Doe", "email": "john@example.com" },
+      "weekStartDate": "2024-01-08T00:00:00Z",
+      "totalScore": 85.5,
+      "incentivePercentage": 12.5
+    }
+  ]
+}
+```
+
+### Aging Analysis
+```
+GET /api/v1/reports/aging
+Authorization: Bearer <token>
+Role: admin, manager
+
+Response:
+{
+  "success": true,
+  "data": [
+    { "period": "0-30 days", "loanCount": 600, "outstandingAmount": 3000000 },
+    { "period": "31-60 days", "loanCount": 300, "outstandingAmount": 2000000 },
+    { "period": "61-90 days", "loanCount": 200, "outstandingAmount": 1500000 },
+    { "period": "90+ days", "loanCount": 150, "outstandingAmount": 1000000 }
+  ]
+}
+```
+
+---
+
+## 🗂️ File Structure
+
+```
+backend/src/
+├── routes/
+│   ├── reports.routes.js          ← Main reports endpoints
+│   └── mis.routes.js              ← MIS-specific endpoints
+├── services/
+│   ├── reports.service.js         ← Business logic
+│   └── mis-report.service.js      ← MIS logic
+├── controllers/
+│   └── reports.controller.js      ← Request handlers
+├── models/
+│   ├── loan.model.js              ← Loan schema
+│   ├── installment.model.js       ← Installment schema (NEW)
+│   ├── payment.model.js           ← Payment schema
+│   ├── customer.model.js          ← Customer schema
+│   ├── legal-case.model.js        ← Legal case schema
+│   ├── collector-performance.model.js
+│   └── index.js                   ← Model exports
+├── middlewares/
+│   ├── auth.middleware.js         ← JWT verification
+│   └── ...
+├── app.js                         ← Main app (needs fix)
+└── app-production.js              ← Production app (needs fix)
+
+frontend-unified/src/
+├── pages/
+│   └── MISReports/
+│       └── index.jsx              ← Frontend UI
+├── services/
+│   └── api.js                     ← API calls
+└── ...
+```
+
+---
+
+## 🔍 Schema Reference
+
+### Loan Model
 ```javascript
-// MongoDB connection pooling
-mongoose.connect(uri, {
-  maxPoolSize: 10,
-  minPoolSize: 5
-});
+{
+  loanId: String,
+  customerId: ObjectId,
+  principal: Number,              // ← Use this, not loanAmount
+  annualInterestRate: Number,
+  termMonths: Number,
+  emiAmount: Number,
+  disbursementDate: Date,         // ← Use for aging
+  status: String,                 // active, closed, npa
+  dpd: Number,                    // ← Use for buckets (Days Past Due)
+  bucket: String,                 // current, X, Y, M1, M2, M3, NPA
+  schedule: [InstallmentSchema],  // ← Embedded installments
+  createdAt: Date,
+  updatedAt: Date
+}
+```
+
+### Installment Schema (Embedded in Loan)
+```javascript
+{
+  sequence: Number,
+  dueDate: Date,
+  principalDue: Number,
+  interestDue: Number,
+  penaltyDue: Number,
+  paidPrincipal: Number,
+  paidInterest: Number,
+  paidPenalty: Number,
+  status: String                  // pending, partially_paid, paid, overdue
+}
+```
+
+### Payment Model
+```javascript
+{
+  paymentId: String,
+  loanId: ObjectId,
+  customerId: ObjectId,
+  amount: Number,
+  method: String,                 // razorpay, stripe, bank_transfer, etc
+  status: String,                 // initiated, pending, success, failed
+  allocation: {
+    principal: Number,
+    interest: Number,
+    penalty: Number
+  },
+  createdAt: Date,
+  updatedAt: Date
+}
 ```
 
 ---
 
-## 🔄 Deployment Workflow
+## 🧮 Calculation Formulas
 
-1. **Prepare** → Update code, test locally
-2. **Commit** → Push to main branch
-3. **Deploy** → SSH to instance, git pull, rebuild
-4. **Verify** → Run health checks
-5. **Monitor** → Watch logs for errors
-
----
-
-## 📅 Maintenance Schedule
-
-| Task | Frequency | Command |
-|------|-----------|---------|
-| Backup | Daily | Auto (2 AM) |
-| SSL Renewal | Monthly | Auto (Certbot) |
-| Security Updates | Weekly | `sudo apt-get update && upgrade` |
-| Log Rotation | Daily | Auto (Logrotate) |
-| Health Check | Hourly | Auto (Cron) |
-
----
-
-## 💡 Pro Tips
-
-1. **Use PM2 Plus** for advanced monitoring
-2. **Enable CloudWatch** for centralized logging
-3. **Set up SNS** for critical alerts
-4. **Use RDS** for managed MongoDB (optional)
-5. **Enable VPC Flow Logs** for network monitoring
-6. **Use AWS Backup** for automated backups
-7. **Enable MFA** on AWS account
-8. **Use Secrets Manager** for sensitive data
-
----
-
-## 🆘 When Things Go Wrong
-
-### Check Everything
-```bash
-health-check.sh
-pm2 status
-sudo systemctl status nginx
-sudo systemctl status mongod
-sudo systemctl status redis-server
+### Outstanding Amount
+```
+Outstanding = Sum of all installments:
+  (principalDue + interestDue + penaltyDue) - (paidPrincipal + paidInterest + paidPenalty)
 ```
 
-### Review Logs
-```bash
-pm2 logs loan-crm-api --lines 100
-sudo tail -100 /var/log/nginx/error.log
-sudo tail -100 /var/log/mongodb/mongod.log
+### Bucket Assignment (Based on DPD)
+```
+if dpd <= 0      → CURRENT
+if dpd <= 7      → X
+if dpd <= 30     → Y
+if dpd <= 60     → M1
+if dpd <= 90     → M2
+if dpd <= 180    → M3
+if dpd > 180     → NPA
 ```
 
-### Restart Services
-```bash
-pm2 restart loan-crm-api
-sudo systemctl reload nginx
+### Aging Period (Based on Disbursement Date)
+```
+ageInDays = (Today - disbursementDate) / (24 * 60 * 60 * 1000)
+
+if ageInDays <= 30   → 0-30 days
+if ageInDays <= 60   → 31-60 days
+if ageInDays <= 90   → 61-90 days
+if ageInDays > 90    → 90+ days
 ```
 
-### Still Not Working?
-1. Check disk space: `df -h`
-2. Check memory: `free -h`
-3. Check CPU: `top`
-4. Check network: `netstat -an`
-5. Check firewall: `sudo ufw status`
+### Collection Efficiency
+```
+Efficiency = (Collected Amount / Due Amount) × 100
+
+Where:
+  Due Amount = Sum of all due installments (principal + interest + penalty)
+  Collected Amount = Sum of all paid amounts (paid principal + paid interest + paid penalty)
+```
 
 ---
 
-## 📞 Getting Help
+## 🚀 Implementation Steps
 
-- **Documentation**: See EC2_DEPLOYMENT_GUIDE.md
-- **Checklist**: See DEPLOYMENT_CHECKLIST.md
-- **Summary**: See DEPLOYMENT_SUMMARY.md
-- **GitHub Issues**: Report bugs and feature requests
-- **AWS Support**: For AWS-related issues
+### Step 1: Register Routes (5 minutes)
+1. Open `backend/src/app.js`
+2. Add: `app.use('/api/v1/reports', require('./routes/reports.routes'));`
+3. Open `backend/src/app-production.js`
+4. Add: `app.use('/api/v1/reports', auth, authorize('admin', 'manager'), reportsRoutes);`
+
+### Step 2: Fix Schema Fields (10 minutes)
+1. Open `backend/src/routes/reports.routes.js`
+2. Change `$sum: '$loanAmount'` → `$sum: '$principal'`
+3. Fix outstanding amount calculation using schedule array
+
+### Step 3: Fix Bucket Logic (15 minutes)
+1. Add `$addFields` stage to calculate bucket from DPD
+2. Change `$group` to group by bucket instead of status
+
+### Step 4: Fix Aging Logic (15 minutes)
+1. Add `$addFields` stage to calculate age in days
+2. Add another `$addFields` to assign period
+3. Change `$group` to group by period
+
+### Step 5: Create Installment Model (5 minutes)
+1. Create `backend/src/models/installment.model.js`
+2. Copy schema from loan model
+3. Add indexes
+
+### Step 6: Update Model Exports (5 minutes)
+1. Open `backend/src/models/index.js`
+2. Add missing model exports
+
+### Step 7: Test (10 minutes)
+1. Start backend: `npm run dev`
+2. Test endpoints with Postman/curl
+3. Check frontend displays data
+
+**Total Time: ~60 minutes**
 
 ---
 
-**Last Updated**: 2024  
-**Version**: 2.0.0  
-**Environment**: Production
+## 🐛 Common Issues & Solutions
+
+### Issue: 404 Not Found
+**Cause:** Routes not registered in app.js
+**Solution:** Add route registration in app.js and app-production.js
+
+### Issue: Empty Data in Frontend
+**Cause:** API returns 404 or empty response
+**Solution:** Check route registration and database data
+
+### Issue: Wrong Bucket Distribution
+**Cause:** Grouping by status instead of DPD
+**Solution:** Use DPD-based bucket assignment logic
+
+### Issue: Aging Shows Wrong Periods
+**Cause:** Grouping by installment status instead of loan age
+**Solution:** Calculate age from disbursement date
+
+### Issue: Outstanding Amount is 0
+**Cause:** Using non-existent field or wrong calculation
+**Solution:** Calculate from schedule array using map/reduce
+
+### Issue: Authorization Denied
+**Cause:** User role is not admin/manager
+**Solution:** Check user role in database or use different role
+
+---
+
+## 📞 Support
+
+For detailed implementation, see:
+- `PROJECT_REVIEW_SUMMARY.md` - Complete analysis
+- `FLOW_DIAGRAMS.md` - Visual flows
+- `IMPLEMENTATION_FIXES.md` - Step-by-step fixes
+

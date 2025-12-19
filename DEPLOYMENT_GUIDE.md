@@ -1,165 +1,422 @@
-# EC2 Deployment Guide
+# DEPLOYMENT_GUIDE.md
 
-## Quick Start
+**Step-by-step deployment procedures for MIS Reports System**
 
-### 1. Automated Setup
+---
+
+## 📋 Pre-Deployment Checklist
+
+### Code Quality
+- [ ] All tests pass
+- [ ] No console errors
+- [ ] No linting errors
+- [ ] Code reviewed by team
+- [ ] No breaking changes
+
+### Documentation
+- [ ] README updated
+- [ ] API documentation updated
+- [ ] Deployment notes prepared
+- [ ] Rollback procedure documented
+
+### Infrastructure
+- [ ] Database backups created
+- [ ] Monitoring configured
+- [ ] Alerts configured
+- [ ] Logging configured
+
+### Team
+- [ ] Team notified of deployment
+- [ ] Deployment window scheduled
+- [ ] Rollback team on standby
+- [ ] Communication channel open
+
+---
+
+## 🚀 Deployment Steps
+
+### Step 1: Backup Database
 ```bash
-chmod +x scripts/deploy.sh
-./scripts/deploy.sh your-domain.com
+# Create backup
+mongodump --uri="mongodb://user:pass@host:port/dbname" --out=/backups/pre-deployment-$(date +%Y%m%d-%H%M%S)
+
+# Verify backup
+ls -lh /backups/
 ```
 
-### 2. Terraform Deployment
+---
+
+### Step 2: Pull Latest Code
 ```bash
-cd infrastructure/aws
-terraform init
-terraform plan -var="key_name=your-key" -var="certificate_arn=arn:..."
-terraform apply
+cd /path/to/loan-management-system
+git pull origin main
+git log --oneline -5
 ```
 
-### 3. Manual Steps
+---
+
+### Step 3: Install Dependencies
 ```bash
-# SSH into EC2
-ssh -i your-key.pem ubuntu@instance-ip
-
-# Run deployment
-./scripts/deploy.sh your-domain.com
-
-# Secure
-./scripts/secure.sh
-
-# Monitor
-./scripts/monitor.sh
+cd backend
+npm install
+npm audit
 ```
 
-## Configuration
+---
 
-### Environment Variables
-Create `.env.production`:
-```
-NODE_ENV=production
-PORT=5000
-MONGODB_URI=mongodb://localhost:27017/loan-management
-JWT_SECRET=your-secret-key
-REDIS_URL=redis://localhost:6379
-CORS_ORIGIN=https://your-domain.com
-```
-
-### Database Backup
+### Step 4: Run Tests
 ```bash
-# Manual backup
-./scripts/backup.sh
-
-# Automated (cron)
-0 2 * * * /path/to/scripts/backup.sh
+npm test
+npm run lint
 ```
 
-### Health Monitoring
-```bash
-# Check status
-./scripts/monitor.sh
+**Expected:** All tests pass, no linting errors
 
+---
+
+### Step 5: Build Application
+```bash
+npm run build
+```
+
+---
+
+### Step 6: Stop Current Service
+```bash
+# Using PM2
+pm2 stop loan-management-backend
+
+# Or using systemd
+sudo systemctl stop loan-management-backend
+
+# Or using Docker
+docker-compose down
+```
+
+---
+
+### Step 7: Deploy New Code
+```bash
+# Copy new files
+cp -r src/ /var/www/loan-management-backend/
+
+# Or using Docker
+docker-compose up -d
+```
+
+---
+
+### Step 8: Start Service
+```bash
+# Using PM2
+pm2 start ecosystem.config.js
+
+# Or using systemd
+sudo systemctl start loan-management-backend
+
+# Or using Docker
+docker-compose up -d
+```
+
+---
+
+### Step 9: Verify Service Health
+```bash
+# Check service status
+curl http://localhost:3000/health
+
+# Expected response:
+# {"success":true,"status":"healthy","timestamp":"2024-01-15T..."}
+```
+
+---
+
+### Step 10: Test Endpoints
+```bash
+# Test portfolio endpoint
+curl -H "Authorization: Bearer <token>" \
+  http://localhost:3000/api/v1/reports/portfolio
+
+# Test buckets endpoint
+curl -H "Authorization: Bearer <token>" \
+  http://localhost:3000/api/v1/reports/buckets
+
+# Test all endpoints
+./test-endpoints.sh
+```
+
+---
+
+### Step 11: Monitor Logs
+```bash
 # View logs
-pm2 logs loan-api
+tail -f /var/log/loan-management-backend.log
 
-# Restart services
-pm2 restart loan-api
-sudo systemctl reload nginx
+# Or using Docker
+docker-compose logs -f backend
+
+# Or using PM2
+pm2 logs loan-management-backend
 ```
 
-## Security
+---
 
-### Firewall
+### Step 12: Verify Frontend
+1. Open browser
+2. Navigate to MISReports page
+3. Verify all tabs load
+4. Verify data displays
+5. Check browser console for errors
+
+---
+
+## 🔄 Rollback Procedure
+
+### If Deployment Fails
+
+**Step 1: Stop Current Service**
 ```bash
-sudo ufw status
-sudo ufw allow 22/tcp
-sudo ufw allow 80/tcp
-sudo ufw allow 443/tcp
+pm2 stop loan-management-backend
 ```
 
-### SSL Certificate
+**Step 2: Restore Previous Code**
 ```bash
-sudo certbot certonly --nginx -d your-domain.com
-sudo certbot renew --dry-run
+git checkout HEAD~1
+npm install
 ```
 
-### SSH Hardening
+**Step 3: Start Service**
 ```bash
-# Disable password auth
-sudo sed -i 's/PasswordAuthentication yes/PasswordAuthentication no/' /etc/ssh/sshd_config
-sudo systemctl reload sshd
+pm2 start ecosystem.config.js
 ```
 
-## Troubleshooting
-
-### Backend not running
+**Step 4: Verify**
 ```bash
-pm2 logs loan-api
-mongosh --eval "db.adminCommand('ping')"
-redis-cli ping
+curl http://localhost:3000/health
 ```
 
-### Frontend not loading
+---
+
+### If Data Issues Occur
+
+**Step 1: Stop Service**
 ```bash
-sudo nginx -t
-sudo tail -f /var/log/nginx/error.log
+pm2 stop loan-management-backend
 ```
 
-### Database issues
+**Step 2: Restore Database**
 ```bash
+mongorestore --uri="mongodb://user:pass@host:port/dbname" /backups/pre-deployment-YYYYMMDD-HHMMSS
+```
+
+**Step 3: Start Service**
+```bash
+pm2 start ecosystem.config.js
+```
+
+---
+
+## 📊 Post-Deployment Verification
+
+### Immediate (First 5 minutes)
+- [ ] Service is running
+- [ ] Health check passes
+- [ ] No errors in logs
+- [ ] Endpoints respond
+
+### Short-term (First hour)
+- [ ] All endpoints working
+- [ ] Frontend displays data
+- [ ] No 404s
+- [ ] No 500s
+- [ ] Response times normal
+
+### Medium-term (First day)
+- [ ] Monitor error logs
+- [ ] Monitor response times
+- [ ] Monitor database performance
+- [ ] Gather user feedback
+
+### Long-term (First week)
+- [ ] No issues reported
+- [ ] Data accuracy verified
+- [ ] Performance stable
+- [ ] All metrics normal
+
+---
+
+## 🔍 Monitoring
+
+### Key Metrics to Monitor
+
+**Response Times**
+```bash
+# Check average response time
+curl -w "@curl-format.txt" -o /dev/null -s http://localhost:3000/api/v1/reports/portfolio
+```
+
+**Error Rates**
+```bash
+# Check error logs
+grep "ERROR" /var/log/loan-management-backend.log | wc -l
+```
+
+**Database Performance**
+```bash
+# Check MongoDB performance
+mongostat --uri="mongodb://user:pass@host:port/dbname"
+```
+
+---
+
+### Alerts to Configure
+
+1. **Service Down**
+   - Alert if service stops responding
+   - Action: Restart service
+
+2. **High Error Rate**
+   - Alert if error rate > 1%
+   - Action: Check logs, investigate
+
+3. **Slow Response Time**
+   - Alert if response time > 5s
+   - Action: Check database, optimize queries
+
+4. **Database Connection Error**
+   - Alert if cannot connect to database
+   - Action: Check database status
+
+---
+
+## 📝 Deployment Log Template
+
+```
+DEPLOYMENT LOG
+==============
+
+Date: YYYY-MM-DD
+Time: HH:MM:SS
+Deployed By: <name>
+Environment: <dev/staging/prod>
+
+PRE-DEPLOYMENT:
+[ ] Code reviewed
+[ ] Tests passed
+[ ] Database backed up
+[ ] Team notified
+
+DEPLOYMENT:
+[ ] Code pulled
+[ ] Dependencies installed
+[ ] Service stopped
+[ ] Code deployed
+[ ] Service started
+[ ] Health check passed
+
+VERIFICATION:
+[ ] Portfolio endpoint: OK
+[ ] Buckets endpoint: OK
+[ ] Efficiency endpoint: OK
+[ ] Legal endpoint: OK
+[ ] Collectors endpoint: OK
+[ ] Aging endpoint: OK
+[ ] Frontend loads: OK
+[ ] No errors in logs: OK
+
+ISSUES:
+<list any issues>
+
+RESOLUTION:
+<how issues were resolved>
+
+ROLLBACK NEEDED: [ ] Yes [ ] No
+
+NOTES:
+<any additional notes>
+
+APPROVED: [ ] Yes [ ] No
+Approved By: <name>
+```
+
+---
+
+## 🚨 Emergency Procedures
+
+### Service Crash
+```bash
+# 1. Check status
+pm2 status
+
+# 2. Check logs
+pm2 logs loan-management-backend
+
+# 3. Restart service
+pm2 restart loan-management-backend
+
+# 4. Verify
+curl http://localhost:3000/health
+```
+
+---
+
+### Database Connection Lost
+```bash
+# 1. Check database status
+mongo --eval "db.adminCommand('ping')"
+
+# 2. Check connection string
+echo $MONGODB_URI
+
+# 3. Restart database
 sudo systemctl restart mongod
-mongosh --eval "db.adminCommand('ping')"
+
+# 4. Restart service
+pm2 restart loan-management-backend
 ```
 
-## Monitoring
+---
 
-### Health Check
+### High Memory Usage
 ```bash
-./scripts/monitor.sh
+# 1. Check memory
+pm2 monit
+
+# 2. Check for memory leaks
+node --inspect=0.0.0.0:9229 src/server.js
+
+# 3. Restart service
+pm2 restart loan-management-backend
 ```
 
-### Backup Verification
-```bash
-ls -la /backups/mongodb/
-tar -tzf /backups/mongodb/backup_*.tar.gz | head
-```
+---
 
-### Restore from Backup
-```bash
-tar -xzf /backups/mongodb/backup_YYYYMMDD_HHMMSS.tar.gz -C /tmp
-mongorestore /tmp/mongodb_backup_YYYYMMDD_HHMMSS
-```
+## 📞 Support Contacts
 
-## Deployment Checklist
+**On-Call Engineer:** <phone>  
+**Database Admin:** <phone>  
+**DevOps:** <phone>  
+**Team Lead:** <phone>  
 
-- [ ] AWS account ready
-- [ ] SSH key created
-- [ ] SSL certificate obtained
-- [ ] Domain DNS configured
-- [ ] Repository cloned
-- [ ] Environment variables set
-- [ ] Deployment script run
-- [ ] Health checks passing
-- [ ] Backups configured
-- [ ] Security hardened
-- [ ] Monitoring enabled
+---
 
-## Architecture
+## 📚 Related Documents
 
-```
-Internet
-    ↓
-  ALB (443)
-    ↓
-EC2 Instances (2+)
-├── Frontend (3000)
-├── Backend (5000)
-├── MongoDB (27017)
-└── Redis (6379)
-```
+- PROJECT_TODOS.md - What was implemented
+- RULES_OF_ENGAGEMENT.md - What was allowed
+- TESTING_GUIDE.md - How to test
+- EXECUTION_COMPLETE.md - What changed
 
-## Support
+---
 
-- Logs: `/opt/loan-management-system/backend/logs/`
-- Backups: `/backups/mongodb/`
-- Nginx: `/etc/nginx/sites-available/loan-crm`
-- PM2: `pm2 status`
+## ✅ Deployment Approval
+
+**Code Review:** [ ] Approved [ ] Rejected  
+**QA Testing:** [ ] Approved [ ] Rejected  
+**Security Review:** [ ] Approved [ ] Rejected  
+**DevOps:** [ ] Approved [ ] Rejected  
+
+**Final Approval:** [ ] Approved [ ] Rejected  
+**Approved By:** <name>  
+**Date:** YYYY-MM-DD  
+

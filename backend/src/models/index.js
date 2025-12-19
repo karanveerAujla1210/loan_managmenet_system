@@ -9,6 +9,7 @@ const CollectorPerformance = require('./collector-performance.model');
 const BankReconciliation = require('./bank-reconciliation.model');
 const LoanBucketHistory = require('./loan-bucket-history.model');
 const PromiseToPay = require('./promise-to-pay.model');
+const LegalCase = require('./legal-case.model');
 
 module.exports = {
   User,
@@ -21,5 +22,6 @@ module.exports = {
   CollectorPerformance,
   BankReconciliation,
   LoanBucketHistory,
-  PromiseToPay
+  PromiseToPay,
+  LegalCase
 };

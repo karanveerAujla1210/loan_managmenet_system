@@ -24,6 +24,7 @@ const disputesRoutes = require('./routes/disputes.routes');
 const promisesRoutes = require('./routes/promises.routes');
 const collectorPerformanceRoutes = require('./routes/collector-performance.routes');
 const misRoutes = require('./routes/mis.routes');
+const reportsRoutes = require('./routes/reports.routes');
 const reconciliationAdvancedRoutes = require('./routes/reconciliation-advanced.routes');
 const auditRoutes = require('./routes/audit.routes');
 const legalAdvancedRoutes = require('./routes/legal.advanced.routes');
@@ -68,6 +69,7 @@ app.use('/api/v1/reconciliation', auth, permissionGuard, reconciliationLockGuard
 app.use('/api/v1/promises', promisesRoutes);
 app.use('/api/v1/collector-performance', collectorPerformanceRoutes);
 app.use('/api/v1/mis', misRoutes);
+app.use('/api/v1/reports', auth, authorize('admin', 'manager'), reportsRoutes);
 app.use('/api/v1/reconciliation', reconciliationAdvancedRoutes);
 app.use('/api/v1/audit', auditRoutes);
 app.use('/api/v1/legal', legalAdvancedRoutes);

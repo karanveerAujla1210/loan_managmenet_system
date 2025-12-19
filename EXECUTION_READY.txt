@@ -1,0 +1,329 @@
+================================================================================
+                    EXECUTION FRAMEWORK - READY ✅
+================================================================================
+
+PROJECT: Loan Management System (NBFC)
+SCOPE: MIS Reports System
+STATUS: ✅ READY FOR EXECUTION
+
+================================================================================
+                      FOUR DOCUMENTS CREATED
+================================================================================
+
+📄 1. PROJECT_TODOS.md
+   - Authoritative execution checklist
+   - 6 phases of work
+   - Clear success criteria
+   - Canonical field definitions
+   - Execution rules
+
+📄 2. AMAZON_Q_MASTER_PROMPT.md
+   - Disciplined instruction set for Q
+   - Strict rules Q must follow
+   - Assumptions Q cannot change
+   - Output format requirements
+   - Instructions to ask instead of guess
+
+📄 3. RULES_OF_ENGAGEMENT.md
+   - Scope and safety guardrails
+   - ✅ Allowed changes
+   - ❌ Forbidden changes
+   - Scope boundaries (MIS Reports only)
+   - Red flags to stop immediately
+
+📄 4. EXECUTION_FRAMEWORK.md
+   - How to use all three documents
+   - Workflow steps
+   - Example conversation
+   - Verification checklist
+   - Safety mechanisms
+
+📄 5. START_HERE_EXECUTION.md
+   - Quick start guide (5 minutes)
+   - Document purposes
+   - Execution workflow
+   - Example: PHASE 1
+   - Verification checklist
+
+================================================================================
+                         HOW TO USE
+================================================================================
+
+STEP 1: Read START_HERE_EXECUTION.md (5 min)
+   - Understand the objective
+   - Understand the workflow
+   - Understand the documents
+
+STEP 2: Read PROJECT_TODOS.md (10 min)
+   - Understand the 6 phases
+   - Understand what needs to be done
+   - Understand success criteria
+
+STEP 3: Read RULES_OF_ENGAGEMENT.md (10 min)
+   - Know what's allowed
+   - Know what's forbidden
+   - Know the red flags
+
+STEP 4: Open Amazon Q Chat
+   - Paste AMAZON_Q_MASTER_PROMPT.md
+   - Wait for Q to acknowledge
+
+STEP 5: Execute Phase by Phase
+   - Start with PHASE 0
+   - Get Q's confirmation
+   - Move to PHASE 1
+   - Repeat for all 6 phases
+
+STEP 6: Verify Success
+   - Check all endpoints return 200 OK
+   - Check frontend displays data
+   - Check no core logic changed
+
+================================================================================
+                         THE FRAMEWORK
+================================================================================
+
+PROJECT_TODOS.md
+├─ PHASE 0: Pre-flight (read-only)
+├─ PHASE 1: Routing & plumbing (15 min)
+├─ PHASE 2: Schema alignment (20 min)
+├─ PHASE 3: Logic fixes (30 min)
+├─ PHASE 4: Data model completion (20 min)
+├─ PHASE 5: Defensive engineering (15 min)
+└─ PHASE 6: Verification (10 min)
+
+AMAZON_Q_MASTER_PROMPT.md
+├─ Strict rules
+├─ Assumptions
+├─ Output format
+└─ Instructions
+
+RULES_OF_ENGAGEMENT.md
+├─ ✅ Allowed changes
+├─ ❌ Forbidden changes
+├─ Scope boundaries
+└─ Red flags
+
+EXECUTION_FRAMEWORK.md
+├─ Workflow steps
+├─ Example conversation
+├─ Verification checklist
+└─ Safety mechanisms
+
+================================================================================
+                         KEY PRINCIPLES
+================================================================================
+
+1. DETERMINISTIC
+   - Everything is explicit
+   - No guessing
+   - No hallucination
+
+2. PHASED
+   - Work in order
+   - Stop between phases
+   - Get confirmation before proceeding
+
+3. SCOPED
+   - MIS Reports only
+   - Nothing else
+   - No feature creep
+
+4. SAFE
+   - Allowed/forbidden lists
+   - Red flags to stop
+   - Minimal, isolated changes
+
+5. VERIFIABLE
+   - Success criteria are measurable
+   - Verification checklist
+   - Proof, not hope
+
+6. REVERSIBLE
+   - Changes are minimal
+   - Changes are isolated
+   - Easy to rollback if needed
+
+================================================================================
+                         WHAT Q WILL DO
+================================================================================
+
+✅ ALLOWED:
+- Register routes
+- Fix aggregations
+- Correct calculations
+- Create missing models
+- Add error handling
+- Align schema usage
+
+❌ FORBIDDEN:
+- Redesign database
+- Change loan rules
+- Introduce new report types
+- Modify frontend UI
+- Optimize prematurely
+- Go out of scope
+
+================================================================================
+                         EXECUTION TIMELINE
+================================================================================
+
+PHASE 0: Pre-flight (5 min)
+├─ Read-only
+├─ Confirm canonical fields
+└─ No code changes
+
+PHASE 1: Routing & plumbing (15 min)
+├─ Register routes in app.js
+├─ Register routes in app-production.js
+└─ Verify all endpoints return 200
+
+PHASE 2: Schema alignment (20 min)
+├─ Replace incorrect field references
+├─ Update all aggregations
+└─ Verify queries use correct fields
+
+PHASE 3: Logic fixes (30 min)
+├─ Fix bucket calculation (DPD-based)
+├─ Fix aging analysis (date-based)
+└─ Fix collection efficiency
+
+PHASE 4: Data model completion (20 min)
+├─ Create standalone Installment model
+├─ Link installments to loans
+└─ Update aggregations
+
+PHASE 5: Defensive engineering (15 min)
+├─ Add error handling
+├─ Add input validation
+└─ Ensure valid JSON responses
+
+PHASE 6: Verification (10 min)
+├─ Verify all endpoints return 200 OK
+├─ Verify data accuracy
+└─ Verify frontend displays data
+
+TOTAL TIME: ~115 minutes (1.75 hours)
+
+================================================================================
+                         SUCCESS CRITERIA
+================================================================================
+
+SYSTEM LEVEL:
+☐ All 6 report endpoints return 200 OK
+☐ All endpoints return valid JSON
+☐ No 404s from frontend
+☐ Frontend displays all report data
+
+DATA LEVEL:
+☐ Bucket totals = portfolio outstanding
+☐ Efficiency ≤ 100%
+☐ Aging totals ≤ portfolio
+☐ All calculations are correct
+
+CODE LEVEL:
+☐ No changes to core loan logic
+☐ No changes to payment processing
+☐ No changes to auth/permissions
+☐ No database schema changes
+
+PROCESS LEVEL:
+☐ All phases completed in order
+☐ All changes reviewed and approved
+☐ All red flags avoided
+☐ All verification checks passed
+
+================================================================================
+                         QUICK START
+================================================================================
+
+1. Read START_HERE_EXECUTION.md (5 min)
+2. Read PROJECT_TODOS.md (10 min)
+3. Read RULES_OF_ENGAGEMENT.md (10 min)
+4. Open Amazon Q chat
+5. Paste AMAZON_Q_MASTER_PROMPT.md
+6. Say: "Let's start with PHASE 0"
+7. Follow the phases
+8. Verify success
+
+TOTAL TIME: ~2 hours
+
+================================================================================
+                         DOCUMENTS LOCATION
+================================================================================
+
+All documents are in the project root:
+
+loan-management-system/
+├── PROJECT_TODOS.md
+├── AMAZON_Q_MASTER_PROMPT.md
+├── RULES_OF_ENGAGEMENT.md
+├── EXECUTION_FRAMEWORK.md
+├── START_HERE_EXECUTION.md
+└── EXECUTION_READY.txt (this file)
+
+================================================================================
+                         REFERENCE
+================================================================================
+
+When you need to:
+
+Know WHAT to do
+→ Read PROJECT_TODOS.md
+
+Know HOW to instruct Q
+→ Paste AMAZON_Q_MASTER_PROMPT.md
+
+Know what's ALLOWED/FORBIDDEN
+→ Read RULES_OF_ENGAGEMENT.md
+
+Know HOW to execute
+→ Read EXECUTION_FRAMEWORK.md
+
+Quick reference
+→ Read START_HERE_EXECUTION.md
+
+================================================================================
+                         SAFETY MECHANISMS
+================================================================================
+
+Built into AMAZON_Q_MASTER_PROMPT.md:
+✓ Strict rules Q must follow
+✓ Assumptions Q cannot change
+✓ Phase-based execution
+✓ Stop points before proceeding
+✓ Output format requirements
+
+Built into RULES_OF_ENGAGEMENT.md:
+✓ Allowed changes list
+✓ Forbidden changes list
+✓ Scope boundaries
+✓ Red flags to stop
+✓ Enforcement checklist
+
+Built into PROJECT_TODOS.md:
+✓ Clear phases
+✓ Success criteria
+✓ Canonical fields
+✓ Execution rules
+
+================================================================================
+                         READY TO EXECUTE
+================================================================================
+
+✅ Framework complete
+✅ Documents created
+✅ Phases defined
+✅ Safety mechanisms in place
+✅ Verification checklist ready
+
+STATUS: READY FOR EXECUTION
+
+Next step: Read START_HERE_EXECUTION.md
+
+================================================================================
+Generated: 2024-01-15
+Project: Loan Management System (NBFC)
+Scope: MIS Reports System
+Status: ✅ EXECUTION FRAMEWORK READY
+================================================================================

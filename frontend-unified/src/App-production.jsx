@@ -1,89 +1,107 @@
-import React from 'react';
-import { Navigate, Outlet } from 'react-router-dom';
-import { createBrowserRouter, RouterProvider } from 'react-router-dom';
-import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
-import { Toaster } from 'react-hot-toast';
+import React, { useEffect, useState } from 'react';
+import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
+import { AuthContext } from './context/AuthContext';
+import ProtectedRoute from './components/ProtectedRoute';
+import ModernLayout from './components/Layout/ModernLayout';
 
-// Import modern pages
-import ModernLogin from './pages/ModernLogin';
-import ModernDashboard from './pages/ModernDashboard';
-import ModernCustomers from './pages/ModernCustomers';
-import ModernCollections from './pages/ModernCollections';
+// Pages
+import Login from './pages/Login/OptimizedLogin';
+import Dashboard from './pages/Dashboard/DashboardOptimized';
 import Leads from './pages/Leads';
-import CreditAnalysis from './pages/CreditAnalysis';
-import Operations from './pages/Operations';
+import Application from './pages/Application';
+import CreditAssessment from './pages/CreditManagement';
+import Approval from './pages/Approval';
 import Disbursement from './pages/Disbursement';
-import Reports from './pages/Reports';
-import CaseClosure from './pages/CaseClosure';
-import Profile from './pages/Profile';
-import Settings from './pages/Settings';
-import AppLayout from './components/Layout/AppLayout';
-
-// Layout wrapper component
-const LayoutWrapper = () => {
-  return (
-    <AppLayout>
-      <Outlet />
-    </AppLayout>
-  );
-};
-
-// Build a route tree and opt-in to future v7 behaviors to silence warnings
-const router = createBrowserRouter(
-  [
-    { path: '/login', element: <ModernLogin /> },
-    {
-      element: <LayoutWrapper />,
-      children: [
-        { path: '/', element: <ModernDashboard /> },
-        { path: '/customers', element: <ModernCustomers /> },
-        { path: '/leads', element: <Leads /> },
-        { path: '/credit-analysis', element: <CreditAnalysis /> },
-        { path: '/operations', element: <Operations /> },
-        { path: '/disbursement', element: <Disbursement /> },
-        { path: '/collections', element: <ModernCollections /> },
-        { path: '/reports', element: <Reports /> },
-        { path: '/case-closure', element: <CaseClosure /> },
-        { path: '/profile', element: <Profile /> },
-        { path: '/settings', element: <Settings /> },
-      ],
-    },
-    { path: '*', element: <Navigate to="/" replace /> },
-  ],
-  {
-    future: {
-      v7_startTransition: true,
-      v7_relativeSplatPath: true,
-    },
-  }
-);
-
-const queryClient = new QueryClient({
-  defaultOptions: {
-    queries: {
-      staleTime: 10 * 60 * 1000,
-      gcTime: 30 * 60 * 1000,
-      retry: 1,
-      refetchOnWindowFocus: false,
-      refetchOnReconnect: false,
-      refetchInterval: false,
-      networkMode: 'online',
-    },
-    mutations: {
-      retry: 1,
-      networkMode: 'online',
-    },
-  },
-});
+import ActiveLoans from './pages/ActiveLoans';
+import LoanDetail from './pages/LoanDetail';
+import Collections from './pages/Collections';
+import CollectorWorklist from './pages/Collector/MyCases';
+import Legal from './pages/Legal/LegalDashboard';
+import Closure from './pages/CaseClosure';
+import MISReports from './pages/MISReports';
+import Users from './pages/Users';
+import AuditLog from './pages/AuditLog';
+import Configuration from './pages/Configuration';
+import Unauthorized from './pages/Unauthorized';
+import PageNotFound from './pages/PageNotFound';
 
 function App() {
+  const [user, setUser] = useState(null);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    // Check if user is logged in
+    const token = localStorage.getItem('token');
+    const userData = localStorage.getItem('user');
+    
+    if (token && userData) {
+      try {
+        setUser(JSON.parse(userData));
+      } catch (error) {
+        console.error('Failed to parse user data:', error);
+        localStorage.removeItem('token');
+        localStorage.removeItem('user');
+      }
+    }
+    setLoading(false);
+  }, []);
+
+  if (loading) {
+    return <div className="flex items-center justify-center h-screen">Loading...</div>;
+  }
+
   return (
-    <QueryClientProvider client={queryClient}>
-      <div className="min-h-screen bg-gray-50 font-sans">
-        <RouterProvider router={router} />
-        <Toaster position="top-right" />
-      </div>
-    </QueryClientProvider>
+    <AuthContext.Provider value={{ user, setUser }}>
+      <Router>
+        <Routes>
+          {/* Public Routes */}
+          <Route path="/login" element={<Login />} />
+          <Route path="/unauthorized" element={<Unauthorized />} />
+          <Route path="*" element={<PageNotFound />} />
+
+          {/* Protected Routes */}
+          <Route element={<ProtectedRoute user={user} />}>
+            <Route element={<ModernLayout user={user} />}>
+              {/* Dashboard */}
+              <Route path="/" element={<Dashboard />} />
+
+              {/* STAGE 1: LEAD & APPLICATION */}
+              <Route path="/leads" element={<ProtectedRoute user={user} requiredRoles={['telecaller', 'manager', 'admin']}><Leads /></ProtectedRoute>} />
+              <Route path="/application" element={<ProtectedRoute user={user} requiredRoles={['customer', 'telecaller', 'manager', 'admin']}><Application /></ProtectedRoute>} />
+
+              {/* STAGE 2: CREDIT & RISK */}
+              <Route path="/credit-assessment" element={<ProtectedRoute user={user} requiredRoles={['credit_analyst', 'manager', 'admin']}><CreditAssessment /></ProtectedRoute>} />
+              <Route path="/approval" element={<ProtectedRoute user={user} requiredRoles={['manager', 'admin']}><Approval /></ProtectedRoute>} />
+
+              {/* STAGE 3: DISBURSEMENT */}
+              <Route path="/disbursement" element={<ProtectedRoute user={user} requiredRoles={['operations', 'finance', 'manager', 'admin']}><Disbursement /></ProtectedRoute>} />
+
+              {/* STAGE 4: REPAYMENT */}
+              <Route path="/active-loans" element={<ProtectedRoute user={user} requiredRoles={['operations', 'manager', 'admin', 'collector', 'collections_head']}><ActiveLoans /></ProtectedRoute>} />
+              <Route path="/loan/:id" element={<ProtectedRoute user={user} requiredRoles={['all']}><LoanDetail /></ProtectedRoute>} />
+
+              {/* STAGE 5: COLLECTIONS */}
+              <Route path="/collections" element={<ProtectedRoute user={user} requiredRoles={['collections_head', 'manager', 'admin']}><Collections /></ProtectedRoute>} />
+              <Route path="/collector-worklist" element={<ProtectedRoute user={user} requiredRoles={['collector']}><CollectorWorklist /></ProtectedRoute>} />
+
+              {/* STAGE 6: LEGAL */}
+              <Route path="/legal" element={<ProtectedRoute user={user} requiredRoles={['legal_officer', 'manager', 'admin']}><Legal /></ProtectedRoute>} />
+
+              {/* STAGE 7: CLOSURE */}
+              <Route path="/closure" element={<ProtectedRoute user={user} requiredRoles={['operations', 'finance', 'manager', 'admin']}><Closure /></ProtectedRoute>} />
+
+              {/* STAGE 8: MIS & CONTROL */}
+              <Route path="/mis-reports" element={<ProtectedRoute user={user} requiredRoles={['manager', 'admin', 'coo']}><MISReports /></ProtectedRoute>} />
+
+              {/* SYSTEM-WIDE */}
+              <Route path="/users" element={<ProtectedRoute user={user} requiredRoles={['admin']}><Users /></ProtectedRoute>} />
+              <Route path="/audit-log" element={<ProtectedRoute user={user} requiredRoles={['admin', 'manager']}><AuditLog /></ProtectedRoute>} />
+              <Route path="/configuration" element={<ProtectedRoute user={user} requiredRoles={['admin']}><Configuration /></ProtectedRoute>} />
+            </Route>
+          </Route>
+        </Routes>
+      </Router>
+    </AuthContext.Provider>
   );
 }
 
