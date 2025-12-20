@@ -10,6 +10,33 @@ const asyncHandler = (fn) => (req, res, next) => {
   Promise.resolve(fn(req, res, next)).catch(next);
 };
 
+// DPD bucket thresholds
+const DPD_BUCKETS = {
+  CURRENT: { max: 0, label: 'current' },
+  X: { max: 7, label: 'X' },
+  Y: { max: 30, label: 'Y' },
+  M1: { max: 60, label: 'M1' },
+  M2: { max: 90, label: 'M2' },
+  M3: { max: 180, label: 'M3' },
+  NPA: { max: Infinity, label: 'NPA' }
+};
+
+// Reusable outstanding amount calculation
+const outstandingAmountPipeline = {
+  $sum: {
+    $map: {
+      input: '$schedule',
+      as: 'inst',
+      in: {
+        $subtract: [
+          { $add: ['$$inst.principalDue', '$$inst.interestDue', '$$inst.penaltyDue'] },
+          { $add: ['$$inst.paidPrincipal', '$$inst.paidInterest', '$$inst.paidPenalty'] }
+        ]
+      }
+    }
+  }
+};
+
 // Portfolio snapshot
 router.get('/portfolio', protect, authorize('admin', 'manager'), asyncHandler(async (req, res) => {
   const result = await Loan.aggregate([
@@ -19,22 +46,7 @@ router.get('/portfolio', protect, authorize('admin', 'manager'), asyncHandler(as
         _id: null,
         totalLoans: { $sum: 1 },
         totalPrincipal: { $sum: '$principal' },
-        totalOutstanding: {
-          $sum: {
-            $sum: {
-              $map: {
-                input: '$schedule',
-                as: 'inst',
-                in: {
-                  $subtract: [
-                    { $add: ['$$inst.principalDue', '$$inst.interestDue', '$$inst.penaltyDue'] },
-                    { $add: ['$$inst.paidPrincipal', '$$inst.paidInterest', '$$inst.paidPenalty'] }
-                  ]
-                }
-              }
-            }
-          }
-        }
+        totalOutstanding: outstandingAmountPipeline
       }
     }
   ]);
@@ -59,7 +71,7 @@ router.get('/buckets', protect, authorize('admin', 'manager'), asyncHandler(asyn
             { $cond: [{ $lte: ['$dpd', 30] }, 'Y',
             { $cond: [{ $lte: ['$dpd', 60] }, 'M1',
             { $cond: [{ $lte: ['$dpd', 90] }, 'M2',
-            { $cond: [{ $lte: ['$dpd', 180] }, 'M3', 'NPA']}]}]}]}]}]}
+            { $cond: [{ $lte: ['$dpd', 180] }, 'M3', 'NPA']}]}]}]}]}]
           ]
         }
       }
@@ -68,26 +80,12 @@ router.get('/buckets', protect, authorize('admin', 'manager'), asyncHandler(asyn
       $group: {
         _id: '$bucket',
         loanCount: { $sum: 1 },
-        outstandingAmount: {
-          $sum: {
-            $sum: {
-              $map: {
-                input: '$schedule',
-                as: 'inst',
-                in: {
-                  $subtract: [
-                    { $add: ['$$inst.principalDue', '$$inst.interestDue', '$$inst.penaltyDue'] },
-                    { $add: ['$$inst.paidPrincipal', '$$inst.paidInterest', '$$inst.paidPenalty'] }
-                  ]
-                }
-              }
-            }
-          }
-        },
+        outstandingAmount: outstandingAmountPipeline,
         avgDPD: { $avg: '$dpd' }
       }
     },
-    { $sort: { _id: 1 } }
+    { $sort: { _id: 1 } },
+    { $limit: 1000 }
   ]);
 
   res.json({
@@ -153,7 +151,8 @@ router.get('/legal', protect, authorize('admin', 'manager'), asyncHandler(async 
         _id: '$status',
         count: { $sum: 1 }
       }
-    }
+    },
+    { $limit: 100 }
   ]);
 
   res.json({
@@ -165,15 +164,17 @@ router.get('/legal', protect, authorize('admin', 'manager'), asyncHandler(async 
 
 // Collector performance
 router.get('/collectors', protect, authorize('admin', 'manager'), asyncHandler(async (req, res) => {
+  const limit = Math.min(parseInt(req.query.limit) || 50, 500);
+  
   const result = await CollectorPerformance.find()
     .populate('userId', 'name email')
     .sort({ weekStartDate: -1 })
-    .limit(50);
+    .limit(limit);
 
   res.json({
     success: true,
     data: result,
-    meta: { timestamp: new Date().toISOString() }
+    meta: { timestamp: new Date().toISOString(), limit }
   });
 }));
 
@@ -181,6 +182,7 @@ router.get('/collectors', protect, authorize('admin', 'manager'), asyncHandler(a
 router.get('/aging', protect, authorize('admin', 'manager'), asyncHandler(async (req, res) => {
   const today = new Date();
   today.setHours(0, 0, 0, 0);
+  const MILLISECONDS_PER_DAY = 1000 * 60 * 60 * 24;
 
   const result = await Loan.aggregate([
     { $match: { status: { $in: ['active', 'npa'] } } },
@@ -189,7 +191,7 @@ router.get('/aging', protect, authorize('admin', 'manager'), asyncHandler(async 
         ageInDays: {
           $divide: [
             { $subtract: [today, '$disbursementDate'] },
-            1000 * 60 * 60 * 24
+            MILLISECONDS_PER_DAY
           ]
         }
       }
@@ -209,24 +211,10 @@ router.get('/aging', protect, authorize('admin', 'manager'), asyncHandler(async 
       $group: {
         _id: '$agePeriod',
         loanCount: { $sum: 1 },
-        outstandingAmount: {
-          $sum: {
-            $sum: {
-              $map: {
-                input: '$schedule',
-                as: 'inst',
-                in: {
-                  $subtract: [
-                    { $add: ['$$inst.principalDue', '$$inst.interestDue', '$$inst.penaltyDue'] },
-                    { $add: ['$$inst.paidPrincipal', '$$inst.paidInterest', '$$inst.paidPenalty'] }
-                  ]
-                }
-              }
-            }
-          }
-        }
+        outstandingAmount: outstandingAmountPipeline
       }
-    }
+    },
+    { $limit: 1000 }
   ]);
 
   const agingMap = { '0-30 days': 0, '31-60 days': 0, '61-90 days': 0, '90+ days': 0 };

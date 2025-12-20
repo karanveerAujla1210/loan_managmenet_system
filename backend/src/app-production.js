@@ -66,14 +66,13 @@ app.use('/api/v1/loans', auth, permissionGuard, immutabilityGuard, financialGuar
 app.use('/api/v1/payments', auth, permissionGuard, paymentsSafeRoutes);
 app.use('/api/v1/disputes', auth, permissionGuard, financialGuard, disputesRoutes);
 app.use('/api/v1/reconciliation', auth, permissionGuard, reconciliationLockGuard, reconciliationAdvancedRoutes);
-app.use('/api/v1/promises', promisesRoutes);
-app.use('/api/v1/collector-performance', collectorPerformanceRoutes);
-app.use('/api/v1/mis', misRoutes);
+app.use('/api/v1/promises', auth, permissionGuard, promisesRoutes);
+app.use('/api/v1/collector-performance', auth, permissionGuard, collectorPerformanceRoutes);
+app.use('/api/v1/mis', auth, permissionGuard, misRoutes);
 app.use('/api/v1/reports', auth, authorize('admin', 'manager', 'coo'), reportsRoutes);
-app.use('/api/v1/reconciliation', reconciliationAdvancedRoutes);
-app.use('/api/v1/audit', auditRoutes);
-app.use('/api/v1/legal', legalAdvancedRoutes);
-app.use('/api/v1/dashboard', dashboardRoutes);
+app.use('/api/v1/audit', auth, permissionGuard, auditMiddleware, auditRoutes);
+app.use('/api/v1/legal', auth, permissionGuard, legalAdvancedRoutes);
+app.use('/api/v1/dashboard', auth, permissionGuard, dashboardRoutes);
 
 // 404
 app.use('*', (req, res) => {
@@ -82,7 +81,7 @@ app.use('*', (req, res) => {
 
 // Error handler
 app.use((err, req, res, next) => {
-  console.error(err.stack);
+  console.error('[ERROR]', err.message, err.stack);
   res.status(err.statusCode || 500).json({
     success: false,
     message: err.message || 'Server error'

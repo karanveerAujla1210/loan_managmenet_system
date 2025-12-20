@@ -86,5 +86,5 @@ export const routes = [
       }
     ]
   },
-  { path: '*', element: <Navigate to='/dashboard' /> }
+  { path: '*', element: <Navigate to='/' /> }
 ];

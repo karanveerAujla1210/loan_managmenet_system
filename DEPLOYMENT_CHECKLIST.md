@@ -1,333 +1,334 @@
-# EC2 Deployment Checklist - Loan Management System
-
-Complete checklist for deploying the Loan Management System on AWS EC2.
+# Deployment Checklist
 
 ## Pre-Deployment
 
-### AWS Account Setup
-- [ ] AWS account created and verified
-- [ ] IAM user created with EC2, VPC, ALB, S3, Secrets Manager permissions
-- [ ] AWS CLI installed and configured locally
-- [ ] AWS credentials configured: `aws configure`
+### Code Quality
+- [ ] All tests pass
+- [ ] No console errors
+- [ ] No console warnings
+- [ ] ESLint passes
+- [ ] Code review completed
+- [ ] No hardcoded credentials
+- [ ] No TODO comments left
 
-### Domain & SSL
-- [ ] Domain registered (Route53 or external registrar)
-- [ ] Domain DNS configured to point to ALB/EC2
-- [ ] SSL certificate obtained (ACM or Let's Encrypt)
-- [ ] Certificate ARN noted: `arn:aws:acm:region:account:certificate/xxxxx`
-
-### SSH & Security
-- [ ] EC2 key pair created in AWS
-- [ ] Private key downloaded and secured locally
-- [ ] Key permissions set: `chmod 600 your-key.pem`
-- [ ] SSH access tested from local machine
-
-### Repository
-- [ ] GitHub repository created and configured
-- [ ] Repository cloned locally
-- [ ] All code committed and pushed to main branch
-- [ ] GitHub SSH keys configured (if using SSH)
-
----
-
-## Infrastructure Deployment
-
-### Option A: Using Terraform
-
-- [ ] Terraform installed locally (version >= 1.0)
-- [ ] AWS provider configured
-- [ ] S3 bucket created for Terraform state: `loan-crm-terraform-state`
-- [ ] DynamoDB table created for state locking: `terraform-locks`
-- [ ] `terraform.tfvars` created with correct values:
-  - [ ] `aws_region` set
-  - [ ] `key_pair_name` set
-  - [ ] `ssl_certificate_arn` set
-  - [ ] `domain_name` set
-  - [ ] `repository_url` set
-  - [ ] `ssh_cidr_blocks` restricted to your IP
-- [ ] `terraform init` executed
-- [ ] `terraform plan` reviewed
-- [ ] `terraform apply` executed successfully
-- [ ] Outputs noted:
-  - [ ] Load balancer DNS
-  - [ ] Instance IPs
-
-### Option B: Manual EC2 Launch
-
-- [ ] EC2 instance launched:
-  - [ ] AMI: Ubuntu 22.04 LTS
-  - [ ] Instance type: t3.medium or larger
-  - [ ] VPC: Default or custom
-  - [ ] Subnet: Public subnet
-  - [ ] Auto-assign public IP: Enabled
-  - [ ] Security group: Allow SSH (22), HTTP (80), HTTPS (443)
-  - [ ] Storage: 50GB gp3 encrypted
-  - [ ] Key pair: Selected
-- [ ] Instance running and accessible
-- [ ] Elastic IP assigned (optional but recommended)
-- [ ] Instance tagged appropriately
-
----
-
-## Application Deployment
-
-### Connect to Instance
-- [ ] SSH connection successful: `ssh -i your-key.pem ubuntu@instance-ip`
-- [ ] Instance updated: `sudo apt-get update && sudo apt-get upgrade -y`
-
-### Install Dependencies
-- [ ] Node.js 18.x installed
-- [ ] npm verified: `npm -v`
-- [ ] MongoDB installed and running
-- [ ] Redis installed and running
-- [ ] Nginx installed
-- [ ] PM2 installed globally
-- [ ] Docker installed (optional)
-- [ ] Git installed
-
-### Clone Repository
-- [ ] Repository cloned to `/opt/loan-management-system`
-- [ ] Correct branch checked out
-- [ ] Directory permissions correct
-
-### Backend Setup
-- [ ] Backend dependencies installed: `npm ci --production`
-- [ ] `.env` file created with production values:
-  - [ ] `NODE_ENV=production`
-  - [ ] `MONGODB_URI` configured
-  - [ ] `JWT_SECRET` generated and set
-  - [ ] `REDIS_URL` configured
-  - [ ] `CORS_ORIGIN` set to domain
-  - [ ] Email credentials configured
-- [ ] Logs directory created: `mkdir -p logs`
-- [ ] PM2 ecosystem config created
-- [ ] Backend started with PM2: `pm2 start ecosystem.config.js`
-- [ ] Backend process running: `pm2 status`
-
-### Frontend Setup
-- [ ] Frontend dependencies installed: `npm ci`
-- [ ] `.env.production` created with correct API URL
-- [ ] Frontend built: `npm run build`
-- [ ] Build output verified: `ls -la dist/`
-
-### Database Setup
-- [ ] MongoDB running: `sudo systemctl status mongod`
-- [ ] MongoDB authentication enabled
-- [ ] Initial database created
-- [ ] Collections initialized
-- [ ] Indexes created (if needed)
-- [ ] Test data loaded (if applicable)
-
-### Redis Setup
-- [ ] Redis running: `sudo systemctl status redis-server`
-- [ ] Redis password configured
-- [ ] Redis persistence enabled
-
-### Nginx Configuration
-- [ ] Nginx config created at `/etc/nginx/sites-available/loan-crm`
-- [ ] Config includes:
-  - [ ] Frontend static files serving
-  - [ ] Backend API proxy
-  - [ ] SSL configuration
-  - [ ] Gzip compression
-  - [ ] Health check endpoint
-- [ ] Config tested: `sudo nginx -t`
-- [ ] Site enabled: `sudo ln -sf /etc/nginx/sites-available/loan-crm /etc/nginx/sites-enabled/loan-crm`
-- [ ] Default site disabled
-- [ ] Nginx reloaded: `sudo systemctl reload nginx`
-
-### SSL Certificate
-- [ ] Certbot installed
-- [ ] SSL certificate obtained: `sudo certbot certonly --nginx -d your-domain.com`
-- [ ] Certificate path verified
-- [ ] Auto-renewal configured: `sudo systemctl enable certbot.timer`
-- [ ] Certificate renewal tested (optional)
-
----
-
-## Verification & Testing
-
-### Health Checks
-- [ ] Backend health endpoint responds: `curl http://localhost:5000/health`
-- [ ] Frontend loads: `curl http://localhost/`
-- [ ] MongoDB responds: `mongosh --eval "db.adminCommand('ping')"`
-- [ ] Redis responds: `redis-cli ping`
-- [ ] PM2 processes running: `pm2 status`
-
-### Application Testing
-- [ ] Frontend accessible via domain: `https://your-domain.com`
-- [ ] API accessible: `https://your-domain.com/api/v1/health`
-- [ ] Login page loads
-- [ ] Can authenticate with test credentials
-- [ ] Dashboard loads and displays data
-- [ ] API endpoints responding correctly
-
-### SSL/TLS Testing
-- [ ] HTTPS working: `curl -I https://your-domain.com`
-- [ ] HTTP redirects to HTTPS
-- [ ] SSL certificate valid: `openssl s_client -connect your-domain.com:443`
-- [ ] No SSL warnings in browser
-
-### Performance Testing
-- [ ] Page load time acceptable
-- [ ] API response time acceptable
-- [ ] No console errors in browser
-- [ ] No backend errors in logs
-
----
-
-## Security Hardening
-
-### SSH Security
-- [ ] SSH key-based authentication only
-- [ ] Password authentication disabled
-- [ ] Root login disabled
-- [ ] SSH port changed (optional)
-- [ ] Fail2Ban installed and running
-
-### Firewall
-- [ ] UFW enabled: `sudo ufw enable`
-- [ ] Only necessary ports open:
-  - [ ] 22 (SSH) - restricted to your IP
-  - [ ] 80 (HTTP)
-  - [ ] 443 (HTTPS)
-- [ ] Firewall rules verified: `sudo ufw status`
-
-### Application Security
-- [ ] CORS properly configured
-- [ ] Rate limiting enabled
-- [ ] Input validation enabled
-- [ ] SQL injection protection enabled
+### Security
+- [ ] JWT_SECRET is strong
+- [ ] CORS_ORIGIN is configured
+- [ ] Rate limiting is enabled
+- [ ] Helmet headers are set
+- [ ] Input validation is in place
+- [ ] SQL injection prevention checked
 - [ ] XSS protection enabled
-- [ ] CSRF protection enabled
+- [ ] HTTPS enforced
 
-### Database Security
-- [ ] MongoDB authentication enabled
-- [ ] Strong passwords set
-- [ ] Database backups configured
-- [ ] Backup encryption enabled
+### Database
+- [ ] MongoDB connection tested
+- [ ] Indexes created
+- [ ] Backups configured
+- [ ] Migration scripts tested
+- [ ] Data validation rules set
 
-### AWS Security
-- [ ] Security groups properly configured
-- [ ] IAM roles with least privilege
-- [ ] Secrets stored in AWS Secrets Manager
-- [ ] CloudTrail logging enabled
-- [ ] VPC Flow Logs enabled (optional)
+### Environment
+- [ ] .env file configured
+- [ ] All required variables set
+- [ ] No sensitive data in code
+- [ ] Logging configured
+- [ ] Error tracking configured
 
----
+## Backend Deployment
 
-## Monitoring & Logging
+### Build
+```bash
+cd backend
+npm install --production
+npm run build
+```
 
-### Logging Setup
-- [ ] Application logs configured
-- [ ] Log rotation configured
-- [ ] Nginx logs monitored
-- [ ] MongoDB logs monitored
-- [ ] System logs monitored
+### Configuration
+- [ ] NODE_ENV=production
+- [ ] PORT configured
+- [ ] MONGODB_URI set
+- [ ] JWT_SECRET set
+- [ ] CORS_ORIGIN set
+- [ ] LOG_LEVEL set
 
-### Monitoring Setup
-- [ ] CloudWatch agent installed (optional)
-- [ ] CloudWatch alarms configured:
-  - [ ] High CPU usage
-  - [ ] High memory usage
-  - [ ] Disk space low
-  - [ ] Application errors
-- [ ] Health check script created
-- [ ] Cron job for health checks (optional)
+### Testing
+```bash
+npm test
+npm run lint
+```
 
-### Backup Configuration
-- [ ] MongoDB backup script created
-- [ ] Backup cron job configured: `0 2 * * * /usr/local/bin/backup-mongodb.sh`
-- [ ] Backup location verified
-- [ ] Backup retention policy set
-- [ ] Test restore performed
+### Deployment
+```bash
+# Using PM2
+pm2 start ecosystem.config.js --env production
 
----
+# Using Docker
+docker build -f Dockerfile.prod -t loan-app:latest .
+docker run -d -p 5000:5000 --env-file .env loan-app:latest
+```
+
+### Verification
+- [ ] Health check passes: `curl http://localhost:5000/health`
+- [ ] API responds: `curl http://localhost:5000/api/v1/auth/login`
+- [ ] Logs are clean
+- [ ] No errors in logs
+- [ ] Database connection works
+
+## Frontend Deployment
+
+### Build
+```bash
+cd frontend-unified
+npm install --production
+npm run build
+```
+
+### Configuration
+- [ ] VITE_API_URL set correctly
+- [ ] Environment variables configured
+- [ ] Build output verified
+
+### Testing
+```bash
+npm test
+npm run lint
+npm run build
+```
+
+### Deployment
+```bash
+# Using Vercel
+vercel deploy --prod
+
+# Using Docker
+docker build -f Dockerfile -t loan-app-frontend:latest .
+docker run -d -p 3000:3000 loan-app-frontend:latest
+
+# Using Nginx
+cp dist/* /var/www/html/
+```
+
+### Verification
+- [ ] Frontend loads: `http://your-domain.com`
+- [ ] API calls work
+- [ ] Login works
+- [ ] No 404 errors
+- [ ] No CORS errors
 
 ## Post-Deployment
 
-### Documentation
-- [ ] Deployment documented
-- [ ] Access credentials secured
-- [ ] Runbook created
-- [ ] Troubleshooting guide updated
-- [ ] Team notified
-
 ### Monitoring
-- [ ] Logs monitored for errors
-- [ ] Performance metrics reviewed
-- [ ] User feedback collected
-- [ ] Issues tracked and resolved
+- [ ] Set up error tracking (Sentry)
+- [ ] Set up performance monitoring (New Relic)
+- [ ] Set up uptime monitoring (Pingdom)
+- [ ] Set up log aggregation (ELK)
 
-### Maintenance Schedule
-- [ ] Regular backup verification scheduled
-- [ ] Security updates scheduled
-- [ ] Database maintenance scheduled
-- [ ] Log rotation verified
-- [ ] Certificate renewal monitored
+### Testing
+- [ ] Smoke tests pass
+- [ ] User acceptance testing
+- [ ] Performance testing
+- [ ] Security testing
+- [ ] Load testing
 
-### Disaster Recovery
-- [ ] Backup tested and verified
-- [ ] Recovery procedure documented
-- [ ] RTO/RPO defined
-- [ ] Failover plan created (if applicable)
+### Documentation
+- [ ] Update API documentation
+- [ ] Update deployment guide
+- [ ] Update runbook
+- [ ] Update incident response plan
 
----
+### Rollback Plan
+- [ ] Previous version tagged
+- [ ] Rollback procedure documented
+- [ ] Database backup available
+- [ ] Rollback tested
 
-## Troubleshooting Quick Reference
+## Production Checklist
 
-### Backend Issues
+### Security
+- [ ] HTTPS enabled
+- [ ] SSL certificate valid
+- [ ] Security headers present
+- [ ] Rate limiting working
+- [ ] Authentication working
+- [ ] Authorization working
+
+### Performance
+- [ ] Response times acceptable
+- [ ] Database queries optimized
+- [ ] Caching working
+- [ ] CDN configured
+- [ ] Compression enabled
+
+### Reliability
+- [ ] Error handling working
+- [ ] Logging working
+- [ ] Monitoring working
+- [ ] Alerts configured
+- [ ] Backup working
+
+### Compliance
+- [ ] Data privacy compliant
+- [ ] Audit logging enabled
+- [ ] Compliance checks passed
+- [ ] Security audit passed
+
+## Rollback Procedure
+
+If issues occur:
+
+1. **Immediate Actions**
+   - [ ] Alert team
+   - [ ] Check logs
+   - [ ] Assess impact
+   - [ ] Notify users if needed
+
+2. **Rollback Steps**
+   ```bash
+   # Backend
+   git checkout previous-tag
+   npm install
+   npm start
+   
+   # Frontend
+   git checkout previous-tag
+   npm install
+   npm run build
+   # Deploy build
+   ```
+
+3. **Verification**
+   - [ ] Health checks pass
+   - [ ] Users can login
+   - [ ] Data is intact
+   - [ ] No errors in logs
+
+4. **Post-Rollback**
+   - [ ] Root cause analysis
+   - [ ] Fix issues
+   - [ ] Test thoroughly
+   - [ ] Deploy again
+
+## Monitoring Commands
+
+### Backend
 ```bash
-# Check PM2 logs
-pm2 logs loan-crm-api
+# Check process
+pm2 status
 
-# Restart backend
-pm2 restart loan-crm-api
+# View logs
+pm2 logs
 
-# Check MongoDB
-mongosh --eval "db.adminCommand('ping')"
+# Monitor
+pm2 monit
+
+# Check health
+curl http://localhost:5000/health
 ```
 
-### Frontend Issues
+### Frontend
 ```bash
-# Check Nginx
-sudo nginx -t
-sudo systemctl status nginx
+# Check if running
+curl http://localhost:3000
 
 # Check logs
-sudo tail -f /var/log/nginx/error.log
+docker logs <container-id>
+
+# Monitor
+docker stats
 ```
 
-### Database Issues
+### Database
 ```bash
-# Check MongoDB status
-sudo systemctl status mongod
+# Connect
+mongosh
+
+# Check status
+db.adminCommand('ping')
+
+# Check collections
+show collections
+
+# Check indexes
+db.loans.getIndexes()
+```
+
+## Incident Response
+
+### High CPU Usage
+```bash
+# Check processes
+top
+
+# Check logs
+tail -f logs/error.log
+
+# Restart if needed
+pm2 restart all
+```
+
+### High Memory Usage
+```bash
+# Check memory
+free -h
+
+# Check process memory
+ps aux | grep node
+
+# Restart
+pm2 restart all
+```
+
+### Database Connection Issues
+```bash
+# Check connection
+mongosh
+
+# Check logs
+tail -f logs/error.log
 
 # Restart MongoDB
 sudo systemctl restart mongod
 ```
 
-### SSL Issues
+### API Errors
 ```bash
-# Check certificate
-sudo certbot certificates
+# Check logs
+tail -f logs/error.log
 
-# Renew certificate
-sudo certbot renew --force-renewal
+# Check database
+mongosh
+
+# Check API
+curl http://localhost:5000/health
 ```
+
+## Maintenance
+
+### Daily
+- [ ] Check logs for errors
+- [ ] Monitor uptime
+- [ ] Check performance metrics
+
+### Weekly
+- [ ] Review error logs
+- [ ] Check database size
+- [ ] Verify backups
+
+### Monthly
+- [ ] Security audit
+- [ ] Performance review
+- [ ] Dependency updates
+- [ ] Capacity planning
+
+### Quarterly
+- [ ] Full security audit
+- [ ] Disaster recovery test
+- [ ] Load testing
+- [ ] Compliance review
 
 ---
 
-## Sign-Off
-
-- [ ] Deployment completed successfully
-- [ ] All tests passed
-- [ ] Security review completed
-- [ ] Performance acceptable
-- [ ] Team trained on operations
-- [ ] Go-live approved
-
-**Deployed by:** ________________  
-**Date:** ________________  
-**Environment:** Production  
-**Version:** 2.0.0  
+**Last Updated:** 2024-01-15
+**Version:** 1.0
+**Status:** Ready for Deployment

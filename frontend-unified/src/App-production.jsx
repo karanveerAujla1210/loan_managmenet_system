@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
-import { AuthContext } from './context/AuthContext';
+import AuthContext from './context/AuthContext';
 import ProtectedRoute from './components/ProtectedRoute';
 import ModernLayout from './components/Layout/ModernLayout';
 

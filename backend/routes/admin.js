@@ -2,7 +2,8 @@ const express = require('express');
 const router = express.Router();
 const multer = require('multer');
 const { triggerDPDUpdate } = require('../cron/dpdCronScheduler');
-const { authMiddleware } = require('../middleware/auth');
+const protect = require('../middleware/auth');
+const { authorize } = require('../middleware/auth');
 const Loan = require('../models/Loan');
 const Payment = require('../models/Payment');
 const LegalCase = require('../models/LegalCase');
@@ -13,15 +14,8 @@ const upload = multer({ storage: multer.memoryStorage() });
  * Manual DPD Update Trigger
  * POST /api/v1/admin/dpd-update
  */
-router.post('/dpd-update', authMiddleware, async (req, res) => {
+router.post('/dpd-update', protect, authorize('admin'), async (req, res) => {
   try {
-    if (req.user.role !== 'admin') {
-      return res.status(403).json({
-        success: false,
-        message: 'Only admins can trigger DPD updates'
-      });
-    }
-
     const result = await triggerDPDUpdate();
     
     res.json({
@@ -43,14 +37,7 @@ router.post('/dpd-update', authMiddleware, async (req, res) => {
  * Check DPD Cron Status
  * GET /api/v1/admin/dpd-status
  */
-router.get('/dpd-status', authMiddleware, (req, res) => {
-  if (!['admin', 'manager'].includes(req.user.role)) {
-    return res.status(403).json({
-      success: false,
-      message: 'Insufficient permissions'
-    });
-  }
-
+router.get('/dpd-status', protect, authorize('admin', 'manager'), (req, res) => {
   res.json({
     success: true,
     message: 'DPD Cron is running',
@@ -64,12 +51,8 @@ router.get('/dpd-status', authMiddleware, (req, res) => {
  * Import Disbursements
  * POST /api/v1/admin/import-disbursements
  */
-router.post('/import-disbursements', authMiddleware, upload.single('file'), async (req, res) => {
+router.post('/import-disbursements', protect, authorize('admin'), upload.single('file'), async (req, res) => {
   try {
-    if (req.user.role !== 'admin') {
-      return res.status(403).json({ success: false, message: 'Admin access required' });
-    }
-
     if (!req.file) {
       return res.status(400).json({ success: false, message: 'No file uploaded' });
     }
@@ -111,12 +94,8 @@ router.post('/import-disbursements', authMiddleware, upload.single('file'), asyn
  * Import Payments
  * POST /api/v1/admin/import-payments
  */
-router.post('/import-payments', authMiddleware, upload.single('file'), async (req, res) => {
+router.post('/import-payments', protect, authorize('admin'), upload.single('file'), async (req, res) => {
   try {
-    if (req.user.role !== 'admin') {
-      return res.status(403).json({ success: false, message: 'Admin access required' });
-    }
-
     if (!req.file) {
       return res.status(400).json({ success: false, message: 'No file uploaded' });
     }
@@ -158,12 +137,8 @@ router.post('/import-payments', authMiddleware, upload.single('file'), async (re
  * Import Legal Cases
  * POST /api/v1/admin/import-legal-cases
  */
-router.post('/import-legal-cases', authMiddleware, upload.single('file'), async (req, res) => {
+router.post('/import-legal-cases', protect, authorize('admin'), upload.single('file'), async (req, res) => {
   try {
-    if (req.user.role !== 'admin') {
-      return res.status(403).json({ success: false, message: 'Admin access required' });
-    }
-
     if (!req.file) {
       return res.status(400).json({ success: false, message: 'No file uploaded' });
     }
@@ -203,12 +178,8 @@ router.post('/import-legal-cases', authMiddleware, upload.single('file'), async 
  * Bank Reconciliation Upload
  * POST /api/v1/admin/reconciliation/upload
  */
-router.post('/reconciliation/upload', authMiddleware, upload.single('file'), async (req, res) => {
+router.post('/reconciliation/upload', protect, authorize('admin'), upload.single('file'), async (req, res) => {
   try {
-    if (req.user.role !== 'admin') {
-      return res.status(403).json({ success: false, message: 'Admin access required' });
-    }
-
     if (!req.file) {
       return res.status(400).json({ success: false, message: 'No file uploaded' });
     }
@@ -248,12 +219,8 @@ router.post('/reconciliation/upload', authMiddleware, upload.single('file'), asy
  * System Settings
  * POST /api/v1/admin/settings
  */
-router.post('/settings', authMiddleware, async (req, res) => {
+router.post('/settings', protect, authorize('admin'), async (req, res) => {
   try {
-    if (req.user.role !== 'admin') {
-      return res.status(403).json({ success: false, message: 'Admin access required' });
-    }
-
     res.json({
       success: true,
       message: 'Settings saved successfully',

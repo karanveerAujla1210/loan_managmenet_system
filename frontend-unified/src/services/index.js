@@ -1,31 +1,55 @@
 import axios from 'axios';
 
-const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:3000/api';
+const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000/api/v1';
 
 const api = axios.create({
   baseURL: API_BASE_URL,
   headers: {
     'Content-Type': 'application/json'
-  }
+  },
+  timeout: 30000
 });
 
-// Add auth token to requests
 api.interceptors.request.use((config) => {
   const token = localStorage.getItem('authToken');
   if (token) {
     config.headers.Authorization = `Bearer ${token}`;
   }
   return config;
+}, (error) => {
+  return Promise.reject(error);
 });
 
-export const collectorService = {
-  getTodayDashboard: async (collectorId) => {
-    const response = await api.get(`/collector/${collectorId}/today-dashboard`);
+api.interceptors.response.use(
+  (response) => response,
+  (error) => {
+    if (error.response?.status === 401) {
+      localStorage.removeItem('authToken');
+      localStorage.removeItem('user');
+      window.location.href = '/login';
+    }
+    return Promise.reject(error);
+  }
+);
+
+export const authService = {
+  login: async (email, password) => {
+    const response = await api.post('/auth/login', { email, password });
+    if (response.data.data?.token) {
+      localStorage.setItem('authToken', response.data.data.token);
+      localStorage.setItem('user', JSON.stringify(response.data.data.user));
+    }
     return response.data.data;
   },
 
-  getMyCases: async (collectorId, filters = {}) => {
-    const response = await api.get(`/collector/${collectorId}/cases`, { params: filters });
+  logout: async () => {
+    localStorage.removeItem('authToken');
+    localStorage.removeItem('user');
+    return { success: true };
+  },
+
+  getMe: async () => {
+    const response = await api.get('/auth/me');
     return response.data.data;
   }
 };
@@ -36,100 +60,98 @@ export const loanService = {
     return response.data.data;
   },
 
-  getInstallments: async (loanId) => {
-    const response = await api.get(`/loans/${loanId}/installments`);
+  getInstallments: async (loanId, params = {}) => {
+    const response = await api.get(`/loans/${loanId}/installments`, { params });
     return response.data.data;
   },
 
-  getPaymentHistory: async (loanId) => {
-    const response = await api.get(`/loans/${loanId}/payments`);
+  getPaymentHistory: async (loanId, params = {}) => {
+    const response = await api.get(`/loans/${loanId}/payments`, { params });
+    return response.data.data;
+  },
+
+  getLoans: async (params = {}) => {
+    const response = await api.get('/loans', { params });
     return response.data.data;
   }
 };
 
 export const paymentService = {
   recordPayment: async (loanId, paymentData) => {
-    const response = await api.post(`/loans/${loanId}/payments`, paymentData);
+    const response = await api.post(`/payments`, { 
+      loanId, 
+      ...paymentData 
+    });
     return response.data.data;
-  }
-};
+  },
 
-export const remarkService = {
-  addRemark: async (loanId, remarkData) => {
-    const response = await api.post(`/loans/${loanId}/remarks`, remarkData);
-    return response.data.data;
-  }
-};
-
-export const promiseService = {
-  addPromiseToPay: async (loanId, promiseData) => {
-    const response = await api.post(`/loans/${loanId}/promises`, promiseData);
-    return response.data.data;
-  }
-};
-
-export const authService = {
-  login: async (mobileOrEmail, password) => {
-    const response = await api.post('/auth/login', {
-      mobileOrEmail,
-      password
+  getPayments: async (loanId, params = {}) => {
+    const response = await api.get(`/payments`, { 
+      params: { loanId, ...params } 
     });
     return response.data.data;
   }
 };
 
-export const managerService = {
-  getManagerDashboard: async (date) => {
-    const response = await api.get('/manager/dashboard', { params: { date } });
+export const customerService = {
+  getCustomers: async (params = {}) => {
+    const response = await api.get('/customers', { params });
+    return response.data.data;
+  },
+
+  getCustomerById: async (customerId) => {
+    const response = await api.get(`/customers/${customerId}`);
+    return response.data.data;
+  }
+};
+
+export const dashboardService = {
+  getDashboard: async (params = {}) => {
+    const response = await api.get('/dashboard', { params });
+    return response.data.data;
+  }
+};
+
+export const reportsService = {
+  getPortfolio: async (params = {}) => {
+    const response = await api.get('/reports/portfolio', { params });
+    return response.data.data;
+  },
+
+  getBuckets: async (params = {}) => {
+    const response = await api.get('/reports/buckets', { params });
+    return response.data.data;
+  },
+
+  getEfficiency: async (params = {}) => {
+    const response = await api.get('/reports/efficiency', { params });
+    return response.data.data;
+  },
+
+  getLegal: async (params = {}) => {
+    const response = await api.get('/reports/legal', { params });
+    return response.data.data;
+  },
+
+  getCollectors: async (params = {}) => {
+    const response = await api.get('/reports/collectors', { params });
+    return response.data.data;
+  },
+
+  getAging: async (params = {}) => {
+    const response = await api.get('/reports/aging', { params });
     return response.data.data;
   }
 };
 
 export const legalService = {
+  getLegalCases: async (params = {}) => {
+    const response = await api.get('/legal/cases', { params });
+    return response.data.data;
+  },
+
   getLegalStats: async () => {
     const response = await api.get('/legal/stats');
-    return response.data.data;
-  },
-
-  getLegalCases: async (status) => {
-    const response = await api.get('/legal/cases', { params: { status } });
-    return response.data.data;
-  }
-};
-
-export const misService = {
-  getDailyMIS: async (date) => {
-    const response = await api.get('/mis/daily', { params: { date } });
-    return response.data.data;
-  },
-
-  getPortfolioHealth: async (date) => {
-    const response = await api.get('/mis/portfolio-health', { params: { date } });
-    return response.data.data;
-  },
-
-  getRollRate: async (startDate, endDate) => {
-    const response = await api.get('/mis/roll-rate', { params: { startDate, endDate } });
-    return response.data.data;
-  },
-
-  getLegalLoss: async (date) => {
-    const response = await api.get('/mis/legal-loss', { params: { date } });
-    return response.data.data;
-  },
-
-  getUnitEconomics: async (date) => {
-    const response = await api.get('/mis/unit-economics', { params: { date } });
-    return response.data.data;
-  },
-
-  getTrends: async (days = 30) => {
-    const response = await api.get('/mis/trends', { params: { days } });
-    return response.data.data;
-  },
-
-  getMISDashboard: async (date) => {
-    const response = await api.get('/mis/dashboard', { params: { date } });
     return response.data.data;
   }
 };

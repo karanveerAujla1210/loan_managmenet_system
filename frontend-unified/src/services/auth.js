@@ -2,11 +2,29 @@ import api from './api';
 
 export const login = async (credentials) => {
   const response = await api.post('/auth/login', credentials);
+  if (response.data.success && response.data.token) {
+    return {
+      success: true,
+      data: {
+        token: response.data.token,
+        user: response.data.user || { name: 'User', role: 'admin' }
+      }
+    };
+  }
   return response.data;
 };
 
 export const register = async (userData) => {
   const response = await api.post('/auth/register', userData);
+  if (response.data.success && response.data.token) {
+    return {
+      success: true,
+      data: {
+        token: response.data.token,
+        user: response.data.user || { name: userData.name, role: 'user' }
+      }
+    };
+  }
   return response.data;
 };
 

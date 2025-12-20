@@ -18,20 +18,25 @@ export default function ModernDashboard() {
     try {
       setLoading(true);
       const [loansData, customersData] = await Promise.all([
-        loansService.getLoans(),
-        customersService.getCustomers()
+        loansService.getLoans().catch(err => {
+          console.error('Loans fetch error:', err);
+          return { data: [] };
+        }),
+        customersService.getCustomers().catch(err => {
+          console.error('Customers fetch error:', err);
+          return { data: [] };
+        })
       ]);
 
       const loans = loansData?.data || [];
       const customers = customersData?.data || [];
 
-      // Calculate stats
       const stats = {
         totalCustomers: customers.length,
         activeLoans: loans.filter(l => l.status === 'disbursed').length,
-        totalDisbursed: loans.reduce((sum, l) => sum + (l.loanAmount || 0), 0),
+        totalDisbursed: loans.reduce((sum, l) => sum + (l.principalAmount || 0), 0),
         overdueLoans: loans.filter(l => l.dpd > 30).length,
-        monthlyCollections: payments.reduce((sum, p) => sum + (p.amount || 0), 0),
+        monthlyCollections: 0,
       };
 
       setDashboardData(stats);
@@ -61,7 +66,6 @@ export default function ModernDashboard() {
     }
   };
 
-  // Fallback data while loading
   const stats = dashboardData || {
     totalCustomers: 0,
     activeLoans: 0,
@@ -94,13 +98,11 @@ export default function ModernDashboard() {
 
   return (
     <div className="space-y-8">
-      {/* Page Header */}
       <div>
         <h1 className="text-3xl font-bold text-gray-900">Dashboard</h1>
         <p className="text-gray-600 mt-1">Welcome back! Here's your performance snapshot today</p>
       </div>
 
-      {/* KPI Cards */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
         <KPICard
           label="Total Customers"
@@ -136,9 +138,7 @@ export default function ModernDashboard() {
         />
       </div>
 
-      {/* Charts Section */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        {/* Performance Chart */}
         <div className="lg:col-span-2 bg-white rounded-xl p-6 shadow-sm border border-gray-100">
           <div className="mb-6">
             <h2 className="text-lg font-semibold text-gray-900">Performance Overview</h2>
@@ -175,7 +175,6 @@ export default function ModernDashboard() {
           </ResponsiveContainer>
         </div>
 
-        {/* Status Distribution */}
         <div className="bg-white rounded-xl p-6 shadow-sm border border-gray-100">
           <div className="mb-6">
             <h2 className="text-lg font-semibold text-gray-900">Loan Status</h2>
@@ -213,7 +212,6 @@ export default function ModernDashboard() {
         </div>
       </div>
 
-      {/* Recent Activity */}
       <div className="bg-white rounded-xl p-6 shadow-sm border border-gray-100">
         <div className="mb-6">
           <h2 className="text-lg font-semibold text-gray-900">Recent Activity</h2>
@@ -221,31 +219,35 @@ export default function ModernDashboard() {
         </div>
 
         <div className="space-y-4">
-          {recentActivity.map((activity) => (
-            <div key={activity.id} className="flex items-center justify-between p-4 hover:bg-gray-50 rounded-lg transition">
-              <div className="flex-1">
-                <p className="font-medium text-gray-900">{activity.customer}</p>
-                <p className="text-sm text-gray-500">{activity.action}</p>
+          {recentActivity.length > 0 ? (
+            recentActivity.map((activity) => (
+              <div key={activity.id} className="flex items-center justify-between p-4 hover:bg-gray-50 rounded-lg transition">
+                <div className="flex-1">
+                  <p className="font-medium text-gray-900">{activity.customer}</p>
+                  <p className="text-sm text-gray-500">{activity.action}</p>
+                </div>
+                <div className="text-right">
+                  <p className="font-semibold text-gray-900">{activity.amount}</p>
+                  <p className="text-xs text-gray-500">{activity.time}</p>
+                </div>
+                <div className="ml-4">
+                  <span
+                    className={`px-3 py-1 rounded-full text-xs font-medium ${
+                      activity.status === 'success'
+                        ? 'bg-green-50 text-green-700'
+                        : activity.status === 'warning'
+                        ? 'bg-orange-50 text-orange-700'
+                        : 'bg-blue-50 text-blue-700'
+                    }`}
+                  >
+                    {activity.status === 'success' ? '✓' : activity.status === 'warning' ? '!' : 'i'} {activity.status}
+                  </span>
+                </div>
               </div>
-              <div className="text-right">
-                <p className="font-semibold text-gray-900">{activity.amount}</p>
-                <p className="text-xs text-gray-500">{activity.time}</p>
-              </div>
-              <div className="ml-4">
-                <span
-                  className={`px-3 py-1 rounded-full text-xs font-medium ${
-                    activity.status === 'success'
-                      ? 'bg-green-50 text-green-700'
-                      : activity.status === 'warning'
-                      ? 'bg-orange-50 text-orange-700'
-                      : 'bg-blue-50 text-blue-700'
-                  }`}
-                >
-                  {activity.status === 'success' ? '✓' : activity.status === 'warning' ? '!' : 'i'} {activity.status}
-                </span>
-              </div>
-            </div>
-          ))}
+            ))
+          ) : (
+            <p className="text-center text-gray-500 py-8">No recent activity</p>
+          )}
         </div>
       </div>
     </div>

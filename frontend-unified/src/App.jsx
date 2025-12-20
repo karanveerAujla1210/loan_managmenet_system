@@ -47,11 +47,9 @@ const router = createBrowserRouter([
   { path: '/unauthorized', element: <Unauthorized /> },
   {
     element: (
-      <AuthProvider>
-        <ProtectedRoute>
-          <LayoutWrapper />
-        </ProtectedRoute>
-      </AuthProvider>
+      <ProtectedRoute>
+        <LayoutWrapper />
+      </ProtectedRoute>
     ),
     children: [
       { path: '/', element: <Navigate to="/dashboard" replace /> },
@@ -59,12 +57,12 @@ const router = createBrowserRouter([
       { path: '/credit-management', element: <CreditManagement /> },
       { path: '/loans', element: <Loans /> },
       { 
-        path: '/overdue', 
-        element: <OverdueBuckets />,
+        path: '/overdue',
         children: [
-          { path: '/overdue/buckets', element: <OverdueBuckets /> },
-          { path: '/overdue/aging', element: <OverdueAging /> },
-          { path: '/overdue/followup', element: <FollowUpScheduler /> }
+          { path: '', element: <OverdueBuckets /> },
+          { path: 'buckets', element: <OverdueBuckets /> },
+          { path: 'aging', element: <OverdueAging /> },
+          { path: 'followup', element: <FollowUpScheduler /> }
         ]
       },
       { path: '/legal', element: <LegalCases /> },
@@ -99,12 +97,14 @@ const queryClient = new QueryClient({
 
 function App() {
   return (
-    <QueryClientProvider client={queryClient}>
-      <div className="min-h-screen bg-gray-50 font-sans">
-        <RouterProvider router={router} />
-        <Toaster position="top-right" />
-      </div>
-    </QueryClientProvider>
+    <AuthProvider>
+      <QueryClientProvider client={queryClient}>
+        <div className="min-h-screen bg-gray-50 font-sans">
+          <RouterProvider router={router} />
+          <Toaster position="top-right" />
+        </div>
+      </QueryClientProvider>
+    </AuthProvider>
   );
 }
 
